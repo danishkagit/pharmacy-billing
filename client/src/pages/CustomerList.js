@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { PageHeader, GlassCard, GlassTable } from '../components/ui';
 import API from '../utils/api';
 
 export default function CustomerList() {
@@ -14,54 +15,79 @@ export default function CustomerList() {
     }).catch(console.error).finally(() => setLoading(false));
   }, [search, type]);
 
+  const columns = [
+    {
+      key: 'name',
+      label: 'Name',
+      render: c => <span className="font-medium">{c.name}</span>,
+      tdClass: 'p-3'
+    },
+    {
+      key: 'phone',
+      label: 'Phone',
+      render: c => <span className="text-gray-400">{c.phone || '-'}</span>,
+      tdClass: 'p-3'
+    },
+    {
+      key: 'type',
+      label: 'Type',
+      className: 'text-center',
+      tdClass: 'p-3 text-center',
+      render: c => {
+        let cls = 'badge badge-info';
+        if (c.type === 'wholesale') cls = 'badge badge-purple';
+        else if (c.type === 'both') cls = 'badge badge-primary';
+        else if (c.type === 'retail') cls = 'badge badge-gray';
+        return <span className={cls}>{c.type}</span>;
+      }
+    },
+    {
+      key: 'creditLimit',
+      label: 'Credit Limit',
+      className: 'text-right',
+      tdClass: 'p-3 text-right',
+      render: c => `\u20B9${c.creditLimit?.toFixed(0)}`
+    },
+    {
+      key: 'loyaltyPoints',
+      label: 'Loyalty Points',
+      className: 'text-right',
+      tdClass: 'p-3 text-right',
+      render: c => c.loyaltyPoints || 0
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      className: 'text-center',
+      tdClass: 'p-3 text-center',
+      render: c => (
+        <>
+          <Link to={`/customers/${c._id}/edit`} className="btn-ghost text-xs mr-2">Edit</Link>
+          <button onClick={() => API.delete(`/customers/${c._id}`).then(() => setCustomers(prev => prev.filter(x => x._id !== c._id)))} className="btn-ghost text-xs text-red-400 hover:text-red-300">Deactivate</button>
+        </>
+      )
+    }
+  ];
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Customers</h1>
-        <Link to="/customers/new" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2">
+      <PageHeader title="Customers" subtitle="Manage your customers and patients">
+        <Link to="/customers/new" className="btn-primary">
           <i className="fas fa-plus"></i> Add Customer
         </Link>
-      </div>
-      <div className="bg-white rounded-xl shadow-sm p-5">
+      </PageHeader>
+      <GlassCard className="mb-6">
         <div className="flex gap-4 mb-4">
-          <input placeholder="Search by name or phone..." value={search} onChange={e => setSearch(e.target.value)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm outline-none" />
-          <select value={type} onChange={e => setType(e.target.value)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm outline-none">
+          <input placeholder="Search by name or phone..." value={search} onChange={e => setSearch(e.target.value)} className="glass-input flex-1" />
+          <select value={type} onChange={e => setType(e.target.value)} className="glass-input w-40">
             <option value="">All Types</option>
             <option value="retail">Retail</option><option value="wholesale">Wholesale</option><option value="both">Both</option>
           </select>
         </div>
-        {loading ? <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div> : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-600">
-                <tr>
-                  <th className="text-left p-3 font-medium">Name</th>
-                  <th className="text-left p-3 font-medium">Phone</th>
-                  <th className="text-center p-3 font-medium">Type</th>
-                  <th className="text-right p-3 font-medium">Credit Limit</th>
-                  <th className="text-right p-3 font-medium">Loyalty Points</th>
-                  <th className="text-center p-3 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {customers.map(c => (
-                  <tr key={c._id} className="hover:bg-gray-50">
-                    <td className="p-3 font-medium">{c.name}</td>
-                    <td className="p-3 text-gray-500">{c.phone || '-'}</td>
-                    <td className="p-3 text-center"><span className={`px-2 py-0.5 rounded text-xs font-medium ${c.type === 'wholesale' ? 'bg-purple-100 text-purple-700' : c.type === 'both' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}>{c.type}</span></td>
-                    <td className="p-3 text-right">₹{c.creditLimit?.toFixed(0)}</td>
-                    <td className="p-3 text-right">{c.loyaltyPoints || 0}</td>
-                    <td className="p-3 text-center">
-                      <Link to={`/customers/${c._id}/edit`} className="text-blue-600 hover:underline text-xs mr-2">Edit</Link>
-                      <button onClick={() => API.delete(`/customers/${c._id}`).then(() => setCustomers(prev => prev.filter(x => x._id !== c._id)))} className="text-red-500 hover:underline text-xs">Deactivate</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+        <div className="overflow-x-auto">
+          <GlassTable columns={columns} data={customers} loading={loading} emptyMessage="No customers found" />
+        </div>
+      </GlassCard>
     </div>
   );
 }

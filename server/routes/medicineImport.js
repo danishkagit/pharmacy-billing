@@ -247,6 +247,39 @@ router.post('/bulk-scrape', async (req, res) => {
   }
 });
 
+router.post('/seed-indian-medicines', async (req, res) => {
+  try {
+    const medicines = require('../data/indian-medicines-2026.json');
+    let imported = 0;
+    let skipped = 0;
+    const errors = [];
+    const companyId = req.company._id;
+
+    for (const med of medicines) {
+      try {
+        const exists = await Medicine.findOne({
+          name: { $regex: `^${med.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' },
+          company: companyId
+        });
+        if (exists) { skipped++; continue; }
+        await Medicine.create({
+          name: med.name, composition: med.composition || '', manufacturer: med.manufacturer || '',
+          category: med.category || 'other', packSize: med.packSize || '', unit: med.unit || 'nos',
+          hsn: med.hsn || '300490', gstRate: med.gstRate ?? 12, schedule: med.schedule || 'OTC',
+          mrp: med.mrp || 0, reorderLevel: 0, company: companyId, isActive: true
+        });
+        imported++;
+      } catch (err) {
+        errors.push({ name: med.name, error: err.message });
+      }
+    }
+
+    res.json({ success: true, data: { total: medicines.length, imported, skipped, errors: errors.length } });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 function guessCategory(name, packText) {
   const n = (name + ' ' + packText).toLowerCase();
   if (/\b(tablet|tab)\b/.test(n)) return 'tablet';

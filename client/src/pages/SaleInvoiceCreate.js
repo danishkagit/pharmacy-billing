@@ -1,22 +1,32 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../utils/api';
+import { useAuth } from '../context/AuthContext';
+import { PageHeader, GlassCard, GlassModal } from '../components/ui';
 
 export default function SaleInvoiceCreate() {
   const navigate = useNavigate();
+  const { company } = useAuth();
+  const isRetail = company?.drugLicenseCategory === 'retail' || company?.drugLicenseCategory === 'both';
+  const isWholesale = company?.drugLicenseCategory === 'wholesale' || company?.drugLicenseCategory === 'both';
+
   const [medicines, setMedicines] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [prescriptions, setPrescriptions] = useState([]);
   const [batches, setBatches] = useState({});
   const [form, setForm] = useState({
-    type: 'retail', customer: '', customerName: '', customerPhone: '', customerGstin: '',
+    type: isRetail && !isWholesale ? 'retail' : isWholesale && !isRetail ? 'wholesale' : 'retail',
+    customer: '', customerName: '', customerPhone: '', customerGstin: '',
     prescription: '', prescriptionNo: '', doctorName: '', patientName: '',
-    paymentMode: 'cash', isInterState: false, notes: '', notify: true
+    paymentMode: 'cash', isInterState: false, notes: '', notify: true,
+    creditDays: 0, billingAddress: '', deliveryAddress: '',
   });
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showQuickCustomer, setShowQuickCustomer] = useState(false);
+  const [quickCustomer, setQuickCustomer] = useState({ name: '', phone: '', type: 'retail' });
   const searchTimeout = useRef(null);
 
   useEffect(() => {
@@ -35,7 +45,6 @@ export default function SaleInvoiceCreate() {
   }, []);
 
   const addItem = () => setItems([...items, { medicine: '', batch: '', batchNo: '', qty: 1, rate: 0, mrp: 0, discountPercent: 0, gstRate: 12 }]);
-
   const removeItem = (idx) => setItems(items.filter((_, i) => i !== idx));
 
   const handleMedicineSelect = async (idx, medicineId) => {
@@ -43,8 +52,8 @@ export default function SaleInvoiceCreate() {
     if (!med) return;
     const updated = [...items];
     updated[idx] = { ...updated[idx], medicine: medicineId, medicineName: med.name, mrp: med.mrp, gstRate: med.gstRate || 12, schedule: med.schedule };
-    if (med.schedule === 'H' || med.schedule === 'H1' || med.schedule === 'X') {
-      if (!form.prescription) setError(`⚠ ${med.name} requires a prescription. Please add prescription first.`);
+    if ((med.schedule === 'H' || med.schedule === 'H1' || med.schedule === 'X') && !form.prescription) {
+      setError(`${med.name} requires a prescription. Please add prescription first.`);
     }
     try {
       const res = await API.get(`/batches/stock/${medicineId}`);
@@ -92,6 +101,19 @@ export default function SaleInvoiceCreate() {
     }
   };
 
+  const handleQuickCustomerAdd = async () => {
+    if (!quickCustomer.name.trim()) return;
+    try {
+      const res = await API.post('/customers', { ...quickCustomer, companyRef: company?._id });
+      if (res.success) {
+        setCustomers(prev => [...prev, res.data]);
+        handleCustomerSelect(res.data._id);
+        setShowQuickCustomer(false);
+        setQuickCustomer({ name: '', phone: '', type: 'retail' });
+      }
+    } catch (err) { setError(err?.error || 'Failed to add customer'); }
+  };
+
   const subtotal = items.reduce((s, i) => s + (i.amount || 0), 0);
   const totalTax = items.reduce((s, i) => { const amt = (i.amount || 0); return s + (amt * (i.gstRate || 12)) / 100; }, 0);
   const totalAmount = Math.round(subtotal + totalTax);
@@ -104,141 +126,250 @@ export default function SaleInvoiceCreate() {
     setLoading(true);
     setError('');
     try {
-      const res = await API.post('/sale-invoices', { ...form, items: items.map(i => ({ medicine: i.medicine, batch: i.batch, batchNo: i.batchNo, qty: i.qty, rate: i.rate, discountPercent: i.discountPercent, mrp: i.mrp })) });
+      const res = await API.post('/sale-invoices', {
+        ...form,
+        items: items.map(i => ({
+          medicine: i.medicine, batch: i.batch, batchNo: i.batchNo,
+          qty: i.qty, rate: i.rate, discountPercent: i.discountPercent, mrp: i.mrp
+        }))
+      });
       if (res.success) navigate(`/sales/${res.data._id}`);
     } catch (err) { setError(err?.error || 'Failed to create invoice'); }
     finally { setLoading(false); }
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">New Sale Invoice</h1>
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        {error && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm mb-4"><i className="fas fa-exclamation-circle mr-2"></i>{error}</div>}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Invoice Type</label>
-              <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none">
-                <option value="retail">Retail</option>
-                <option value="wholesale">Wholesale</option>
-              </select>
+    <div className="space-y-6">
+      <PageHeader title={form.type === 'retail' ? 'New Retail Sale' : 'New Wholesale Invoice'}
+        subtitle="Create a new sale invoice with medicine items">
+        <div className="flex gap-2">
+          {isRetail && isWholesale && (
+            <div className="glass-tabs inline-flex bg-white/60 border border-gray-200/60 rounded-morph-xs p-0.5">
+              <button type="button" onClick={() => setForm({ ...form, type: 'retail' })}
+                className={`px-3 py-1.5 rounded-morph-xs text-xs font-medium transition-all ${form.type === 'retail' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-500'}`}>
+                <i className="fas fa-store mr-1"></i>Retail
+              </button>
+              <button type="button" onClick={() => setForm({ ...form, type: 'wholesale' })}
+                className={`px-3 py-1.5 rounded-morph-xs text-xs font-medium transition-all ${form.type === 'wholesale' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-500'}`}>
+                <i className="fas fa-warehouse mr-1"></i>Wholesale
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Customer</label>
-              <select value={form.customer} onChange={e => handleCustomerSelect(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none">
-                <option value="">Walk-in Customer</option>
-                {customers.map(c => <option key={c._id} value={c._id}>{c.name} {c.phone ? `(${c.phone})` : ''}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-              <input value={form.customerPhone} onChange={e => setForm({ ...form, customerPhone: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Payment Mode</label>
-              <select value={form.paymentMode} onChange={e => setForm({ ...form, paymentMode: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none">
-                <option value="cash">Cash</option><option value="upi">UPI</option><option value="card">Card</option><option value="credit">Credit</option><option value="mixed">Mixed</option>
-              </select>
-            </div>
-          </div>
+          )}
+        </div>
+      </PageHeader>
 
-          <div className="grid grid-cols-3 gap-4">
+      <GlassCard>
+        {error && (
+          <div className="bg-red-50/80 backdrop-blur-sm border border-red-200 text-red-700 px-4 py-3 rounded-morph-xs text-sm mb-4 flex items-center gap-2">
+            <i className="fas fa-exclamation-circle"></i>{error}
+            <button onClick={() => setError('')} className="ml-auto text-red-400 hover:text-red-600"><i className="fas fa-times"></i></button>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+
+          {/* Customer & Invoice Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Prescription</label>
-              <select value={form.prescription} onChange={e => handlePrescriptionSelect(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none">
-                <option value="">No Prescription</option>
-                {prescriptions.map(p => <option key={p._id} value={p._id}>{p.prescriptionNo} - {p.patientName}</option>)}
+              <label className="block text-xs font-medium text-gray-500 mb-1">Customer</label>
+              <div className="flex gap-1">
+                <select value={form.customer} onChange={e => handleCustomerSelect(e.target.value)} className="glass-select flex-1">
+                  <option value="">Walk-in Customer</option>
+                  {customers.map(c => <option key={c._id} value={c._id}>{c.name} {c.phone ? `(${c.phone})` : ''}</option>)}
+                </select>
+                {isRetail && (
+                  <button type="button" onClick={() => setShowQuickCustomer(true)} className="btn-ghost px-2" title="Quick Add Customer">
+                    <i className="fas fa-plus"></i>
+                  </button>
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Phone / GSTIN</label>
+              <input value={form.customerPhone} onChange={e => setForm({ ...form, customerPhone: e.target.value })} placeholder="Phone" className="glass-input text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Payment Mode</label>
+              <select value={form.paymentMode} onChange={e => setForm({ ...form, paymentMode: e.target.value })} className="glass-select">
+                <option value="cash">Cash</option><option value="upi">UPI</option>
+                <option value="card">Card</option><option value="credit">Credit</option>
+                <option value="mixed">Mixed</option>
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Doctor Name</label>
-              <input value={form.doctorName} onChange={e => setForm({ ...form, doctorName: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Patient Name</label>
-              <input value={form.patientName} onChange={e => setForm({ ...form, patientName: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" />
-            </div>
-          </div>
-
-          <div className="border rounded-lg overflow-hidden">
-            <div className="bg-gray-50 p-3 flex items-center justify-between">
-              <span className="font-medium text-sm">Sale Items</span>
-              <button type="button" onClick={addItem} className="text-blue-600 text-sm hover:underline"><i className="fas fa-plus mr-1"></i>Add Item</button>
-            </div>
-            {items.length === 0 ? (
-              <div className="p-8 text-center text-gray-400">No items. <button type="button" onClick={addItem} className="text-blue-600 hover:underline">Add the first item</button></div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="p-2 text-left">Medicine</th>
-                      <th className="p-2 text-left">Batch</th>
-                      <th className="p-2">MRP</th>
-                      <th className="p-2">Rate</th>
-                      <th className="p-2">Qty</th>
-                      <th className="p-2">Disc%</th>
-                      <th className="p-2 text-right">Amount</th>
-                      <th className="p-2"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {items.map((item, idx) => (
-                      <tr key={idx}>
-                        <td className="p-2">
-                          <select value={item.medicine} onChange={e => handleMedicineSelect(idx, e.target.value)} className="w-44 px-2 py-1 border rounded text-sm">
-                            <option value="">Select</option>
-                            {medicines.map(m => <option key={m._id} value={m._id}>{m.name}</option>)}
-                          </select>
-                          <input placeholder="Search..." onChange={e => searchMedicines(e.target.value)} className="w-44 px-2 py-1 mt-1 border rounded text-sm" />
-                        </td>
-                        <td className="p-2">
-                          {item.medicine && batches[item.medicine] ? (
-                            <select value={item.batch} onChange={e => updateItem(idx, 'batch', e.target.value)} className="w-36 px-2 py-1 border rounded text-sm">
-                              {batches[item.medicine].filter(b => b.qty > 0).map(b => (
-                                <option key={b._id} value={b._id}>{b.batchNo} (Qty: {b.qty}, Exp: {new Date(b.expiryDate).toLocaleDateString('en-IN')})</option>
-                              ))}
-                            </select>
-                          ) : (
-                            <input value={item.batchNo} onChange={e => updateItem(idx, 'batchNo', e.target.value)} placeholder="Batch" className="w-24 px-2 py-1 border rounded text-sm" />
-                          )}
-                        </td>
-                        <td className="p-2"><input type="number" value={item.mrp} onChange={e => updateItem(idx, 'mrp', parseFloat(e.target.value) || 0)} className="w-16 px-2 py-1 border rounded text-sm" /></td>
-                        <td className="p-2"><input type="number" value={item.rate} onChange={e => updateItem(idx, 'rate', parseFloat(e.target.value) || 0)} className="w-16 px-2 py-1 border rounded text-sm" /></td>
-                        <td className="p-2"><input type="number" value={item.qty} onChange={e => updateItem(idx, 'qty', parseInt(e.target.value) || 0)} min={1} className="w-14 px-2 py-1 border rounded text-sm" /></td>
-                        <td className="p-2"><input type="number" value={item.discountPercent} onChange={e => updateItem(idx, 'discountPercent', parseFloat(e.target.value) || 0)} min={0} max={100} className="w-14 px-2 py-1 border rounded text-sm" /></td>
-                        <td className="p-2 text-right font-medium">₹{(item.amount || 0).toFixed(2)}</td>
-                        <td className="p-2"><button type="button" onClick={() => removeItem(idx)} className="text-red-500"><i className="fas fa-times"></i></button></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {form.type === 'wholesale' && (
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Credit Days</label>
+                <input type="number" value={form.creditDays} onChange={e => setForm({ ...form, creditDays: parseInt(e.target.value) || 0 })}
+                  min={0} className="glass-input text-sm" placeholder="0" />
               </div>
             )}
           </div>
 
-          <div className="flex justify-end">
-            <div className="w-64 space-y-2">
-              <div className="flex justify-between text-sm"><span>Subtotal:</span><span className="font-medium">₹{subtotal.toFixed(2)}</span></div>
-              <div className="flex justify-between text-sm"><span>GST:</span><span className="font-medium">₹{totalTax.toFixed(2)}</span></div>
-              <div className="flex justify-between text-lg font-bold pt-2 border-t"><span>Total:</span><span>₹{totalAmount.toFixed(2)}</span></div>
+          {/* Prescription Info (retail) */}
+          {(isRetail || form.type === 'retail') && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Prescription</label>
+                <select value={form.prescription} onChange={e => handlePrescriptionSelect(e.target.value)} className="glass-select">
+                  <option value="">No Prescription</option>
+                  {prescriptions.map(p => <option key={p._id} value={p._id}>{p.prescriptionNo} - {p.patientName}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Doctor Name</label>
+                <input value={form.doctorName} onChange={e => setForm({ ...form, doctorName: e.target.value })} className="glass-input text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Patient Name</label>
+                <input value={form.patientName} onChange={e => setForm({ ...form, patientName: e.target.value })} className="glass-input text-sm" />
+              </div>
+            </div>
+          )}
+
+          {/* Wholesale extra fields */}
+          {form.type === 'wholesale' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Billing Address</label>
+                <input value={form.billingAddress} onChange={e => setForm({ ...form, billingAddress: e.target.value })} className="glass-input text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Delivery Address</label>
+                <input value={form.deliveryAddress} onChange={e => setForm({ ...form, deliveryAddress: e.target.value })} className="glass-input text-sm" />
+              </div>
+            </div>
+          )}
+
+          {/* Items Table */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-gray-500 uppercase">Sale Items</span>
+              <button type="button" onClick={addItem} className="btn-primary text-xs py-1.5 px-3">
+                <i className="fas fa-plus"></i> Add Item
+              </button>
+            </div>
+
+            <div className="glass-card overflow-hidden" padding={false}>
+              {items.length === 0 ? (
+                <div className="py-12 text-center text-gray-400">
+                  <i className="fas fa-cart-plus text-2xl mb-2"></i>
+                  <p className="text-sm">No items added yet</p>
+                  <button type="button" onClick={addItem} className="text-primary-500 text-xs hover:underline mt-1">Add the first item</button>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="table-wrap">
+                    <thead>
+                      <tr>
+                        <th>Medicine</th>
+                        <th>Batch</th>
+                        <th>MRP</th>
+                        <th>Rate</th>
+                        <th>Qty</th>
+                        <th>Disc%</th>
+                        <th className="text-right">Amount</th>
+                        <th className="w-10"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map((item, idx) => (
+                        <tr key={idx}>
+                          <td>
+                            <div className="flex flex-col gap-1">
+                              <select value={item.medicine} onChange={e => handleMedicineSelect(idx, e.target.value)} className="glass-select text-xs py-1.5 w-40">
+                                <option value="">Select</option>
+                                {medicines.map(m => <option key={m._id} value={m._id}>{m.name}</option>)}
+                              </select>
+                              <input placeholder="Search..." onChange={e => searchMedicines(e.target.value)} className="glass-input text-xs py-1 w-40" />
+                            </div>
+                          </td>
+                          <td>
+                            {item.medicine && batches[item.medicine] ? (
+                              <select value={item.batch} onChange={e => updateItem(idx, 'batch', e.target.value)} className="glass-select text-xs py-1.5 w-36">
+                                {batches[item.medicine].filter(b => b.qty > 0).map(b => (
+                                  <option key={b._id} value={b._id}>{b.batchNo} (Qty:{b.qty})</option>
+                                ))}
+                              </select>
+                            ) : (
+                              <input value={item.batchNo} onChange={e => updateItem(idx, 'batchNo', e.target.value)} placeholder="Batch" className="glass-input text-xs py-1.5 w-24" />
+                            )}
+                          </td>
+                          <td><input type="number" value={item.mrp} onChange={e => updateItem(idx, 'mrp', parseFloat(e.target.value) || 0)} className="glass-input text-xs py-1.5 w-16 text-center" /></td>
+                          <td><input type="number" value={item.rate} onChange={e => updateItem(idx, 'rate', parseFloat(e.target.value) || 0)} className="glass-input text-xs py-1.5 w-16 text-center" /></td>
+                          <td><input type="number" value={item.qty} onChange={e => updateItem(idx, 'qty', parseInt(e.target.value) || 0)} min={1} className="glass-input text-xs py-1.5 w-14 text-center" /></td>
+                          <td><input type="number" value={item.discountPercent} onChange={e => updateItem(idx, 'discountPercent', parseFloat(e.target.value) || 0)} min={0} max={100} className="glass-input text-xs py-1.5 w-14 text-center" /></td>
+                          <td className="text-right font-medium text-sm">₹{(item.amount || 0).toFixed(2)}</td>
+                          <td><button type="button" onClick={() => removeItem(idx)} className="text-red-400 hover:text-red-600 p-1"><i className="fas fa-times"></i></button></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-            <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={2} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none text-sm" />
+          {/* Totals */}
+          <div className="flex justify-end">
+            <div className="w-64 space-y-1.5 bg-gray-50/50 rounded-morph-xs p-4">
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>Subtotal:</span><span className="font-medium">₹{subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>GST:</span><span className="font-medium">₹{totalTax.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-base font-bold text-gray-800 pt-2 border-t border-gray-200">
+                <span>Total:</span><span>₹{totalAmount.toFixed(2)}</span>
+              </div>
+            </div>
           </div>
 
-          <div className="flex gap-3">
-            <button type="submit" disabled={loading} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 text-lg">
-              <i className="fas fa-check-circle mr-2"></i>{loading ? 'Creating...' : `Create Invoice (₹${totalAmount.toFixed(2)})`}
+          {/* Notes & Submit */}
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Notes</label>
+            <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={2} className="glass-input text-sm resize-none" />
+          </div>
+
+          <div className="flex items-center gap-3 pt-2">
+            <button type="submit" disabled={loading}
+              className="btn-primary text-base px-8 py-3">
+              <i className="fas fa-check-circle"></i>
+              {loading ? 'Creating...' : `Create ${form.type === 'retail' ? 'Sale' : 'Invoice'} (₹${totalAmount.toFixed(2)})`}
             </button>
-            <button type="button" onClick={() => navigate('/sales')} className="bg-gray-100 text-gray-700 px-6 py-2 rounded-xl font-medium hover:bg-gray-200">Cancel</button>
+            <button type="button" onClick={() => navigate('/sales')} className="btn-secondary">Cancel</button>
           </div>
         </form>
-      </div>
+      </GlassCard>
+
+      {/* Quick Customer Modal */}
+      <GlassModal open={showQuickCustomer} onClose={() => setShowQuickCustomer(false)} title="Quick Add Customer" size="sm">
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Name *</label>
+            <input value={quickCustomer.name} onChange={e => setQuickCustomer({ ...quickCustomer, name: e.target.value })}
+              className="glass-input" placeholder="Customer name" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Phone</label>
+            <input value={quickCustomer.phone} onChange={e => setQuickCustomer({ ...quickCustomer, phone: e.target.value })}
+              className="glass-input" placeholder="Phone number" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Type</label>
+            <select value={quickCustomer.type} onChange={e => setQuickCustomer({ ...quickCustomer, type: e.target.value })} className="glass-select">
+              <option value="retail">Retail</option>
+              <option value="wholesale">Wholesale</option>
+              <option value="both">Both</option>
+            </select>
+          </div>
+          <div className="flex gap-2 justify-end pt-2">
+            <button onClick={() => setShowQuickCustomer(false)} className="btn-secondary">Cancel</button>
+            <button onClick={handleQuickCustomerAdd} className="btn-primary">
+              <i className="fas fa-plus"></i> Add Customer
+            </button>
+          </div>
+        </div>
+      </GlassModal>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../utils/api';
+import { PageHeader, GlassCard, GlassModal } from '../components/ui';
 
 export default function MedicineImport() {
   const navigate = useNavigate();
@@ -10,6 +11,9 @@ export default function MedicineImport() {
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(false);
   const [bulking, setBulking] = useState(false);
+  const [seeding, setSeeding] = useState(false);
+  const [seedResult, setSeedResult] = useState(null);
+  const [showSeed, setShowSeed] = useState(false);
   const [error, setError] = useState('');
   const [importResult, setImportResult] = useState(null);
   const [bulkResult, setBulkResult] = useState(null);
@@ -60,6 +64,22 @@ export default function MedicineImport() {
     }
   };
 
+  const handleSeed = async () => {
+    setSeeding(true);
+    setSeedResult(null);
+    setError('');
+    try {
+      const res = await API.post('/medicines/import/seed-indian-medicines');
+      if (res.success) setSeedResult(res.data);
+      else setError(res.error || 'Seed failed');
+    } catch (err) {
+      setError(err?.error || 'Seed failed');
+    } finally {
+      setSeeding(false);
+      setShowSeed(false);
+    }
+  };
+
   const handleImport = async () => {
     if (selected.size === 0) return;
     setImporting(true);
@@ -88,32 +108,42 @@ export default function MedicineImport() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="md:col-span-2 bg-white rounded-xl shadow-sm p-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="md:col-span-2 glass-card p-5">
           <div className="flex gap-3">
             <input
               value={query} onChange={e => setQuery(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSearch()}
               placeholder="Search medicine name (e.g., paracetamol, amoxicillin)..."
-              className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              className="glass-input"
             />
-            <button onClick={handleSearch} disabled={loading || !query.trim()}
-              className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2">
+            <button onClick={handleSearch} disabled={loading || !query.trim()} className="btn-primary">
               {loading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-search"></i>}
               Search
             </button>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col justify-center">
-          <button onClick={handleBulk} disabled={bulking}
-            className="bg-purple-600 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center gap-2">
+        <div className="glass-card p-5 flex flex-col justify-center">
+          <button onClick={handleBulk} disabled={bulking} className="btn-primary bg-purple-600 hover:bg-purple-700">
             {bulking ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-database"></i>}
-            {bulking ? 'Importing...' : 'Bulk Import from PharmEasy'}
+            {bulking ? 'Importing...' : 'Bulk from PharmEasy'}
           </button>
           {bulkResult && (
-            <div className="mt-3 text-xs text-gray-600 text-center">
-              Found {bulkResult.uniqueFound} unique, imported {bulkResult.imported} new
+            <div className="mt-2 text-xs text-gray-500 text-center">
+              Found {bulkResult.uniqueFound}, imported {bulkResult.imported} new
+            </div>
+          )}
+        </div>
+
+        <div className="glass-card p-5 flex flex-col justify-center">
+          <button onClick={() => setShowSeed(true)} disabled={seeding} className="btn-success">
+            {seeding ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-seedling"></i>}
+            {seeding ? 'Seeding...' : 'Seed Indian Meds 2026'}
+          </button>
+          {seedResult && (
+            <div className="mt-2 text-xs text-gray-500 text-center">
+              Imported {seedResult.imported} of {seedResult.total}
             </div>
           )}
         </div>
@@ -197,11 +227,30 @@ export default function MedicineImport() {
       )}
 
       {results.length === 0 && !loading && !error && (
-        <div className="text-center py-16 text-gray-400">
-          <i className="fas fa-search text-4xl mb-3"></i>
-          <p>Search for a medicine name to find results from online sources</p>
+        <div className="glass-card text-center py-16">
+          <i className="fas fa-search text-4xl text-gray-300 mb-3"></i>
+          <p className="text-gray-400">Search for a medicine name or use bulk import options</p>
         </div>
       )}
+
+      {/* Seed Confirmation Modal */}
+      <GlassModal open={showSeed} onClose={() => setShowSeed(false)} title="Seed Indian Medicines 2026" size="sm">
+        <p className="text-sm text-gray-600 mb-4">
+          This will import <strong>506 common Indian medicines</strong> into your catalog, including all major brands
+          across pain/fever, antibiotics, cardiac, diabetes, respiratory, vitamins, and more therapeutic categories.
+        </p>
+        <div className="bg-amber-50 border border-amber-200 rounded-morph-xs p-3 text-xs text-amber-700 mb-4 flex items-start gap-2">
+          <i className="fas fa-info-circle mt-0.5"></i>
+          <span>Medicines that already exist in your catalog will be skipped.</span>
+        </div>
+        <div className="flex gap-3 justify-end">
+          <button onClick={() => setShowSeed(false)} className="btn-secondary">Cancel</button>
+          <button onClick={handleSeed} disabled={seeding} className="btn-success">
+            {seeding ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-check"></i>}
+            {seeding ? 'Importing...' : 'Confirm Import'}
+          </button>
+        </div>
+      </GlassModal>
     </div>
   );
 }
