@@ -34,6 +34,7 @@ const { branchFilter } = require('./middleware/branch');
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/company', auth, require('./routes/company'));
 app.use('/api/branches', auth, branchFilter, require('./routes/branches'));
+app.use('/api/medicines/import', auth, branchFilter, require('./routes/medicineImport'));
 app.use('/api/medicines', auth, branchFilter, require('./routes/medicines'));
 app.use('/api/batches', auth, branchFilter, require('./routes/batches'));
 app.use('/api/suppliers', auth, branchFilter, require('./routes/suppliers'));

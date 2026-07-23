@@ -7,6 +7,7 @@ import Layout from './components/Layout';
 
 import MedicineList from './pages/MedicineList';
 import MedicineForm from './pages/MedicineForm';
+import MedicineImport from './pages/MedicineImport';
 import BatchList from './pages/BatchList';
 import ExpiryDashboard from './pages/ExpiryDashboard';
 
@@ -83,6 +84,7 @@ export default function App() {
         <Route path="medicines" element={<MedicineList />} />
         <Route path="medicines/new" element={<MedicineForm />} />
         <Route path="medicines/:id/edit" element={<MedicineForm />} />
+        <Route path="medicines/import" element={<MedicineImport />} />
         <Route path="batches" element={<BatchList />} />
         <Route path="expiry" element={<ExpiryDashboard />} />
 

@@ -1,0 +1,172 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import API from '../utils/api';
+
+export default function MedicineImport() {
+  const navigate = useNavigate();
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
+  const [selected, setSelected] = useState(new Set());
+  const [loading, setLoading] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [error, setError] = useState('');
+  const [importResult, setImportResult] = useState(null);
+
+  const handleSearch = async () => {
+    if (!query.trim()) return;
+    setLoading(true);
+    setError('');
+    setResults([]);
+    setSelected(new Set());
+    setImportResult(null);
+    try {
+      const res = await API.get('/medicines/import/search-web', { params: { q: query.trim() } });
+      if (res.success) setResults(res.data);
+      else setError(res.error || 'Search failed');
+    } catch (err) {
+      setError(err?.error || 'Search failed. Check server connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleSelect = (id) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selected.size === results.length) setSelected(new Set());
+    else setSelected(new Set(results.map((_, i) => i)));
+  };
+
+  const handleImport = async () => {
+    if (selected.size === 0) return;
+    setImporting(true);
+    setError('');
+    try {
+      const meds = results.filter((_, i) => selected.has(i)).map(m => ({
+        name: m.name, manufacturer: m.manufacturer, composition: m.composition,
+        mrp: m.mrp, packSize: m.packSize, category: m.category, schedule: m.schedule
+      }));
+      const res = await API.post('/medicines/import/import', { medicines: meds });
+      if (res.success) setImportResult(res.data);
+      else setError(res.error || 'Import failed');
+    } catch (err) {
+      setError(err?.error || 'Import failed');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">Import Medicines</h1>
+        <button onClick={() => navigate('/medicines')} className="text-sm text-gray-500 hover:text-gray-700">
+          <i className="fas fa-arrow-left mr-1"></i> Back to Medicines
+        </button>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <div className="flex gap-3">
+          <input
+            value={query} onChange={e => setQuery(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSearch()}
+            placeholder="Search medicine name (e.g., paracetamol, amoxicillin)..."
+            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+          />
+          <button onClick={handleSearch} disabled={loading || !query.trim()}
+            className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2">
+            {loading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-search"></i>}
+            Search
+          </button>
+        </div>
+        {error && <div className="mt-3 bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm">{error}</div>}
+      </div>
+
+      {loading && (
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+        </div>
+      )}
+
+      {results.length > 0 && !loading && (
+        <div className="bg-white rounded-xl shadow-sm">
+          <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <input type="checkbox" checked={selected.size === results.length} onChange={toggleAll}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600" />
+              <span className="text-sm text-gray-600">{results.length} medicines found</span>
+            </div>
+            <button onClick={handleImport} disabled={selected.size === 0 || importing}
+              className="bg-green-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-2">
+              {importing ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-download"></i>}
+              Import Selected ({selected.size})
+            </button>
+          </div>
+
+          {importResult && (
+            <div className="mx-4 mt-4 p-4 bg-green-50 border border-green-200 rounded-lg text-sm">
+              <p className="font-medium text-green-800">
+                <i className="fas fa-check-circle mr-1"></i>
+                Imported {importResult.created} medicine(s) successfully
+              </p>
+              {importResult.errors?.length > 0 && (
+                <div className="mt-2 text-yellow-700">
+                  <p className="font-medium">{importResult.errors.length} skipped:</p>
+                  <ul className="list-disc list-inside text-xs mt-1">
+                    {importResult.errors.slice(0, 5).map((e, i) => (
+                      <li key={i}>{e.name}: {e.error}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="divide-y divide-gray-50">
+            {results.map((med, i) => (
+              <div key={i} className={`flex items-start gap-3 p-4 hover:bg-gray-50 transition-colors ${selected.has(i) ? 'bg-blue-50' : ''}`}>
+                <input type="checkbox" checked={selected.has(i)} onChange={() => toggleSelect(i)}
+                  className="mt-1 w-4 h-4 rounded border-gray-300 text-blue-600" />
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-gray-900">{med.name}</h3>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-gray-500">
+                    {med.manufacturer && <span>{med.manufacturer}</span>}
+                    {med.composition && <span>{med.composition}</span>}
+                    {med.packSize && <span>{med.packSize}</span>}
+                    <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${med.schedule === 'OTC' ? 'bg-gray-100 text-gray-600' : 'bg-yellow-100 text-yellow-700'}`}>{med.schedule}</span>
+                  </div>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  {med.mrp > 0 && <div className="font-medium text-gray-800">₹{med.mrp.toFixed(2)}</div>}
+                  <span className="text-xs text-gray-400 capitalize">{med.category}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="p-4 border-t border-gray-100 flex items-center justify-between">
+            <span className="text-sm text-gray-500">{selected.size} of {results.length} selected</span>
+            <button onClick={handleImport} disabled={selected.size === 0 || importing}
+              className="bg-green-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-2">
+              {importing ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-download"></i>}
+              Import Selected ({selected.size})
+            </button>
+          </div>
+        </div>
+      )}
+
+      {results.length === 0 && !loading && !error && (
+        <div className="text-center py-16 text-gray-400">
+          <i className="fas fa-search text-4xl mb-3"></i>
+          <p>Search for a medicine name to find results from online sources</p>
+        </div>
+      )}
+    </div>
+  );
+}
