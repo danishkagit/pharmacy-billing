@@ -150,6 +150,103 @@ router.post('/import-csv', async (req, res) => {
   }
 });
 
+const BULK_SEARCH_TERMS = [
+  'paracetamol','crocin','dolo','ibuprofen','aspirin',
+  'amoxicillin','azithromycin','ciprofloxacin','metronidazole','flagyl',
+  'omeprazole','pantoprazole','rabeprazole','domperidone','ondansetron',
+  'cetirizine','levocetirizine','fexofenadine','montelukast','deriphyllin',
+  'asthalin','budecort','augmentin','calpol','gluconorm',
+  'metformin','glimepiride','atorvastatin','rosuvastatin','amlodipine',
+  'telmisartan','losartan','ramipril','metoprolol','clopidogrel',
+  'ecospirin','thyroxine','neurobion','becosules','revital',
+  'calcium','vitamin','iron','ferrous','multivitamin',
+  'ceftum','taxim','ofloxacin','norfloxacin','doxycycline',
+  'fluconazole','itraconazole','terbinafine','clotrimazole','ketoconazole',
+  'acyclovir','albendazole','ivermectin','pregabalin','gabapentin',
+  'sertraline','fluoxetine','escitalopram','amitriptyline','duloxetine',
+  'alprazolam','clonazepam','diclofenac','aceclofenac','etoricoxib',
+  'allopurinol','prednisolone','dexamethasone','hydroxychloroquine','sulfasalazine',
+  'spasmo','drotin','meftal','nimesulide','cyclospasmonol',
+  'colchicine','methotrexate','insulin','lactulose','cremaffin',
+  'soframycin','betadine','neosporin','bactroban','clindamycin',
+  'silverex','septilin','cystone','hajmola','pudin'
+];
+
+router.post('/bulk-scrape', async (req, res) => {
+  try {
+    const seen = new Set();
+    const allResults = [];
+    let searched = 0;
+    let errors = 0;
+
+    for (const term of BULK_SEARCH_TERMS) {
+      searched++;
+      try {
+        const { data: html } = await axios.get(`https://pharmeasy.in/search/all?name=${encodeURIComponent(term)}`, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+          timeout: 10000
+        });
+        const $ = cheerio.load(html);
+        $('a[class*="medicineUnitWrapper"]').each((i, el) => {
+          const card = $(el);
+          const name = card.find('h1[class*="medicineName"]').first().text().trim();
+          if (!name || seen.has(name.toLowerCase())) return;
+          seen.add(name.toLowerCase());
+          const manuText = card.find('div[class*="brandName"]').first().text().trim();
+          const manufacturer = manuText.replace(/^By\s*/i, '').trim();
+          const packSize = card.find('div[class*="measurementUnit"]').first().text().trim();
+          const mrpText = card.find('span[class*="striked"]').first().text().trim();
+          const mrp = parseFloat(mrpText.replace(/[^0-9.]/g, '')) || 0;
+          allResults.push({
+            name, manufacturer: manufacturer || '', composition: '',
+            mrp, packSize: packSize || '',
+            category: guessCategory(name, packSize), schedule: 'OTC'
+          });
+        });
+        await new Promise(r => setTimeout(r, 500));
+      } catch {
+        errors++;
+      }
+    }
+
+    let imported = 0;
+    const importErrors = [];
+    const companyId = req.company._id;
+
+    for (const med of allResults) {
+      try {
+        const existing = await Medicine.findOne({
+          name: { $regex: `^${med.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' },
+          company: companyId
+        });
+        if (existing) continue;
+        await Medicine.create({
+          name: med.name, composition: med.composition, manufacturer: med.manufacturer,
+          category: med.category, packSize: med.packSize, unit: 'nos', hsn: '',
+          gstRate: 12, schedule: med.schedule, mrp: med.mrp, reorderLevel: 0,
+          company: companyId
+        });
+        imported++;
+      } catch (err) {
+        importErrors.push({ name: med.name, error: err.message });
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        termsSearched: searched,
+        searchErrors: errors,
+        uniqueFound: allResults.length,
+        imported,
+        importErrors: importErrors.length
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 function guessCategory(name, packText) {
   const n = (name + ' ' + packText).toLowerCase();
   if (/\b(tablet|tab)\b/.test(n)) return 'tablet';

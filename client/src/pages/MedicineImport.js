@@ -9,8 +9,10 @@ export default function MedicineImport() {
   const [selected, setSelected] = useState(new Set());
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [bulking, setBulking] = useState(false);
   const [error, setError] = useState('');
   const [importResult, setImportResult] = useState(null);
+  const [bulkResult, setBulkResult] = useState(null);
 
   const handleSearch = async () => {
     if (!query.trim()) return;
@@ -43,6 +45,21 @@ export default function MedicineImport() {
     else setSelected(new Set(results.map((_, i) => i)));
   };
 
+  const handleBulk = async () => {
+    setBulking(true);
+    setError('');
+    setBulkResult(null);
+    try {
+      const res = await API.post('/medicines/import/bulk-scrape');
+      if (res.success) setBulkResult(res.data);
+      else setError(res.error || 'Bulk import failed');
+    } catch (err) {
+      setError(err?.error || 'Bulk import failed');
+    } finally {
+      setBulking(false);
+    }
+  };
+
   const handleImport = async () => {
     if (selected.size === 0) return;
     setImporting(true);
@@ -71,22 +88,40 @@ export default function MedicineImport() {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <div className="flex gap-3">
-          <input
-            value={query} onChange={e => setQuery(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSearch()}
-            placeholder="Search medicine name (e.g., paracetamol, amoxicillin)..."
-            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-          />
-          <button onClick={handleSearch} disabled={loading || !query.trim()}
-            className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2">
-            {loading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-search"></i>}
-            Search
-          </button>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="md:col-span-2 bg-white rounded-xl shadow-sm p-6">
+          <div className="flex gap-3">
+            <input
+              value={query} onChange={e => setQuery(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSearch()}
+              placeholder="Search medicine name (e.g., paracetamol, amoxicillin)..."
+              className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+            <button onClick={handleSearch} disabled={loading || !query.trim()}
+              className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2">
+              {loading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-search"></i>}
+              Search
+            </button>
+          </div>
         </div>
-        {error && <div className="mt-3 bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm">{error}</div>}
+
+        <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col justify-center">
+          <button onClick={handleBulk} disabled={bulking}
+            className="bg-purple-600 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center gap-2">
+            {bulking ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-database"></i>}
+            {bulking ? 'Importing...' : 'Bulk Import from PharmEasy'}
+          </button>
+          {bulkResult && (
+            <div className="mt-3 text-xs text-gray-600 text-center">
+              Found {bulkResult.uniqueFound} unique, imported {bulkResult.imported} new
+            </div>
+          )}
+        </div>
       </div>
+
+      {error && !importResult && (
+        <div className="mb-6 bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm">{error}</div>
+      )}
 
       {loading && (
         <div className="flex justify-center py-12">
