@@ -2,6 +2,18 @@ const express = require('express');
 const router = express.Router();
 const Medicine = require('../models/Medicine');
 const { hasPermission } = require('../middleware/rbac');
+const { brandCompositionMap, lookupBrand } = require('../data/brand-composition-map');
+
+router.get('/lookup', async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q || q.length < 2) return res.json({ success: true, data: null });
+    const result = lookupBrand(q);
+    res.json({ success: true, data: result || null });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 router.get('/', async (req, res) => {
   try {
@@ -42,7 +54,19 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', hasPermission('inventory'), async (req, res) => {
   try {
-    const medicine = await Medicine.create({ ...req.body, company: req.company._id });
+    let data = { ...req.body, company: req.company._id };
+    if (!data.composition && data.name) {
+      const lookup = lookupBrand(data.name);
+      if (lookup) {
+        data.composition = lookup.composition;
+        if (!data.hsn && lookup.hsn) data.hsn = lookup.hsn;
+        if (!data.gstRate && lookup.gstRate) data.gstRate = lookup.gstRate;
+        if (!data.schedule && lookup.schedule) data.schedule = lookup.schedule;
+        if (!data.category && lookup.category) data.category = lookup.category;
+        if (!data.manufacturer && lookup.manufacturer) data.manufacturer = lookup.manufacturer;
+      }
+    }
+    const medicine = await Medicine.create(data);
     res.status(201).json({ success: true, data: medicine });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

@@ -10,7 +10,7 @@ router.get('/', async (req, res) => {
     if (partyType) filter.partyType = partyType;
     if (party) filter.party = party;
     if (mode) filter.mode = mode;
-    if (from || to) { filter.paymentDate = {}; if (from) filter.paymentDate.$gte = new Date(from); if (to) filter.paymentDate.$lte = new Date(to); }
+    if (from || to) { filter.paymentDate = {}; if (from) filter.paymentDate.$gte = new Date(from); if (to) filter.paymentDate.$lte = new Date(new Date(to).setHours(23,59,59,999)); }
     const total = await Payment.countDocuments(filter);
     const payments = await Payment.find(filter).sort({ paymentDate: -1 }).skip((page - 1) * parseInt(limit)).limit(parseInt(limit));
     const totals = await Payment.aggregate([

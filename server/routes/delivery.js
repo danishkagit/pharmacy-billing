@@ -8,7 +8,7 @@ router.get('/', async (req, res) => {
     const { status, from, to, page = 1, limit = 50 } = req.query;
     const filter = { companyRef: req.company._id, branch: req.activeBranch || req.branch?._id };
     if (status) filter.status = status;
-    if (from || to) { filter.deliveryDate = {}; if (from) filter.deliveryDate.$gte = new Date(from); if (to) filter.deliveryDate.$lte = new Date(to); }
+    if (from || to) { filter.deliveryDate = {}; if (from) filter.deliveryDate.$gte = new Date(from); if (to) filter.deliveryDate.$lte = new Date(new Date(to).setHours(23,59,59,999)); }
     const total = await DeliveryOrder.countDocuments(filter);
     const orders = await DeliveryOrder.find(filter).populate('customer', 'name phone').populate('assignedTo', 'name').sort({ createdAt: -1 }).skip((page - 1) * parseInt(limit)).limit(parseInt(limit));
     res.json({ success: true, data: orders, total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });
@@ -44,7 +44,7 @@ router.post('/', hasPermission('billing'), async (req, res) => {
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', hasPermission('billing'), async (req, res) => {
   try {
     const updates = { ...req.body };
     if (req.body.status === 'delivered') {

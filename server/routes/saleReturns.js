@@ -10,7 +10,7 @@ router.get('/', async (req, res) => {
     const filter = { companyRef: req.company._id, branch: req.activeBranch || req.branch?._id };
     if (customer) filter.customer = customer;
     if (status) filter.status = status;
-    if (from || to) { filter.returnDate = {}; if (from) filter.returnDate.$gte = new Date(from); if (to) filter.returnDate.$lte = new Date(to); }
+    if (from || to) { filter.returnDate = {}; if (from) filter.returnDate.$gte = new Date(from); if (to) filter.returnDate.$lte = new Date(new Date(to).setHours(23,59,59,999)); }
     const total = await SaleReturn.countDocuments(filter);
     const returns = await SaleReturn.find(filter).populate('customer', 'name phone').sort({ returnDate: -1 }).skip((page - 1) * parseInt(limit)).limit(parseInt(limit));
     res.json({ success: true, data: returns, total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });

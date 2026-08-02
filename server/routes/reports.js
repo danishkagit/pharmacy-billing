@@ -54,14 +54,14 @@ router.get('/purchases', async (req, res) => {
 router.get('/outstanding', async (req, res) => {
   try {
     const { type } = req.query;
-    const baseFilter = { companyRef: req.company._id, paymentStatus: { $ne: 'paid' }, paymentStatus: { $ne: 'cancelled' } };
+    const baseFilter = { companyRef: req.company._id, paymentStatus: { $nin: ['paid', 'cancelled'] } };
     if (req.activeBranch) baseFilter.branch = req.activeBranch;
     if (type === 'receivable' || !type) {
       const sales = await SaleInvoice.find({ ...baseFilter, paymentStatus: { $in: ['pending', 'partial'] } }).populate('customer', 'name phone').sort({ invoiceDate: -1 });
       const receivable = sales.map(s => ({ party: s.customer, invoiceNo: s.invoiceNo, date: s.invoiceDate, total: s.totalAmount, paid: s.paidAmount || 0, due: s.totalAmount - (s.paidAmount || 0), type: 'receivable' }));
       res.json({ success: true, data: { receivable, totalReceivable: receivable.reduce((t, r) => t + r.due, 0) } });
     } else {
-      const purchases = await PurchaseInvoice.find({ ...baseFilter, paymentStatus: { $in: ['pending', 'partial'] } }).populate('supplier', 'name phone').sort({ invoiceDate: -1 });
+      const purchases = await PurchaseInvoice.find({ ...baseFilter, paymentStatus: 'pending' }).populate('supplier', 'name phone').sort({ invoiceDate: -1 });
       const payable = purchases.map(p => ({ party: p.supplier, invoiceNo: p.invoiceNo, date: p.invoiceDate, total: p.totalAmount, paid: 0, due: p.totalAmount, type: 'payable' }));
       res.json({ success: true, data: { payable, totalPayable: payable.reduce((t, p) => t + p.due, 0) } });
     }

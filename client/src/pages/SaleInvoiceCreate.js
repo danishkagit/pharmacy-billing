@@ -98,6 +98,7 @@ export default function SaleInvoiceCreate() {
     const rx = prescriptions.find(p => p._id === rxId);
     if (rx) {
       setForm({ ...form, prescription: rxId, prescriptionNo: rx.prescriptionNo, doctorName: rx.doctorName, patientName: rx.patientName });
+      setError('');
     }
   };
 
@@ -249,7 +250,7 @@ export default function SaleInvoiceCreate() {
               </button>
             </div>
 
-            <div className="glass-card overflow-hidden" padding={false}>
+            <GlassCard className="overflow-hidden p-0">
               {items.length === 0 ? (
                 <div className="py-12 text-center text-gray-400">
                   <i className="fas fa-cart-plus text-2xl mb-2"></i>
@@ -306,7 +307,7 @@ export default function SaleInvoiceCreate() {
                   </table>
                 </div>
               )}
-            </div>
+            </GlassCard>
           </div>
 
           {/* Totals */}

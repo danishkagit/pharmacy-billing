@@ -88,10 +88,10 @@ export default function BatchList() {
       tdClass: 'text-center',
       render: row => {
         const days = dayDiff(row.expiryDate);
-        let cls = 'badge-success';
+        let cls = 'badge-green';
         let label = 'Active';
-        if (row.isExpired || days <= 0) { cls = 'badge-danger'; label = 'Expired'; }
-        else if (days <= 30) { cls = 'badge-warning'; label = 'Expiring'; }
+        if (row.isExpired || days <= 0) { cls = 'badge-red'; label = 'Expired'; }
+        else if (days <= 30) { cls = 'badge-yellow'; label = 'Expiring'; }
         return <span className={cls}>{label}</span>;
       },
     },

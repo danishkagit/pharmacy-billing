@@ -34,9 +34,9 @@ export default function CustomerList() {
       className: 'text-center',
       tdClass: 'p-3 text-center',
       render: c => {
-        let cls = 'badge badge-info';
+        let cls = 'badge badge-blue';
         if (c.type === 'wholesale') cls = 'badge badge-purple';
-        else if (c.type === 'both') cls = 'badge badge-primary';
+        else if (c.type === 'both') cls = 'badge badge-green';
         else if (c.type === 'retail') cls = 'badge badge-gray';
         return <span className={cls}>{c.type}</span>;
       }

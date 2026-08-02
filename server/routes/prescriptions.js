@@ -20,7 +20,7 @@ router.get('/', async (req, res) => {
     if (from || to) {
       filter.date = {};
       if (from) filter.date.$gte = new Date(from);
-      if (to) filter.date.$lte = new Date(to);
+      if (to) filter.date.$lte = new Date(new Date(to).setHours(23,59,59,999));
     }
     const total = await Prescription.countDocuments(filter);
     const prescriptions = await Prescription.find(filter).populate('doctor', 'name hospital').populate('patient', 'name phone').sort({ date: -1 }).skip((page - 1) * parseInt(limit)).limit(parseInt(limit));

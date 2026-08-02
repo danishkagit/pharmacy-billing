@@ -9,7 +9,7 @@ export default function SalesReport() {
 
   useEffect(() => {
     API.get('/reports/sales', { params: { filter, groupBy: filter === 'month' ? 'month' : filter === 'day' ? 'day' : undefined } }).then(res => {
-      if (res.success) { setData(res.data.data || []); setSummary(res.data.summary); }
+      if (res.success) { setData(res.data || []); setSummary(res.summary || null); }
     }).catch(console.error).finally(() => setLoading(false));
   }, [filter]);
 

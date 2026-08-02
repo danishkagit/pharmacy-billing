@@ -12,7 +12,7 @@ router.get('/', async (req, res) => {
     const filter = { companyRef: req.company._id, branch: req.activeBranch || req.branch?._id };
     if (supplier) filter.supplier = supplier;
     if (paymentStatus) filter.paymentStatus = paymentStatus;
-    if (from || to) { filter.invoiceDate = {}; if (from) filter.invoiceDate.$gte = new Date(from); if (to) filter.invoiceDate.$lte = new Date(to); }
+    if (from || to) { filter.invoiceDate = {}; if (from) filter.invoiceDate.$gte = new Date(from); if (to) filter.invoiceDate.$lte = new Date(new Date(to).setHours(23,59,59,999)); }
     const total = await PurchaseInvoice.countDocuments(filter);
     const invoices = await PurchaseInvoice.find(filter).populate('supplier', 'name company gstin dlNo').sort({ invoiceDate: -1 }).skip((page - 1) * parseInt(limit)).limit(parseInt(limit));
     res.json({ success: true, data: invoices, total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });

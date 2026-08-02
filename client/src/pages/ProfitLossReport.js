@@ -8,7 +8,7 @@ export default function ProfitLossReport() {
 
   useEffect(() => {
     API.get('/reports/profit-loss', { params: { filter } }).then(res => {
-      if (res.success) setData(res.data.data);
+      if (res.success) setData(res.data);
     }).catch(console.error).finally(() => setLoading(false));
   }, [filter]);
 

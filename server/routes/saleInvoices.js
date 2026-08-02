@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const SaleInvoice = require('../models/SaleInvoice');
 const Batch = require('../models/Batch');
+const Branch = require('../models/Branch');
+const Medicine = require('../models/Medicine');
 const Customer = require('../models/Customer');
 const DrugScheduleLog = require('../models/DrugScheduleLog');
 const NarcoticsRegister = require('../models/NarcoticsRegister');
@@ -17,7 +20,7 @@ router.get('/', async (req, res) => {
     if (type) filter.type = type;
     if (paymentStatus) filter.paymentStatus = paymentStatus;
     if (paymentMode) filter.paymentMode = paymentMode;
-    if (from || to) { filter.invoiceDate = {}; if (from) filter.invoiceDate.$gte = new Date(from); if (to) filter.invoiceDate.$lte = new Date(to); }
+    if (from || to) { filter.invoiceDate = {}; if (from) filter.invoiceDate.$gte = new Date(from); if (to) filter.invoiceDate.$lte = new Date(new Date(to).setHours(23,59,59,999)); }
     const total = await SaleInvoice.countDocuments(filter);
     const invoices = await SaleInvoice.find(filter)
       .populate('customer', 'name phone')
@@ -56,10 +59,10 @@ router.get('/:id', async (req, res) => {
 });
 
 router.post('/', hasPermission('billing'), async (req, res) => {
-  const session = await require('mongoose').startSession();
+  const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const branch = await require('../models/Branch').findById(req.activeBranch || req.branch?._id);
+    const branch = await Branch.findById(req.activeBranch || req.branch?._id);
     if (!branch) return res.status(400).json({ success: false, error: 'Branch not found' });
     branch.invoiceCounter = (branch.invoiceCounter || 0) + 1;
     await branch.save({ session });
@@ -68,11 +71,11 @@ router.post('/', hasPermission('billing'), async (req, res) => {
     const invoiceNo = `${prefix}${counter}`;
 
     const items = [];
-    let subtotal = 0, totalCgst = 0, totalSgst = 0, totalIgst = 0, totalTax = 0;
+    let subtotal = 0, totalDiscount = 0, totalCgst = 0, totalSgst = 0, totalIgst = 0, totalTax = 0;
     let hasScheduleH1 = false, hasScheduleX = false;
 
     for (const item of req.body.items) {
-      const medicine = await require('../models/Medicine').findById(item.medicine).session(session);
+      const medicine = await Medicine.findById(item.medicine).session(session);
       if (!medicine) throw new Error(`Medicine ${item.medicine} not found`);
 
       const batch = await Batch.findOne({
@@ -86,9 +89,9 @@ router.post('/', hasPermission('billing'), async (req, res) => {
       if (medicine.schedule === 'H' && !req.body.prescription) {
         throw new Error(`Schedule H drug ${medicine.name} requires a prescription`);
       }
-      if (medicine.schedule === 'H1' && !req.body.prescription) {
+      if (medicine.schedule === 'H1') {
+        if (!req.body.prescription) throw new Error(`Schedule H1 drug ${medicine.name} requires a prescription`);
         hasScheduleH1 = true;
-        throw new Error(`Schedule H1 drug ${medicine.name} requires a prescription`);
       }
       if (medicine.schedule === 'X') {
         hasScheduleX = true;
@@ -104,7 +107,8 @@ router.post('/', hasPermission('billing'), async (req, res) => {
       const gst = calculateGST(netAmount, medicine.gstRate || 12, req.body.isInterState);
       const itemTax = (netAmount * (medicine.gstRate || 12)) / 100;
 
-      subtotal += amount;
+      subtotal += netAmount;
+      totalDiscount += discAmount;
       totalCgst += gst.cgst;
       totalSgst += gst.sgst;
       totalIgst += gst.igst;
@@ -128,7 +132,8 @@ router.post('/', hasPermission('billing'), async (req, res) => {
       });
     }
 
-    const roundOffVal = roundOff(subtotal + totalTax - Math.round(subtotal + totalTax));
+    const invoiceBase = subtotal + totalTax - (req.body.discountAmount || 0);
+    const roundOffVal = roundOff(invoiceBase) - invoiceBase;
 
     const invoice = await SaleInvoice.create([{
       invoiceNo,
@@ -145,13 +150,13 @@ router.post('/', hasPermission('billing'), async (req, res) => {
       dueDate: req.body.dueDate,
       items,
       subtotal,
-      discountAmount: req.body.discountAmount || 0,
+      discountAmount: (req.body.discountAmount || 0) + totalDiscount,
       cgst: totalCgst,
       sgst: totalSgst,
       igst: totalIgst,
       taxAmount: totalTax,
       roundOff: roundOffVal,
-      totalAmount: Math.round(subtotal + totalTax) - (req.body.discountAmount || 0),
+      totalAmount: Math.round(subtotal + totalTax - (req.body.discountAmount || 0)),
       paymentMode: req.body.paymentMode || 'cash',
       paymentStatus: req.body.paymentStatus || (req.body.paymentMode === 'credit' ? 'pending' : 'paid'),
       paidAmount: req.body.paidAmount || 0,
@@ -227,7 +232,7 @@ router.post('/', hasPermission('billing'), async (req, res) => {
 
     if (req.body.notify && req.body.customerPhone) {
       const msg = `Invoice ${invoiceNo}: ₹${invoice[0].totalAmount.toFixed(2)} - ${req.company?.name || 'Pharmacy'}`;
-      sendSMS(req.body.customerPhone, msg, 'invoice', invoice[0]._id, 'SaleInvoice', req.activeBranch, req.company._id, req.user._id);
+      await sendSMS(req.body.customerPhone, msg, 'invoice', invoice[0]._id, 'SaleInvoice', req.activeBranch, req.company._id, req.user._id).catch(() => {});
     }
 
     res.status(201).json({ success: true, data: populated });
@@ -238,7 +243,7 @@ router.post('/', hasPermission('billing'), async (req, res) => {
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', hasPermission('billing'), async (req, res) => {
   try {
     const invoice = await SaleInvoice.findOneAndUpdate({ _id: req.params.id, companyRef: req.company._id }, req.body, { new: true, runValidators: true });
     if (!invoice) return res.status(404).json({ success: false, error: 'Invoice not found' });
@@ -248,7 +253,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-router.put('/:id/payment', async (req, res) => {
+router.put('/:id/payment', hasPermission('accounting'), async (req, res) => {
   try {
     const { paidAmount, paymentMode, paymentStatus } = req.body;
     const invoice = await SaleInvoice.findOne({ _id: req.params.id, companyRef: req.company._id });

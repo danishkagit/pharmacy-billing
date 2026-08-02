@@ -44,10 +44,10 @@ router.post('/adjust', hasPermission('inventory'), async (req, res) => {
     const count = await StockAdjustment.countDocuments({ companyRef: req.company._id });
     const adjNo = `ADJ${String(count + 1).padStart(5, '0')}`;
     const items = await Promise.all(req.body.items.map(async (item) => {
-      const batch = await Batch.findById(item.batch);
+      const batch = await Batch.findById(item.batch).populate('medicine', 'name');
       return {
         medicine: item.medicine,
-        medicineName: item.medicineName || batch?.medicine?.toString(),
+        medicineName: item.medicineName || batch?.medicine?.name || item.medicine,
         batch: item.batch,
         batchNo: batch?.batchNo || item.batchNo,
         expiryDate: batch?.expiryDate,
@@ -69,7 +69,7 @@ router.post('/adjust', hasPermission('inventory'), async (req, res) => {
       createdBy: req.user._id
     });
     for (const item of items) {
-      if (item.batch) {
+      if (item.batch && typeof item.qtyAfter === 'number') {
         await Batch.findByIdAndUpdate(item.batch, { qty: item.qtyAfter });
       }
     }

@@ -32,14 +32,14 @@ export default function GSTR3BReport() {
         {loading ? <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div> : data && (
           <div className="space-y-6">
             <div className="grid grid-cols-3 gap-4">
-              <div className="p-4 bg-green-50 rounded-lg text-center"><p className="text-xl font-bold text-green-700">₹{data.data.sales?.totalTaxable?.toFixed(2)}</p><p className="text-sm text-gray-500">Sales Taxable</p></div>
-              <div className="p-4 bg-blue-50 rounded-lg text-center"><p className="text-xl font-bold text-blue-700">₹{data.data.sales?.totalTax?.toFixed(2)}</p><p className="text-sm text-gray-500">Output Tax</p></div>
-              <div className="p-4 bg-purple-50 rounded-lg text-center"><p className="text-xl font-bold text-purple-700">₹{data.data.purchases?.totalTax?.toFixed(2)}</p><p className="text-sm text-gray-500">Input Tax Credit</p></div>
+              <div className="p-4 bg-green-50 rounded-lg text-center"><p className="text-xl font-bold text-green-700">₹{data.sales?.totalTaxable?.toFixed(2)}</p><p className="text-sm text-gray-500">Sales Taxable</p></div>
+              <div className="p-4 bg-blue-50 rounded-lg text-center"><p className="text-xl font-bold text-blue-700">₹{data.sales?.totalTax?.toFixed(2)}</p><p className="text-sm text-gray-500">Output Tax</p></div>
+              <div className="p-4 bg-purple-50 rounded-lg text-center"><p className="text-xl font-bold text-purple-700">₹{data.purchases?.totalTax?.toFixed(2)}</p><p className="text-sm text-gray-500">Input Tax Credit</p></div>
             </div>
-            <div className={`p-6 rounded-lg text-center ${data.data.netTaxLiability >= 0 ? 'bg-red-50' : 'bg-green-50'}`}>
+            <div className={`p-6 rounded-lg text-center ${data.netTaxLiability >= 0 ? 'bg-red-50' : 'bg-green-50'}`}>
               <p className="text-sm text-gray-500">Net Tax Liability (Output - Input Credit)</p>
-              <p className={`text-3xl font-bold ${data.data.netTaxLiability >= 0 ? 'text-red-600' : 'text-green-600'}`}>₹{Math.abs(data.data.netTaxLiability || 0).toFixed(2)}</p>
-              <p className="text-sm text-gray-500">{data.data.netTaxLiability >= 0 ? 'Payable' : 'Refundable'}</p>
+              <p className={`text-3xl font-bold ${data.netTaxLiability >= 0 ? 'text-red-600' : 'text-green-600'}`}>₹{Math.abs(data.netTaxLiability || 0).toFixed(2)}</p>
+              <p className="text-sm text-gray-500">{data.netTaxLiability >= 0 ? 'Payable' : 'Refundable'}</p>
             </div>
           </div>
         )}

@@ -16,7 +16,7 @@ export default function EInvoicePage() {
       API.get('/gst/gstr1', { params: { month, year } }),
       API.get('/gst/filing-history')
     ]).then(([invRes, filingRes]) => {
-      if (invRes.success) setInvoices(invRes.data?.data?.b2b || []);
+      if (invRes.success) setInvoices(invRes.data?.b2b || []);
       if (filingRes.success) setFilingHistory(filingRes.data || []);
     }).catch(console.error).finally(() => setLoading(false));
   }, [month, year]);

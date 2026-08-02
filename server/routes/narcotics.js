@@ -8,7 +8,7 @@ router.get('/', async (req, res) => {
     const { medicine, from, to, page = 1, limit = 100 } = req.query;
     const filter = { companyRef: req.company._id, branch: req.activeBranch || req.branch?._id };
     if (medicine) filter.medicine = medicine;
-    if (from || to) { filter.date = {}; if (from) filter.date.$gte = new Date(from); if (to) filter.date.$lte = new Date(to); }
+    if (from || to) { filter.date = {}; if (from) filter.date.$gte = new Date(from); if (to) filter.date.$lte = new Date(new Date(to).setHours(23,59,59,999)); }
     const total = await NarcoticsRegister.countDocuments(filter);
     const entries = await NarcoticsRegister.find(filter).populate('medicine', 'name composition manufacturer').populate('dispensedBy', 'name').sort({ date: -1 }).skip((page - 1) * parseInt(limit)).limit(parseInt(limit));
     res.json({ success: true, data: entries, total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });

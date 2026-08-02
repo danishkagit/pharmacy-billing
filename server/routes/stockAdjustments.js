@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const StockAdjustment = require('../models/StockAdjustment');
 const { hasPermission } = require('../middleware/rbac');
-const { audit } = require('../middleware/audit');
 
 router.get('/', async (req, res) => {
   try {

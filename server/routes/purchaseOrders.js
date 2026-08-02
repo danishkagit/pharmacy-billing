@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
     const filter = { companyRef: req.company._id, branch: req.activeBranch || req.branch?._id };
     if (supplier) filter.supplier = supplier;
     if (status) filter.status = status;
-    if (from || to) { filter.orderDate = {}; if (from) filter.orderDate.$gte = new Date(from); if (to) filter.orderDate.$lte = new Date(to); }
+    if (from || to) { filter.orderDate = {}; if (from) filter.orderDate.$gte = new Date(from); if (to) filter.orderDate.$lte = new Date(new Date(to).setHours(23,59,59,999)); }
     const total = await PurchaseOrder.countDocuments(filter);
     const orders = await PurchaseOrder.find(filter).populate('supplier', 'name company gstin').sort({ orderDate: -1 }).skip((page - 1) * parseInt(limit)).limit(parseInt(limit));
     res.json({ success: true, data: orders, total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });

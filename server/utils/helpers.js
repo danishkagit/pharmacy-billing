@@ -48,6 +48,7 @@ function getDateRange(filter, customStart, customEnd) {
     case 'custom':
       start = customStart ? new Date(customStart) : new Date(0);
       end = customEnd ? new Date(customEnd) : new Date();
+      if (!isNaN(end.getTime())) end.setHours(23, 59, 59, 999);
       break;
     default:
       start = new Date(0);
@@ -56,4 +57,11 @@ function getDateRange(filter, customStart, customEnd) {
   return { start, end };
 }
 
-module.exports = { calculateGST, roundOff, generateInvoiceNumber, formatCurrency, getDateRange };
+module.exports = { calculateGST, roundOff, generateInvoiceNumber, formatCurrency, getDateRange, endOfDay };
+
+function endOfDay(date) {
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return d;
+  d.setHours(23, 59, 59, 999);
+  return d;
+}

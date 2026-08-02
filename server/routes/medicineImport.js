@@ -2,9 +2,27 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const cheerio = require('cheerio');
+const multer = require('multer');
 const Medicine = require('../models/Medicine');
 const csv = require('fast-csv');
 const { Readable } = require('stream');
+const { lookupBrand } = require('../data/brand-composition-map');
+
+function autoFillComposition(med) {
+  if (med.composition) return med;
+  const lookup = lookupBrand(med.name);
+  if (lookup) {
+    med.composition = med.composition || lookup.composition || '';
+    med.manufacturer = med.manufacturer || lookup.manufacturer || '';
+    med.category = med.category === 'other' ? (lookup.category || med.category) : med.category;
+    med.hsn = med.hsn || lookup.hsn || '';
+    med.gstRate = med.gstRate || lookup.gstRate || 12;
+    med.schedule = med.schedule === 'OTC' ? (lookup.schedule || med.schedule) : med.schedule;
+  }
+  return med;
+}
+
+const csvUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: (req, file, cb) => { if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) cb(null, true); else cb(new Error('Only CSV files allowed'), false); } });
 
 router.get('/search-web', async (req, res) => {
   try {
@@ -60,16 +78,17 @@ router.post('/import', async (req, res) => {
 
     for (const med of medicines) {
       try {
+        const filled = autoFillComposition({ ...med });
         const existing = await Medicine.findOne({
-          name: { $regex: `^${med.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' },
+          name: { $regex: `^${filled.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' },
           company: req.company._id
         });
         if (existing) {
-          errors.push({ name: med.name, error: 'Already exists' });
+          errors.push({ name: filled.name, error: 'Already exists' });
           continue;
         }
         const medicine = await Medicine.create({
-          name: med.name,
+          name: filled.name,
           composition: med.composition || '',
           manufacturer: med.manufacturer || '',
           category: med.category || 'other',
@@ -94,15 +113,15 @@ router.post('/import', async (req, res) => {
   }
 });
 
-router.post('/import-csv', async (req, res) => {
+router.post('/import-csv', csvUpload.single('file'), async (req, res) => {
   try {
-    if (!req.files || !req.files.file) {
+    if (!req.file) {
       return res.status(400).json({ success: false, error: 'No CSV file uploaded' });
     }
 
     const results = [];
     const errors = [];
-    const stream = Readable.from(req.files.file.data.toString());
+    const stream = Readable.from(req.file.buffer.toString());
     const csvStream = csv.parse({ headers: true, ignoreEmpty: true });
 
     await new Promise((resolve, reject) => {
@@ -116,16 +135,17 @@ router.post('/import-csv', async (req, res) => {
     for (const row of results) {
       try {
         if (!row.name) continue;
+        const filled = autoFillComposition({ name: row.name, composition: row.composition, manufacturer: row.manufacturer, category: row.category, hsn: row.hsn, gstRate: parseFloat(row.gstRate), schedule: row.schedule });
         const existing = await Medicine.findOne({
-          name: { $regex: `^${row.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' },
+          name: { $regex: `^${filled.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' },
           company: req.company._id
         });
         if (existing) {
-          errors.push({ name: row.name, error: 'Already exists' });
+          errors.push({ name: filled.name, error: 'Already exists' });
           continue;
         }
         const medicine = await Medicine.create({
-          name: row.name,
+          name: filled.name,
           composition: row.composition || '',
           manufacturer: row.manufacturer || '',
           category: row.category || 'other',
@@ -215,15 +235,16 @@ router.post('/bulk-scrape', async (req, res) => {
 
     for (const med of allResults) {
       try {
+        const filled = autoFillComposition(med);
         const existing = await Medicine.findOne({
-          name: { $regex: `^${med.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' },
+          name: { $regex: `^${filled.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' },
           company: companyId
         });
         if (existing) continue;
         await Medicine.create({
-          name: med.name, composition: med.composition, manufacturer: med.manufacturer,
-          category: med.category, packSize: med.packSize, unit: 'nos', hsn: '',
-          gstRate: 12, schedule: med.schedule, mrp: med.mrp, reorderLevel: 0,
+          name: filled.name, composition: filled.composition, manufacturer: filled.manufacturer,
+          category: filled.category, packSize: filled.packSize, unit: 'nos', hsn: filled.hsn,
+          gstRate: filled.gstRate || 12, schedule: filled.schedule, mrp: filled.mrp, reorderLevel: 0,
           company: companyId
         });
         imported++;
@@ -257,16 +278,17 @@ router.post('/seed-indian-medicines', async (req, res) => {
 
     for (const med of medicines) {
       try {
+        const filled = autoFillComposition({ ...med });
         const exists = await Medicine.findOne({
-          name: { $regex: `^${med.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' },
+          name: { $regex: `^${filled.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' },
           company: companyId
         });
         if (exists) { skipped++; continue; }
         await Medicine.create({
-          name: med.name, composition: med.composition || '', manufacturer: med.manufacturer || '',
-          category: med.category || 'other', packSize: med.packSize || '', unit: med.unit || 'nos',
-          hsn: med.hsn || '300490', gstRate: med.gstRate ?? 12, schedule: med.schedule || 'OTC',
-          mrp: med.mrp || 0, reorderLevel: 0, company: companyId, isActive: true
+          name: filled.name, composition: filled.composition || '', manufacturer: filled.manufacturer || '',
+          category: filled.category || 'other', packSize: filled.packSize || '', unit: filled.unit || 'nos',
+          hsn: filled.hsn || '300490', gstRate: filled.gstRate ?? 12, schedule: filled.schedule || 'OTC',
+          mrp: filled.mrp || 0, reorderLevel: 0, company: companyId, isActive: true
         });
         imported++;
       } catch (err) {

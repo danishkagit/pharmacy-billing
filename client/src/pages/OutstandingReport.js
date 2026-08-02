@@ -7,7 +7,7 @@ export default function OutstandingReport() {
 
   useEffect(() => {
     API.get('/reports/outstanding', { params: { type: 'receivable' } }).then(res => {
-      if (res.success) setData(res.data.data);
+      if (res.success) setData(res.data);
     }).catch(console.error).finally(() => setLoading(false));
   }, []);
 

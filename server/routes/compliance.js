@@ -8,7 +8,7 @@ router.get('/schedule-logs', async (req, res) => {
     const filter = { companyRef: req.company._id, branch: req.activeBranch || req.branch?._id };
     if (schedule) filter.schedule = schedule;
     if (medicine) filter.medicine = medicine;
-    if (from || to) { filter.dispensedAt = {}; if (from) filter.dispensedAt.$gte = new Date(from); if (to) filter.dispensedAt.$lte = new Date(to); }
+    if (from || to) { filter.dispensedAt = {}; if (from) filter.dispensedAt.$gte = new Date(from); if (to) filter.dispensedAt.$lte = new Date(new Date(to).setHours(23,59,59,999)); }
     const total = await DrugScheduleLog.countDocuments(filter);
     const logs = await DrugScheduleLog.find(filter).populate('medicine', 'name composition schedule').populate('dispensedBy', 'name').sort({ dispensedAt: -1 }).skip((page - 1) * parseInt(limit)).limit(parseInt(limit));
     res.json({ success: true, data: logs, total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });

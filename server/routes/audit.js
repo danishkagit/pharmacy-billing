@@ -11,7 +11,7 @@ router.get('/', rbac('owner', 'admin'), async (req, res) => {
     if (model) filter.model = model;
     if (action) filter.action = action;
     if (userId) filter.userId = userId;
-    if (from || to) { filter.createdAt = {}; if (from) filter.createdAt.$gte = new Date(from); if (to) filter.createdAt.$lte = new Date(to); }
+    if (from || to) { filter.createdAt = {}; if (from) filter.createdAt.$gte = new Date(from); if (to) filter.createdAt.$lte = new Date(new Date(to).setHours(23,59,59,999)); }
     const total = await AuditLog.countDocuments(filter);
     const logs = await AuditLog.find(filter).populate('userId', 'name role').sort({ createdAt: -1 }).skip((page - 1) * parseInt(limit)).limit(parseInt(limit));
     res.json({ success: true, data: logs, total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });

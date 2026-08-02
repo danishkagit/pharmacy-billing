@@ -38,7 +38,7 @@ const saleInvoiceSchema = new mongoose.Schema({
   roundOff: { type: Number, default: 0 },
   totalAmount: { type: Number, default: 0 },
   paymentMode: { type: String, enum: ['cash', 'upi', 'card', 'credit', 'mixed', 'other'], default: 'cash' },
-  paymentStatus: { type: String, enum: ['pending', 'partial', 'paid'], default: 'paid' },
+  paymentStatus: { type: String, enum: ['pending', 'partial', 'paid', 'cancelled'], default: 'paid' },
   paidAmount: { type: Number, default: 0 },
   changeAmount: { type: Number, default: 0 },
   loyaltyPointsEarned: { type: Number, default: 0 },

@@ -12,7 +12,7 @@ router.get('/', async (req, res) => {
       filter.$or = [{ fromBranch: req.activeBranch }, { toBranch: req.activeBranch }];
     }
     if (status) filter.status = status;
-    if (from || to) { filter.transferDate = {}; if (from) filter.transferDate.$gte = new Date(from); if (to) filter.transferDate.$lte = new Date(to); }
+    if (from || to) { filter.transferDate = {}; if (from) filter.transferDate.$gte = new Date(from); if (to) filter.transferDate.$lte = new Date(new Date(to).setHours(23,59,59,999)); }
     const total = await InterBranchTransfer.countDocuments(filter);
     const transfers = await InterBranchTransfer.find(filter).populate('fromBranch', 'name').populate('toBranch', 'name').populate('createdBy', 'name').sort({ transferDate: -1 }).skip((page - 1) * parseInt(limit)).limit(parseInt(limit));
     res.json({ success: true, data: transfers, total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });
@@ -61,6 +61,9 @@ router.put('/:id/receive', hasPermission('inventory'), async (req, res) => {
   try {
     const transfer = await InterBranchTransfer.findOne({ _id: req.params.id, companyRef: req.company._id });
     if (!transfer) return res.status(404).json({ success: false, error: 'Transfer not found' });
+    if (transfer.status === 'received') {
+      return res.json({ success: true, data: transfer, message: 'Transfer already received' });
+    }
     transfer.status = 'received';
     transfer.receivedAt = new Date();
     transfer.receivedBy = req.user._id;

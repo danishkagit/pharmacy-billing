@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
     const filter = { companyRef: req.company._id, branch: req.activeBranch || req.branch?._id };
     if (category) filter.category = category;
     if (paymentMode) filter.paymentMode = paymentMode;
-    if (from || to) { filter.expenseDate = {}; if (from) filter.expenseDate.$gte = new Date(from); if (to) filter.expenseDate.$lte = new Date(to); }
+    if (from || to) { filter.expenseDate = {}; if (from) filter.expenseDate.$gte = new Date(from); if (to) filter.expenseDate.$lte = new Date(new Date(to).setHours(23,59,59,999)); }
     const total = await Expense.countDocuments(filter);
     const expenses = await Expense.find(filter).sort({ expenseDate: -1 }).skip((page - 1) * parseInt(limit)).limit(parseInt(limit));
     const totals = await Expense.aggregate([{ $match: filter }, { $group: { _id: null, total: { $sum: '$totalAmount' } } }]);

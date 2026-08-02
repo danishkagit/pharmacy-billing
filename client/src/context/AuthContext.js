@@ -15,15 +15,17 @@ export function AuthProvider({ children }) {
     if (token && savedUser) {
       try {
         const parsed = JSON.parse(savedUser);
-        setUser(parsed);
-        setCompany(parsed.company);
-        setBranch(parsed.branch);
+        if (parsed.user) {
+          setUser(parsed.user);
+          setCompany(parsed.company);
+          setBranch(parsed.branch);
+        }
         API.get('/auth/me').then(res => {
           if (res.success) {
             setUser(res.data.user);
             setCompany(res.data.company);
             setBranch(res.data.branch);
-            localStorage.setItem('user', JSON.stringify(res.data));
+            localStorage.setItem('user', JSON.stringify({ user: res.data.user, company: res.data.company, branch: res.data.branch }));
           }
         }).catch(() => {
           localStorage.removeItem('token');
@@ -41,7 +43,7 @@ export function AuthProvider({ children }) {
     const res = await API.post('/auth/login', { email, password });
     if (res.success) {
       localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data));
+      localStorage.setItem('user', JSON.stringify({ user: res.data.user, company: res.data.company, branch: res.data.branch }));
       setUser(res.data.user);
       setCompany(res.data.company);
       setBranch(res.data.branch);
@@ -53,7 +55,7 @@ export function AuthProvider({ children }) {
     const res = await API.post('/auth/register', data);
     if (res.success) {
       localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data));
+      localStorage.setItem('user', JSON.stringify({ user: res.data.user, company: res.data.company, branch: res.data.branch }));
       setUser(res.data.user);
       setCompany(res.data.company);
       setBranch(res.data.branch);

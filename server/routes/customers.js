@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const Customer = require('../models/Customer');
-const CustomerModel = require('../models/Customer');
 const { hasPermission } = require('../middleware/rbac');
 
 router.get('/', async (req, res) => {
