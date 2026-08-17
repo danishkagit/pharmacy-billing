@@ -9,6 +9,7 @@ package-lock.json
 # ==== Client Dependencies ====
 client/node_modules/
 client/build/
+client/.next/
 
 # ==== Environment Variables (CRITICAL - NEVER COMMIT) ====
 .env
