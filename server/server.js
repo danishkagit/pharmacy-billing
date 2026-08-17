@@ -9,9 +9,14 @@ require('dotenv').config({ path: __dirname + '/.env' });
 
 const app = express();
 
+const defaultOrigins = [
+  'http://localhost:3000',
+  'https://pharmacy-billing.vercel.app',
+  'https://pharmacybills.vercel.app',
+];
 const allowedOrigins = process.env.CLIENT_URL
-  ? process.env.CLIENT_URL.split(',').map(s => s.trim())
-  : ['http://localhost:3000'];
+  ? [...new Set([...defaultOrigins, ...process.env.CLIENT_URL.split(',').map(s => s.trim())])]
+  : defaultOrigins;
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
