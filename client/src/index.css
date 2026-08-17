@@ -3,6 +3,10 @@
    Design tokens + component surfaces. Tailwind utilities coexist.
    ═══════════════════════════════════════════════════════════════════ */
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html { color-scheme: light; }
