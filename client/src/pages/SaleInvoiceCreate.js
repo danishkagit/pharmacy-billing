@@ -30,6 +30,8 @@ export default function SaleInvoiceCreate() {
   const [prescriptionFile, setPrescriptionFile] = useState(null);
   const [prescriptionPreview, setPrescriptionPreview] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
+  const [aiScanning, setAiScanning] = useState(false);
+  const [aiMessage, setAiMessage] = useState('');
   const cameraInputRef = useRef(null);
   const fileInputRef = useRef(null);
   const videoRef = useRef(null);
@@ -182,6 +184,54 @@ export default function SaleInvoiceCreate() {
   const handlePrescriptionFileChange = (e) => {
     setPrescriptionFile(e.target.files[0] || null);
     e.target.value = '';
+  };
+
+  const addAiMedicine = async (med, qty) => {
+    const newItem = { medicine: med._id, medicineName: med.name, batch: '', batchNo: '', qty: qty || 1, rate: 0, mrp: med.mrp || 0, discountPercent: 0, gstRate: med.gstRate || 12, schedule: med.schedule };
+    try {
+      const res = await API.get(`/batches/stock/${med._id}`);
+      if (res.success && res.data.length) {
+        const batchData = res.data.slice().sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
+        const best = batchData[0];
+        newItem.batch = best._id;
+        newItem.batchNo = best.batchNo;
+        newItem.rate = best.saleRate || best.purchaseRate;
+        newItem.mrp = best.mrp;
+        newItem.amount = (newItem.qty || 0) * (newItem.rate || 0);
+      }
+    } catch (e) { }
+    return newItem;
+  };
+
+  const handleAiScan = async () => {
+    if (!prescriptionFile) return setError('Attach a prescription image first');
+    if (prescriptionFile.type && !prescriptionFile.type.startsWith('image/')) return setError('AI scan works with image prescriptions (JPG/PNG)');
+    setAiScanning(true);
+    setError('');
+    setAiMessage('');
+    try {
+      const fd = new FormData();
+      fd.append('image', prescriptionFile);
+      const res = await API.post('/ai/ocr-prescription', fd, { headers: { 'Content-Type': false } });
+      if (!res.success) return setError(res.error || 'AI scan failed');
+      const items = res.data.items || [];
+      if (items.length === 0) return setAiMessage('AI could not read any medicines from this prescription.');
+      const found = items.filter(it => it.matched);
+      const missing = items.filter(it => !it.matched && it.name);
+      const added = [];
+      for (const it of found) {
+        const item = await addAiMedicine(it.matched, 1);
+        if (item.batch) added.push(item);
+      }
+      if (added.length) setItems(prev => [...prev, ...added]);
+      const noStock = found.filter(it => added.length && !added.some(a => a.medicine === it.matched._id));
+      const missingNames = [...new Set([...missing.map(m => m.name), ...noStock.map(n => n.matched.name)])];
+      setAiMessage(`AI found ${items.length} item(s): added ${added.length} to cart${missingNames.length ? `. Not available in stock: ${missingNames.join(', ')}` : ''}. Please verify before billing.`);
+      if (found.some(it => ['H', 'H1', 'X'].includes(it.matched.schedule)) && !form.prescription) {
+        setAiMessage(prev => `${prev} ⚠ One or more drugs are Schedule H/H1/X — select a prescription.`);
+      }
+    } catch (err) { setError(err?.error || 'AI scan failed'); }
+    finally { setAiScanning(false); }
   };
 
   const handleSubmit = async (e) => {
@@ -349,6 +399,16 @@ export default function SaleInvoiceCreate() {
               <button type="button" onClick={() => fileInputRef.current?.click()} className="btn-secondary text-xs py-2 px-3">
                 <i className="fas fa-upload mr-1"></i>Upload Image / PDF
               </button>
+              {prescriptionFile && prescriptionFile.type?.startsWith('image/') && (
+                <button type="button" onClick={handleAiScan} disabled={aiScanning} className="btn-primary text-xs py-2 px-3">
+                  <i className="fas fa-robot mr-1"></i>{aiScanning ? 'Scanning…' : 'Scan with AI'}
+                </button>
+              )}
+              {aiMessage && (
+                <div className="w-full flex items-start gap-2 bg-pharma-50/70 border border-pharma-200 text-pharma-800 rounded-morph-xs px-3 py-2 text-xs">
+                  <i className="fas fa-sparkles mt-0.5"></i><span>{aiMessage}</span>
+                </div>
+              )}
               {prescriptionFile ? (
                 <div className="flex items-center gap-2 bg-white/60 border border-gray-200 rounded-morph-xs px-3 py-1.5">
                   {prescriptionPreview ? (

@@ -69,6 +69,7 @@ app.use('/api/loyalty', auth, branchFilter, require('./routes/loyalty'));
 app.use('/api/transfers', auth, branchFilter, require('./routes/transfers'));
 app.use('/api/stock-adjustments', auth, branchFilter, require('./routes/stockAdjustments'));
 app.use('/api/lookup', auth, require('./routes/lookup'));
+app.use('/api/ai', auth, require('./routes/ai'));
 
 const Batch = require('./models/Batch');
 const BatchModel = Batch;

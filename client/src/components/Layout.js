@@ -1,6 +1,7 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import AiAssistant from './AiAssistant';
 
 const navSections = [
   {
@@ -248,6 +249,8 @@ export default function Layout() {
           <Outlet />
         </main>
       </div>
+
+      <AiAssistant />
     </div>
   );
 }
