@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Company = require('../models/Company');
@@ -69,6 +70,54 @@ router.get('/me', async (req, res) => {
     res.json({ success: true, data: { user, company: user.company, branch: user.branch } });
   } catch (error) {
     res.status(401).json({ success: false, error: 'Invalid token' });
+  }
+});
+
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, error: 'Email required' });
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    if (!user) {
+      return res.json({ success: true, message: 'If an account exists for this email, a reset token has been generated.' });
+    }
+    const resetToken = crypto.randomBytes(24).toString('hex');
+    user.resetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    user.resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
+    await user.save();
+    res.json({
+      success: true,
+      message: 'Password reset token generated (valid for 1 hour). Use it to set a new password.',
+      resetToken
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, token, newPassword } = req.body;
+    if (!email || !token || !newPassword) {
+      return res.status(400).json({ success: false, error: 'Email, reset token, and new password required' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
+    }
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await User.findOne({
+      email: email.toLowerCase().trim(),
+      resetToken: hashedToken,
+      resetTokenExpiry: { $gt: new Date() }
+    });
+    if (!user) return res.status(400).json({ success: false, error: 'Invalid or expired reset token' });
+    user.password = newPassword;
+    user.resetToken = undefined;
+    user.resetTokenExpiry = undefined;
+    await user.save();
+    res.json({ success: true, message: 'Password reset successfully. You can now sign in.' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

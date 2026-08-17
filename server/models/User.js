@@ -22,7 +22,9 @@ const userSchema = new mongoose.Schema({
     allBranches: { type: Boolean, default: false }
   },
   isActive: { type: Boolean, default: true },
-  lastLogin: { type: Date }
+  lastLogin: { type: Date },
+  resetToken: { type: String },
+  resetTokenExpiry: { type: Date }
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {
