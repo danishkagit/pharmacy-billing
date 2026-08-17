@@ -14,6 +14,7 @@ const saleInvoiceSchema = new mongoose.Schema({
   invoiceDate: { type: Date, default: Date.now },
   dueDate: { type: Date },
   billFile: { type: String },
+  prescriptionFile: { type: String },
   items: [{
     medicine: { type: mongoose.Schema.Types.ObjectId, ref: 'Medicine', required: true },
     medicineName: String,

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import API from '../utils/api';
+import API, { fileUrl } from '../utils/api';
 import { PageHeader } from '../components/ui';
 
 export default function SaleInvoiceView() {
@@ -95,6 +95,36 @@ export default function SaleInvoiceView() {
         {invoice.isScheduleX && <div className="mt-4 p-3 bg-red-50/90 rounded-xl text-sm text-red-700"><i className="fas fa-skull mr-2"></i>This invoice contains Schedule X (Narcotic) drugs. Dispensing logged in narcotics register.</div>}
 
         {invoice.notes && <div className="mt-4 text-sm text-slate-500 italic">Notes: {invoice.notes}</div>}
+
+        {(invoice.prescriptionFile || invoice.billFile) && (
+          <div className="mt-6 pt-4 border-t border-white/70">
+            <h4 className="text-sm font-semibold text-slate-700 mb-3"><i className="fas fa-paperclip mr-1.5 text-slate-400"></i>Attachments</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {invoice.prescriptionFile && (
+                <div>
+                  <p className="text-xs text-slate-500 mb-1.5 font-medium">Prescription</p>
+                  {invoice.prescriptionFile.match(/\.pdf$/i) ? (
+                    <a href={fileUrl(invoice.prescriptionFile)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm text-pharma-700 hover:underline">
+                      <i className="fas fa-file-pdf text-red-500 text-lg"></i>View Prescription PDF
+                    </a>
+                  ) : (
+                    <a href={fileUrl(invoice.prescriptionFile)} target="_blank" rel="noopener noreferrer">
+                      <img src={fileUrl(invoice.prescriptionFile)} alt="Prescription" className="h-36 w-36 object-cover rounded-xl border border-white/70 shadow-sm" />
+                    </a>
+                  )}
+                </div>
+              )}
+              {invoice.billFile && (
+                <div>
+                  <p className="text-xs text-slate-500 mb-1.5 font-medium">Bill File</p>
+                  <a href={fileUrl(invoice.billFile)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm text-pharma-700 hover:underline">
+                    <i className="fas fa-file-alt text-slate-500 text-lg"></i>View Bill File
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

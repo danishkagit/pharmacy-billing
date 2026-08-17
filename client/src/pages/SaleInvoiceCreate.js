@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../utils/api';
 import { useAuth } from '../context/AuthContext';
@@ -27,6 +27,10 @@ export default function SaleInvoiceCreate() {
   const [showQuickCustomer, setShowQuickCustomer] = useState(false);
   const [quickCustomer, setQuickCustomer] = useState({ name: '', phone: '', type: 'retail' });
   const [selectedFile, setSelectedFile] = useState(null);
+  const [prescriptionFile, setPrescriptionFile] = useState(null);
+  const [prescriptionPreview, setPrescriptionPreview] = useState(null);
+  const cameraInputRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     API.get('/customers', { params: { limit: 200 } }).then(r => { if (r.success) setCustomers(r.data); });
@@ -111,6 +115,20 @@ export default function SaleInvoiceCreate() {
     setSelectedFile(e.target.files[0]);
   };
 
+  useEffect(() => {
+    if (prescriptionFile && prescriptionFile.type?.startsWith('image/')) {
+      const url = URL.createObjectURL(prescriptionFile);
+      setPrescriptionPreview(url);
+      return () => URL.revokeObjectURL(url);
+    }
+    setPrescriptionPreview(null);
+  }, [prescriptionFile]);
+
+  const handlePrescriptionFileChange = (e) => {
+    setPrescriptionFile(e.target.files[0] || null);
+    e.target.value = '';
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (items.length === 0) return setError('At least one item required');
@@ -138,6 +156,7 @@ export default function SaleInvoiceCreate() {
       formData.append('billingAddress', form.billingAddress);
       formData.append('deliveryAddress', form.deliveryAddress);
       if (selectedFile) formData.append('billFile', selectedFile);
+      if (prescriptionFile) formData.append('prescriptionFile', prescriptionFile);
       items.forEach((item, idx) => {
         formData.append(`items[${idx}][medicine]`, item.medicine || '');
         formData.append(`items[${idx}][batch]`, item.batch || '');
@@ -262,6 +281,34 @@ export default function SaleInvoiceCreate() {
               </div>
             </div>
           )}
+
+          {/* Prescription Attachment */}
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">Prescription Image / PDF</label>
+            <div className="flex flex-wrap items-center gap-3">
+              <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" hidden onChange={handlePrescriptionFileChange} />
+              <input ref={fileInputRef} type="file" accept="image/*,.pdf,application/pdf" hidden onChange={handlePrescriptionFileChange} />
+              <button type="button" onClick={() => cameraInputRef.current?.click()} className="btn-secondary text-xs py-2 px-3">
+                <i className="fas fa-camera mr-1"></i>Take Photo
+              </button>
+              <button type="button" onClick={() => fileInputRef.current?.click()} className="btn-secondary text-xs py-2 px-3">
+                <i className="fas fa-upload mr-1"></i>Upload Image / PDF
+              </button>
+              {prescriptionFile ? (
+                <div className="flex items-center gap-2 bg-white/60 border border-gray-200 rounded-morph-xs px-3 py-1.5">
+                  {prescriptionPreview ? (
+                    <img src={prescriptionPreview} alt="Prescription preview" className="h-10 w-10 object-cover rounded-lg border border-gray-200" />
+                  ) : (
+                    <span className="text-red-500"><i className="fas fa-file-pdf text-lg"></i></span>
+                  )}
+                  <span className="text-xs text-slate-600 max-w-[180px] truncate">{prescriptionFile.name}</span>
+                  <button type="button" onClick={() => setPrescriptionFile(null)} className="text-red-400 hover:text-red-600 text-xs" title="Remove"><i className="fas fa-times"></i></button>
+                </div>
+              ) : (
+                <span className="text-xs text-slate-400">No prescription attached. Photos attach to this invoice for compliance records.</span>
+              )}
+            </div>
+          </div>
 
           {/* Items Table */}
           <div>

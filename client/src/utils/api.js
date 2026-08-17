@@ -1,7 +1,11 @@
 import axios from 'axios';
 
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
+export const UPLOAD_BASE = API_BASE.replace(/\/api\/?$/, '');
+export const fileUrl = (path) => path ? `${UPLOAD_BASE}${path.startsWith('/') ? path : `/${path}`}` : null;
+
 const API = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || '/api',
+  baseURL: API_BASE,
   headers: { 'Accept': 'application/json' }
 });
 
