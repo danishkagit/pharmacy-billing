@@ -40,7 +40,7 @@ export default function Dashboard() {
       setData({
         ...dash.data,
         recentMeds: meds.data?.medicines || meds.data || [],
-        lowStock: lowStock.data || [],
+        lowStock: Array.isArray(lowStock.data) ? lowStock.data : (lowStock.data?.all || []),
       });
     }).catch(console.error).finally(() => setLoading(false));
   }, []);
