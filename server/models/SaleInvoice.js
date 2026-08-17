@@ -13,6 +13,7 @@ const saleInvoiceSchema = new mongoose.Schema({
   patientName: { type: String, trim: true },
   invoiceDate: { type: Date, default: Date.now },
   dueDate: { type: Date },
+  billFile: { type: String },
   items: [{
     medicine: { type: mongoose.Schema.Types.ObjectId, ref: 'Medicine', required: true },
     medicineName: String,

@@ -1,20 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../utils/api';
+import MedicinePicker from '../components/MedicinePicker';
+import { PageHeader, GlassCard } from '../components/ui';
 
 export default function StockAdjustmentCreate() {
   const navigate = useNavigate();
-  const [medicines, setMedicines] = useState([]);
   const [form, setForm] = useState({ type: 'write_off', reason: '' });
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    API.get('/medicines', { params: { limit: 500 } }).then(res => { if (res.success) setMedicines(res.data); });
-  }, []);
-
-  const loadBatches = async (idx, medicineId) => {
+  const loadBatches = async (idx, med) => {
+    const medicineId = med?._id || '';
     if (!medicineId) {
       const updated = [...items];
       updated[idx] = { ...updated[idx], medicine: '', medicineName: '', batches: [], selectedBatch: '', batchNo: '', qtyBefore: 0, qtyAfter: 0, rate: 0, difference: 0, amount: 0 };
@@ -24,7 +22,6 @@ export default function StockAdjustmentCreate() {
     try {
       const res = await API.get(`/batches/stock/${medicineId}`);
       if (res.success) {
-        const med = medicines.find(m => m._id === medicineId);
         const updated = [...items];
         updated[idx] = { ...updated[idx], medicine: medicineId, medicineName: med?.name || '', batches: res.data || [], selectedBatch: '', batchNo: '', qtyBefore: 0, qtyAfter: 0, rate: 0, difference: 0, amount: 0 };
         setItems(updated);
@@ -94,15 +91,15 @@ export default function StockAdjustmentCreate() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">New Stock Adjustment</h1>
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        {error && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm mb-4">{error}</div>}
+    <div className="max-w-4xl mx-auto space-y-5">
+      <PageHeader title="New Stock Adjustment" subtitle="Correct inventory quantities" />
+      <GlassCard>
+        {error && <div className="animate-fade-up bg-red-50/80 text-red-600 px-4 py-3 rounded-xl text-sm mb-4 flex items-center gap-2 border border-red-200"><i className="fas fa-exclamation-circle"></i>{error}</div>}
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
-              <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} required className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none">
+              <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Type *</label>
+              <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} required className="glass-select">
                 <option value="write_off">Write Off</option>
                 <option value="damage">Damage</option>
                 <option value="physical_count">Physical Count</option>
@@ -112,56 +109,63 @@ export default function StockAdjustmentCreate() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
-              <input value={form.reason} onChange={e => setForm({ ...form, reason: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" />
+              <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Reason</label>
+              <input value={form.reason} onChange={e => setForm({ ...form, reason: e.target.value })} className="glass-input" />
             </div>
           </div>
 
-          <div className="border rounded-lg overflow-hidden">
-            <div className="bg-gray-50 p-3 flex items-center justify-between">
-              <span className="font-medium text-sm">Items</span>
-              <button type="button" onClick={addItem} className="text-blue-600 text-sm hover:underline"><i className="fas fa-plus mr-1"></i>Add Item</button>
+          <div className="surface-2 rounded-xl overflow-hidden">
+            <div className="bg-white/60 backdrop-blur-md px-4 py-3 flex items-center justify-between border-b border-white/70">
+              <span className="font-semibold text-sm text-slate-700">Items</span>
+              <button type="button" onClick={addItem} className="btn btn-sm btn-secondary text-pharma-600"><i className="fas fa-plus mr-1"></i>Add Item</button>
             </div>
             {items.length === 0 ? (
-              <div className="p-8 text-center text-gray-400">No items added. Click "Add Item" to start.</div>
+              <div className="p-10 text-center text-slate-400">
+                <i className="fas fa-balance-scale text-3xl mb-3 text-slate-300"></i>
+                <p className="text-sm">No items added yet. Click "Add Item" to start.</p>
+              </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50">
+                <table className="app-table">
+                  <thead>
                     <tr>
-                      <th className="p-2 text-left">Medicine</th>
-                      <th className="p-2 text-left">Batch</th>
-                      <th className="p-2 text-right">Qty Before</th>
-                      <th className="p-2 text-center">Qty After</th>
-                      <th className="p-2 text-center">Difference</th>
-                      <th className="p-2 text-right">Rate</th>
-                      <th className="p-2 text-right">Amount</th>
-                      <th className="p-2"></th>
+                      <th className="text-left">Medicine</th>
+                      <th className="text-left">Batch</th>
+                      <th className="text-right">Qty Before</th>
+                      <th className="text-center">Qty After</th>
+                      <th className="text-center">Difference</th>
+                      <th className="text-right">Rate</th>
+                      <th className="text-right">Amount</th>
+                      <th></th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-gray-50">
                     {items.map((item, idx) => (
                       <tr key={idx}>
                         <td className="p-2">
-                          <select value={item.medicine} onChange={e => loadBatches(idx, e.target.value)} className="w-40 px-2 py-1 border rounded text-sm">
-                            <option value="">Select</option>
-                            {medicines.map(m => <option key={m._id} value={m._id}>{m.name}</option>)}
-                          </select>
+                          {item.medicine ? (
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-slate-700 truncate max-w-[160px]">{item.medicineName}</span>
+                              <button type="button" onClick={() => loadBatches(idx, '')} className="text-slate-400 hover:text-red-500"><i className="fas fa-sync-alt text-xs"></i></button>
+                            </div>
+                          ) : (
+                            <MedicinePicker compact onSelect={(med) => loadBatches(idx, med)} />
+                          )}
                         </td>
                         <td className="p-2">
-                          <select value={item.selectedBatch} onChange={e => selectBatch(idx, e.target.value)} disabled={!item.medicine} className="w-32 px-2 py-1 border rounded text-sm">
+                          <select value={item.selectedBatch} onChange={e => selectBatch(idx, e.target.value)} disabled={!item.medicine} className="glass-select w-36">
                             <option value="">Select</option>
                             {item.batches?.map(b => <option key={b._id} value={b._id}>{b.batchNo} (Qty: {b.qty})</option>)}
                           </select>
                         </td>
                         <td className="p-2 text-right">{item.qtyBefore}</td>
                         <td className="p-2 text-center">
-                          <input type="number" min={0} value={item.qtyAfter} onChange={e => updateQtyAfter(idx, e.target.value)} disabled={!item.selectedBatch} className="w-16 px-2 py-1 border rounded text-center text-sm" />
+                          <input type="number" min={0} value={item.qtyAfter} onChange={e => updateQtyAfter(idx, e.target.value)} disabled={!item.selectedBatch} className="glass-input w-16 text-center" />
                         </td>
                         <td className={`p-2 text-center font-medium ${item.difference < 0 ? 'text-red-600' : item.difference > 0 ? 'text-green-600' : ''}`}>{item.difference}</td>
                         <td className="p-2 text-right">{item.rate}</td>
                         <td className="p-2 text-right font-medium">₹{(item.amount || 0).toFixed(2)}</td>
-                        <td className="p-2"><button type="button" onClick={() => removeItem(idx)} className="text-red-500"><i className="fas fa-times"></i></button></td>
+                        <td className="p-2 text-center"><button type="button" onClick={() => removeItem(idx)} className="btn btn-ghost btn-sm text-red-400 hover:text-red-600"><i className="fas fa-times"></i></button></td>
                       </tr>
                     ))}
                   </tbody>
@@ -171,17 +175,17 @@ export default function StockAdjustmentCreate() {
           </div>
 
           <div className="flex justify-end">
-            <div className="w-64 space-y-1">
-              <div className="flex justify-between text-lg font-bold pt-2 border-t"><span>Total Amount:</span><span>₹{items.reduce((s, i) => s + (i.amount || 0), 0).toFixed(2)}</span></div>
+            <div className="w-64 surface-1 rounded-xl p-4">
+              <div className="flex justify-between text-lg font-bold text-slate-800"><span>Total Amount:</span><span>₹{items.reduce((s, i) => s + (i.amount || 0), 0).toFixed(2)}</span></div>
             </div>
           </div>
 
-          <div className="flex gap-3">
-            <button type="submit" disabled={loading} className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50">{loading ? 'Saving...' : 'Save Adjustment'}</button>
-            <button type="button" onClick={() => navigate('/stock-adjustments')} className="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-gray-200">Cancel</button>
+          <div className="flex flex-wrap gap-3">
+            <button type="submit" disabled={loading} className="btn btn-primary btn-glow"><i className="fas fa-check mr-1"></i>{loading ? 'Saving...' : 'Save Adjustment'}</button>
+            <button type="button" onClick={() => navigate('/stock-adjustments')} className="btn btn-secondary">Cancel</button>
           </div>
         </form>
-      </div>
+      </GlassCard>
     </div>
   );
 }

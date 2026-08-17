@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../utils/api';
+import MedicinePicker from '../components/MedicinePicker';
+import { PageHeader, GlassCard } from '../components/ui';
 
 export default function TransferCreate() {
   const navigate = useNavigate();
   const [branches, setBranches] = useState([]);
-  const [medicines, setMedicines] = useState([]);
   const [batches, setBatches] = useState({});
   const [form, setForm] = useState({ fromBranch: '', toBranch: '', transferDate: new Date().toISOString().split('T')[0], challanNo: '', notes: '' });
   const [items, setItems] = useState([]);
@@ -14,18 +15,17 @@ export default function TransferCreate() {
 
   useEffect(() => {
     API.get('/branches', { params: { limit: 200 } }).then(r => { if (r.success) setBranches(r.data); });
-    API.get('/medicines', { params: { limit: 500 } }).then(r => { if (r.success) setMedicines(r.data); });
   }, []);
 
   const addItem = () => setItems([...items, { medicine: '', medicineName: '', batch: '', batchNo: '', expiryDate: '', qty: 1, rate: 0, amount: 0 }]);
 
   const removeItem = (idx) => setItems(items.filter((_, i) => i !== idx));
 
-  const handleMedicineSelect = async (idx, medicineId) => {
-    const med = medicines.find(m => m._id === medicineId);
-    if (!med) return;
+  const handleMedicineSelect = async (idx, med) => {
+    const medicineId = med?._id || '';
+    if (!medicineId) { const u=[...items]; u[idx]={...u[idx], medicine:'', medicineName:''}; setItems(u); return; }
     const updated = [...items];
-    updated[idx] = { ...updated[idx], medicine: medicineId, medicineName: med.name, batch: '', batchNo: '', expiryDate: '', rate: med.saleRate || med.purchaseRate || 0, qty: 1 };
+    updated[idx] = { ...updated[idx], medicine: medicineId, medicineName: med.name, batch: '', batchNo: '', expiryDate: '', qty: 1 };
     try {
       const res = await API.get(`/batches/stock/${medicineId}`);
       if (res.success) {
@@ -34,7 +34,7 @@ export default function TransferCreate() {
         if (batchData.length > 0) {
           batchData.sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
           const best = batchData[0];
-          updated[idx] = { ...updated[idx], batch: best._id, batchNo: best.batchNo, expiryDate: best.expiryDate, rate: best.saleRate || best.purchaseRate || updated[idx].rate };
+          updated[idx] = { ...updated[idx], batch: best._id, batchNo: best.batchNo, expiryDate: best.expiryDate, rate: best.saleRate || best.purchaseRate || 0 };
         }
       }
     } catch (e) { }
@@ -85,85 +85,93 @@ export default function TransferCreate() {
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">New Inter-Branch Transfer</h1>
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        {error && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm mb-4"><i className="fas fa-exclamation-circle mr-2"></i>{error}</div>}
+    <div className="space-y-5">
+      <PageHeader title="New Inter-Branch Transfer" subtitle="Move stock from one branch to another" />
+      <GlassCard>
+        {error && <div className="animate-fade-up bg-red-50/80 text-red-600 px-4 py-3 rounded-xl text-sm mb-4 flex items-center gap-2 border border-red-200"><i className="fas fa-exclamation-circle"></i>{error}</div>}
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">From Branch</label>
-              <select value={form.fromBranch} onChange={e => setForm({ ...form, fromBranch: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none">
+              <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">From Branch</label>
+              <select value={form.fromBranch} onChange={e => setForm({ ...form, fromBranch: e.target.value })} className="glass-select">
                 <option value="">Select Branch</option>
                 {branches.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">To Branch</label>
-              <select value={form.toBranch} onChange={e => setForm({ ...form, toBranch: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none">
+              <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">To Branch</label>
+              <select value={form.toBranch} onChange={e => setForm({ ...form, toBranch: e.target.value })} className="glass-select">
                 <option value="">Select Branch</option>
                 {branches.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Transfer Date</label>
-              <input type="date" value={form.transferDate} onChange={e => setForm({ ...form, transferDate: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" />
+              <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Transfer Date</label>
+              <input type="date" value={form.transferDate} onChange={e => setForm({ ...form, transferDate: e.target.value })} className="glass-input" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Challan No</label>
-              <input value={form.challanNo} onChange={e => setForm({ ...form, challanNo: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" placeholder="Optional" />
+              <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Challan No</label>
+              <input value={form.challanNo} onChange={e => setForm({ ...form, challanNo: e.target.value })} className="glass-input" placeholder="Optional" />
             </div>
           </div>
 
-          <div className="border rounded-lg overflow-hidden">
-            <div className="bg-gray-50 p-3 flex items-center justify-between">
-              <span className="font-medium text-sm">Transfer Items</span>
-              <button type="button" onClick={addItem} className="text-blue-600 text-sm hover:underline"><i className="fas fa-plus mr-1"></i>Add Item</button>
+          <div className="surface-2 rounded-xl overflow-hidden">
+            <div className="bg-white/60 backdrop-blur-md px-4 py-3 flex items-center justify-between border-b border-white/70">
+              <span className="font-semibold text-sm text-slate-700">Transfer Items</span>
+              <button type="button" onClick={addItem} className="btn btn-sm btn-secondary text-pharma-600"><i className="fas fa-plus mr-1"></i>Add Item</button>
             </div>
             {items.length === 0 ? (
-              <div className="p-8 text-center text-gray-400">No items. <button type="button" onClick={addItem} className="text-blue-600 hover:underline">Add the first item</button></div>
+              <div className="p-10 text-center text-slate-400">
+                <i className="fas fa-truck text-3xl mb-3 text-slate-300"></i>
+                <p className="text-sm mb-2">No items yet.</p>
+                <button type="button" onClick={addItem} className="text-pharma-600 hover:underline text-sm font-medium">Add the first item</button>
+              </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50">
+                <table className="app-table">
+                  <thead>
                     <tr>
-                      <th className="p-2 text-left">Medicine</th>
-                      <th className="p-2 text-left">Batch</th>
-                      <th className="p-2">Expiry</th>
-                      <th className="p-2">Qty</th>
-                      <th className="p-2">Rate</th>
-                      <th className="p-2 text-right">Amount</th>
-                      <th className="p-2"></th>
+                      <th className="text-left">Medicine</th>
+                      <th className="text-left">Batch</th>
+                      <th>Expiry</th>
+                      <th>Qty</th>
+                      <th>Rate</th>
+                      <th className="text-right">Amount</th>
+                      <th></th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-gray-50">
                     {items.map((item, idx) => (
                       <tr key={idx}>
                         <td className="p-2">
-                          <select value={item.medicine} onChange={e => handleMedicineSelect(idx, e.target.value)} className="w-44 px-2 py-1 border rounded text-sm">
-                            <option value="">Select</option>
-                            {medicines.map(m => <option key={m._id} value={m._id}>{m.name}</option>)}
-                          </select>
+                          {item.medicine ? (
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-slate-700 truncate max-w-[160px]">{item.medicineName}</span>
+                              <button type="button" onClick={() => handleMedicineSelect(idx, '')} className="text-slate-400 hover:text-red-500"><i className="fas fa-sync-alt text-xs"></i></button>
+                            </div>
+                          ) : (
+                            <MedicinePicker compact onSelect={(med) => handleMedicineSelect(idx, med)} />
+                          )}
                         </td>
                         <td className="p-2">
                           {item.medicine && batches[item.medicine] ? (
-                            <select value={item.batch} onChange={e => updateItem(idx, 'batch', e.target.value)} className="w-36 px-2 py-1 border rounded text-sm">
+                            <select value={item.batch} onChange={e => updateItem(idx, 'batch', e.target.value)} className="glass-select w-40">
                               <option value="">Select Batch</option>
                               {batches[item.medicine].filter(b => b.qty > 0).map(b => (
                                 <option key={b._id} value={b._id}>{b.batchNo} (Qty: {b.qty}, Exp: {new Date(b.expiryDate).toLocaleDateString('en-IN')})</option>
                               ))}
                             </select>
                           ) : (
-                            <input value={item.batchNo} onChange={e => updateItem(idx, 'batchNo', e.target.value)} placeholder="Batch No" className="w-24 px-2 py-1 border rounded text-sm" />
+                            <input value={item.batchNo} onChange={e => updateItem(idx, 'batchNo', e.target.value)} placeholder="Batch No" className="glass-input w-28" />
                           )}
                         </td>
                         <td className="p-2">
-                          <input type="date" value={item.expiryDate ? item.expiryDate.split('T')[0] : ''} onChange={e => updateItem(idx, 'expiryDate', e.target.value)} className="w-28 px-2 py-1 border rounded text-sm" />
+                          <input type="date" value={item.expiryDate ? item.expiryDate.split('T')[0] : ''} onChange={e => updateItem(idx, 'expiryDate', e.target.value)} className="glass-input w-32" />
                         </td>
-                        <td className="p-2"><input type="number" value={item.qty} onChange={e => updateItem(idx, 'qty', parseInt(e.target.value) || 0)} min={1} className="w-14 px-2 py-1 border rounded text-sm" /></td>
-                        <td className="p-2"><input type="number" value={item.rate} onChange={e => updateItem(idx, 'rate', parseFloat(e.target.value) || 0)} className="w-20 px-2 py-1 border rounded text-sm" /></td>
+                        <td className="p-2"><input type="number" value={item.qty} onChange={e => updateItem(idx, 'qty', parseInt(e.target.value) || 0)} min={1} className="glass-input w-16" /></td>
+                        <td className="p-2"><input type="number" value={item.rate} onChange={e => updateItem(idx, 'rate', parseFloat(e.target.value) || 0)} className="glass-input w-20" /></td>
                         <td className="p-2 text-right font-medium">₹{(item.amount || 0).toFixed(2)}</td>
-                        <td className="p-2"><button type="button" onClick={() => removeItem(idx)} className="text-red-500"><i className="fas fa-times"></i></button></td>
+                        <td className="p-2 text-center"><button type="button" onClick={() => removeItem(idx)} className="btn btn-ghost btn-sm text-red-400 hover:text-red-600"><i className="fas fa-times"></i></button></td>
                       </tr>
                     ))}
                   </tbody>
@@ -173,25 +181,25 @@ export default function TransferCreate() {
           </div>
 
           <div className="flex justify-end">
-            <div className="w-64 space-y-2">
-              <div className="flex justify-between text-sm"><span>Total Items:</span><span className="font-medium">{totalItems}</span></div>
-              <div className="flex justify-between text-lg font-bold pt-2 border-t"><span>Total Amount:</span><span>₹{totalAmount.toFixed(2)}</span></div>
+            <div className="w-64 space-y-2 surface-1 rounded-xl p-4">
+              <div className="flex justify-between text-sm"><span className="text-slate-500">Total Items:</span><span className="font-medium text-slate-700">{totalItems}</span></div>
+              <div className="flex justify-between text-lg font-bold pt-2 border-t border-slate-200 text-slate-800"><span>Total Amount:</span><span>₹{totalAmount.toFixed(2)}</span></div>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-            <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={2} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none text-sm" placeholder="Optional notes" />
+            <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Notes</label>
+            <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={2} className="glass-input" placeholder="Optional notes" />
           </div>
 
-          <div className="flex gap-3">
-            <button type="submit" disabled={loading} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 text-lg">
-              <i className="fas fa-check-circle mr-2"></i>{loading ? 'Creating...' : 'Create Transfer'}
+          <div className="flex flex-wrap gap-3">
+            <button type="submit" disabled={loading} className="btn btn-primary btn-glow">
+              <i className="fas fa-check-circle mr-1"></i>{loading ? 'Creating...' : 'Create Transfer'}
             </button>
-            <button type="button" onClick={() => navigate('/transfers')} className="bg-gray-100 text-gray-700 px-6 py-2 rounded-xl font-medium hover:bg-gray-200">Cancel</button>
+            <button type="button" onClick={() => navigate('/transfers')} className="btn btn-secondary">Cancel</button>
           </div>
         </form>
-      </div>
+      </GlassCard>
     </div>
   );
 }

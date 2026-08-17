@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import API from '../utils/api';
+import { PageHeader, GlassCard } from '../components/ui';
 
 export default function GSTR3BReport() {
   const [data, setData] = useState(null);
@@ -18,32 +19,35 @@ export default function GSTR3BReport() {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">GSTR-3B Report</h1>
-      <div className="bg-white rounded-xl shadow-sm p-5">
-        <div className="flex gap-4 mb-6">
-          <select value={month} onChange={e => setMonth(parseInt(e.target.value))} className="px-4 py-2 border border-gray-300 rounded-lg text-sm outline-none">
+    <div className="space-y-5">
+      <PageHeader title="GSTR-3B Report" subtitle="Monthly summary of outward supplies">
+        <div className="flex flex-wrap gap-2 items-center">
+          <select value={month} onChange={e => setMonth(parseInt(e.target.value))} className="glass-select w-36">
             {months.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
           </select>
-          <select value={year} onChange={e => setYear(parseInt(e.target.value))} className="px-4 py-2 border border-gray-300 rounded-lg text-sm outline-none">
+          <select value={year} onChange={e => setYear(parseInt(e.target.value))} className="glass-select w-28">
             {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
-        {loading ? <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div> : data && (
+      </PageHeader>
+      <GlassCard>
+        {loading ? (
+          <div className="flex justify-center py-14"><div className="animate-spin rounded-full h-8 w-8 border-2 border-slate-200 border-t-pharma-500"></div></div>
+        ) : data && (
           <div className="space-y-6">
-            <div className="grid grid-cols-3 gap-4">
-              <div className="p-4 bg-green-50 rounded-lg text-center"><p className="text-xl font-bold text-green-700">₹{data.sales?.totalTaxable?.toFixed(2)}</p><p className="text-sm text-gray-500">Sales Taxable</p></div>
-              <div className="p-4 bg-blue-50 rounded-lg text-center"><p className="text-xl font-bold text-blue-700">₹{data.sales?.totalTax?.toFixed(2)}</p><p className="text-sm text-gray-500">Output Tax</p></div>
-              <div className="p-4 bg-purple-50 rounded-lg text-center"><p className="text-xl font-bold text-purple-700">₹{data.purchases?.totalTax?.toFixed(2)}</p><p className="text-sm text-gray-500">Input Tax Credit</p></div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 stagger">
+              <div className="app-card app-card-hover p-4 text-center"><p className="text-xl font-bold text-green-600">₹{data.sales?.totalTaxable?.toFixed(2)}</p><p className="text-sm text-slate-500">Sales Taxable</p></div>
+              <div className="app-card app-card-hover p-4 text-center"><p className="text-xl font-bold text-blue-600">₹{data.sales?.totalTax?.toFixed(2)}</p><p className="text-sm text-slate-500">Output Tax</p></div>
+              <div className="app-card app-card-hover p-4 text-center"><p className="text-xl font-bold text-purple-600">₹{data.purchases?.totalTax?.toFixed(2)}</p><p className="text-sm text-slate-500">Input Tax Credit</p></div>
             </div>
-            <div className={`p-6 rounded-lg text-center ${data.netTaxLiability >= 0 ? 'bg-red-50' : 'bg-green-50'}`}>
-              <p className="text-sm text-gray-500">Net Tax Liability (Output - Input Credit)</p>
+            <div className={`relative overflow-hidden p-6 rounded-2xl text-center border ${data.netTaxLiability >= 0 ? 'bg-red-50/70 border-red-200' : 'bg-green-50/70 border-green-200'}`}>
+              <p className="text-sm text-slate-500 font-medium">Net Tax Liability (Output - Input Credit)</p>
               <p className={`text-3xl font-bold ${data.netTaxLiability >= 0 ? 'text-red-600' : 'text-green-600'}`}>₹{Math.abs(data.netTaxLiability || 0).toFixed(2)}</p>
-              <p className="text-sm text-gray-500">{data.netTaxLiability >= 0 ? 'Payable' : 'Refundable'}</p>
+              <span className={`badge mt-2 ${data.netTaxLiability >= 0 ? 'badge-red' : 'badge-green'}`}>{data.netTaxLiability >= 0 ? 'Payable' : 'Refundable'}</span>
             </div>
           </div>
         )}
-      </div>
+      </GlassCard>
     </div>
   );
 }

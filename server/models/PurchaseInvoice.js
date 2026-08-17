@@ -6,6 +6,7 @@ const purchaseInvoiceSchema = new mongoose.Schema({
   purchaseOrder: { type: mongoose.Schema.Types.ObjectId, ref: 'PurchaseOrder' },
   invoiceDate: { type: Date, default: Date.now },
   receivedDate: { type: Date, default: Date.now },
+  billFile: { type: String },
   batches: [{
     medicine: { type: mongoose.Schema.Types.ObjectId, ref: 'Medicine', required: true },
     medicineName: String,

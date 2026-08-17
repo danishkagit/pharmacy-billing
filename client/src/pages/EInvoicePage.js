@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import API from '../utils/api';
+import { PageHeader, GlassCard, GlassTable } from '../components/ui';
 
 export default function EInvoicePage() {
   const [invoices, setInvoices] = useState([]);
@@ -55,122 +56,71 @@ export default function EInvoicePage() {
     setGenerating(null);
   };
 
-  const getFilingForInvoice = (invoiceNo) => {
-    return filingHistory.filter(f => f.referenceNo?.includes(invoiceNo));
-  };
+  const getFilingForInvoice = (invoiceNo) => filingHistory.filter(f => f.referenceNo?.includes(invoiceNo));
+
+  const columns = [
+    { key: 'invoiceNo', label: 'Invoice', tdClass: 'font-medium' },
+    { label: 'Customer GSTIN', render: inv => inv.gstin, tdClass: 'font-mono text-xs text-slate-500' },
+    { label: 'Customer Name', key: 'name' },
+    { label: 'Date', render: inv => new Date(inv.date).toLocaleDateString('en-IN'), tdClass: 'text-slate-500' },
+    { label: 'Taxable', className: 'text-right', tdClass: 'text-right', render: inv => `₹${inv.taxable?.toFixed(2)}` },
+    { label: 'Total', className: 'text-right', tdClass: 'text-right font-medium', render: inv => `₹${inv.total?.toFixed(2)}` },
+    {
+      label: 'E-Invoice', className: 'text-center', tdClass: 'text-center',
+      render: inv => {
+        const hasEinvoice = getFilingForInvoice(inv.invoiceNo).some(f => f.type === 'EINVOICE');
+        return hasEinvoice
+          ? <span className="text-green-600 text-xs"><i className="fas fa-check-circle mr-1"></i>Generated</span>
+          : <button onClick={() => generateEInvoice(inv)} disabled={generating === 'einv-' + inv.invoiceNo} className="btn btn-ghost btn-sm text-pharma-600 disabled:opacity-50">{generating === 'einv-' + inv.invoiceNo ? 'Generating...' : 'Generate IRN'}</button>;
+      },
+    },
+    {
+      label: 'E-Way Bill', className: 'text-center', tdClass: 'text-center',
+      render: inv => {
+        const hasEwaybill = getFilingForInvoice(inv.invoiceNo).some(f => f.type === 'EWAYBILL');
+        if (hasEwaybill) return <span className="text-green-600 text-xs"><i className="fas fa-check-circle mr-1"></i>Generated</span>;
+        if (inv.total >= 50000) return <button onClick={() => generateEwayBill(inv)} disabled={generating === 'eway-' + inv.invoiceNo} className="btn btn-ghost btn-sm text-orange-600 disabled:opacity-50">{generating === 'eway-' + inv.invoiceNo ? 'Generating...' : 'Generate EWB'}</button>;
+        return <span className="text-slate-400 text-xs">N/A</span>;
+      },
+    },
+  ];
+
+  const filingColumns = [
+    { label: 'Type', render: f => <span className={`badge ${f.type === 'EINVOICE' ? 'badge-purple' : f.type === 'EWAYBILL' ? 'badge-orange' : 'badge-blue'}`}>{f.type}</span> },
+    { label: 'Reference No', render: f => f.referenceNo || '-', tdClass: 'font-mono text-xs' },
+    { label: 'Period', render: f => `${f.month}/${f.year}` },
+    { label: 'Date', render: f => new Date(f.filedDate).toLocaleDateString('en-IN'), tdClass: 'text-slate-500' },
+    { label: 'Status', className: 'text-center', tdClass: 'text-center', render: f => <span className={`badge ${f.status === 'filed' ? 'badge-green' : f.status === 'verified' ? 'badge-blue' : 'badge-yellow'}`}>{f.status}</span> },
+  ];
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-800 mb-2">E-Invoice & E-Way Bill</h1>
-      <p className="text-sm text-gray-500 mb-6">Generate IRN and E-Way Bill for B2B invoices above ₹50,000</p>
-
-      {message && (
-        <div className={`mb-4 px-4 py-3 rounded-lg text-sm ${message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-600 border border-red-200'}`}>
-          <i className={`fas ${message.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2`}></i>{message.text}
-        </div>
-      )}
-
-      <div className="bg-white rounded-xl shadow-sm p-5 mb-6">
-        <div className="flex gap-4 mb-6">
-          <select value={month} onChange={e => setMonth(parseInt(e.target.value))} className="px-4 py-2 border border-gray-300 rounded-lg text-sm outline-none">
+    <div className="space-y-5">
+      <PageHeader title="E-Invoice & E-Way Bill" subtitle="Generate IRN and E-Way Bill for B2B invoices above ₹50,000">
+        <div className="flex flex-wrap gap-2 items-center">
+          <select value={month} onChange={e => setMonth(parseInt(e.target.value))} className="glass-select w-36">
             {months.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
           </select>
-          <select value={year} onChange={e => setYear(parseInt(e.target.value))} className="px-4 py-2 border border-gray-300 rounded-lg text-sm outline-none">
+          <select value={year} onChange={e => setYear(parseInt(e.target.value))} className="glass-select w-28">
             {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
-        {loading ? <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div> : invoices.length === 0 ? (
-          <p className="text-center text-gray-400 py-8">No B2B invoices found for this period</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-600">
-                <tr>
-                  <th className="text-left p-3 font-medium">Invoice</th>
-                  <th className="text-left p-3 font-medium">Customer GSTIN</th>
-                  <th className="text-left p-3 font-medium">Customer Name</th>
-                  <th className="text-left p-3 font-medium">Date</th>
-                  <th className="text-right p-3 font-medium">Taxable</th>
-                  <th className="text-right p-3 font-medium">Total</th>
-                  <th className="text-center p-3 font-medium">E-Invoice</th>
-                  <th className="text-center p-3 font-medium">E-Way Bill</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {invoices.map((inv, i) => {
-                  const filings = getFilingForInvoice(inv.invoiceNo);
-                  const hasEinvoice = filings.some(f => f.type === 'EINVOICE');
-                  const hasEwaybill = filings.some(f => f.type === 'EWAYBILL');
-                  return (
-                    <tr key={i} className={`hover:bg-gray-50 ${inv.total >= 50000 ? 'bg-yellow-50' : ''}`}>
-                      <td className="p-3 font-medium">{inv.invoiceNo}</td>
-                      <td className="p-3 font-mono text-xs">{inv.gstin}</td>
-                      <td className="p-3">{inv.name}</td>
-                      <td className="p-3 text-gray-500">{new Date(inv.date).toLocaleDateString('en-IN')}</td>
-                      <td className="p-3 text-right">₹{inv.taxable?.toFixed(2)}</td>
-                      <td className="p-3 text-right font-medium">₹{inv.total?.toFixed(2)}</td>
-                      <td className="p-3 text-center">
-                        {hasEinvoice ? (
-                          <span className="text-green-600 text-xs"><i className="fas fa-check-circle mr-1"></i>Generated</span>
-                        ) : (
-                          <button onClick={() => generateEInvoice(inv)} disabled={generating === 'einv-' + inv.invoiceNo} className="text-blue-600 text-xs hover:underline disabled:opacity-50">
-                            {generating === 'einv-' + inv.invoiceNo ? 'Generating...' : 'Generate IRN'}
-                          </button>
-                        )}
-                      </td>
-                      <td className="p-3 text-center">
-                        {hasEwaybill ? (
-                          <span className="text-green-600 text-xs"><i className="fas fa-check-circle mr-1"></i>Generated</span>
-                        ) : inv.total >= 50000 ? (
-                          <button onClick={() => generateEwayBill(inv)} disabled={generating === 'eway-' + inv.invoiceNo} className="text-orange-600 text-xs hover:underline disabled:opacity-50">
-                            {generating === 'eway-' + inv.invoiceNo ? 'Generating...' : 'Generate EWB'}
-                          </button>
-                        ) : <span className="text-gray-400 text-xs">N/A</span>}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      </PageHeader>
 
-      <div className="bg-white rounded-xl shadow-sm p-5">
-        <h2 className="text-lg font-semibold mb-4">Filing History</h2>
-        {filingHistory.length === 0 ? (
-          <p className="text-center text-gray-400 py-4">No filing history yet</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-600">
-                <tr>
-                  <th className="text-left p-3 font-medium">Type</th>
-                  <th className="text-left p-3 font-medium">Reference No</th>
-                  <th className="text-left p-3 font-medium">Period</th>
-                  <th className="text-left p-3 font-medium">Date</th>
-                  <th className="text-center p-3 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filingHistory.map(f => (
-                  <tr key={f._id} className="hover:bg-gray-50">
-                    <td className="p-3">
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${f.type === 'EINVOICE' ? 'bg-purple-100 text-purple-700' : f.type === 'EWAYBILL' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>{f.type}</span>
-                    </td>
-                    <td className="p-3 font-mono text-xs">{f.referenceNo || '-'}</td>
-                    <td className="p-3">{f.month}/{f.year}</td>
-                    <td className="p-3 text-gray-500">{new Date(f.filedDate).toLocaleDateString('en-IN')}</td>
-                    <td className="p-3 text-center">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${f.status === 'filed' ? 'bg-green-100 text-green-700' : f.status === 'verified' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}`}>{f.status}</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {message && (
+        <div className={`animate-fade-up px-4 py-3 rounded-xl text-sm flex items-center gap-2 border ${message.type === 'success' ? 'bg-green-50/80 text-green-700 border-green-200' : 'bg-red-50/80 text-red-600 border-red-200'}`}>
+          <i className={`fas ${message.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`}></i>{message.text}
+        </div>
+      )}
+
+      <GlassCard>
+        <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2"><i className="fas fa-file-invoice-dollar text-pharma-500"></i>B2B Invoices</h3>
+        <GlassTable columns={columns} data={invoices} loading={loading} emptyMessage="No B2B invoices found for this period" />
+      </GlassCard>
+
+      <GlassCard>
+        <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2"><i className="fas fa-history text-pharma-500"></i>Filing History</h3>
+        <GlassTable columns={filingColumns} data={filingHistory} loading={false} emptyMessage="No filing history yet" />
+      </GlassCard>
     </div>
   );
 }

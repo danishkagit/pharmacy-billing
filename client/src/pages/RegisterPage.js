@@ -66,23 +66,27 @@ export default function RegisterPage() {
       </div>
 
       {/* Right registration form */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-white overflow-y-auto">
-        <div className="w-full max-w-lg py-4">
+      <div className="flex-1 flex items-center justify-center p-6 overflow-y-auto relative">
+        <div className="absolute inset-0 opacity-50 pointer-events-none">
+          <div className="absolute top-10 left-10 w-72 h-72 bg-mint-300/30 rounded-full blur-3xl animate-drift"></div>
+          <div className="absolute bottom-10 right-10 w-64 h-64 bg-focus-300/30 rounded-full blur-3xl animate-float-slow"></div>
+        </div>
+        <div className="w-full max-w-lg py-4 relative">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-6">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pharma-500 to-pharma-600 flex items-center justify-center mx-auto mb-3">
+            <div className="w-12 h-12 rounded-xl grad-accent flex items-center justify-center mx-auto mb-3 shadow-glow">
               <i className="fas fa-store text-white text-lg"></i>
             </div>
             <h1 className="text-xl font-bold text-slate-900">PharmacyBilling</h1>
           </div>
 
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-slate-900">Create your account</h2>
+            <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Create your account</h2>
             <p className="text-sm text-slate-500 mt-1.5">Setup your retail pharmacy in minutes</p>
           </div>
 
           {error && (
-            <div className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm mb-5 border border-red-100">
+            <div className="flex items-center gap-2 bg-red-50/80 backdrop-blur-sm text-red-600 px-4 py-3 rounded-xl text-sm mb-5 border border-red-100 animate-fade-in">
               <i className="fas fa-exclamation-circle"></i>
               {error}
             </div>
@@ -90,8 +94,8 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Owner Info */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Owner Details</h3>
+            <div className="p-4 rounded-xl glass-card !shadow-soft">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Owner Details</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Owner Name *</label>
@@ -115,8 +119,8 @@ export default function RegisterPage() {
             </div>
 
             {/* Regulatory Info */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Regulatory Details</h3>
+            <div className="p-4 rounded-xl glass-card !shadow-none">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Regulatory Details</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">GSTIN</label>
@@ -136,8 +140,8 @@ export default function RegisterPage() {
             </div>
 
             {/* Password */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Security</h3>
+            <div className="p-4 rounded-xl glass-card !shadow-none">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Security</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Password *</label>
@@ -150,7 +154,7 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <button type="submit" disabled={loading} className="w-full btn btn-primary py-2.5 text-sm">
+            <button type="submit" disabled={loading} className="w-full btn btn-primary btn-glow py-2.5 text-sm">
               {loading ? (
                 <>
                   <i className="fas fa-spinner fa-spin"></i>

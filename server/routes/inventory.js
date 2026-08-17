@@ -14,8 +14,10 @@ router.get('/stock-summary', async (req, res) => {
       { $limit: 20 }
     ]);
     await Batch.populate(summary, { path: '_id', select: 'name manufacturer category schedule' });
-    const top = summary.map(s => ({ medicine: s._id, totalQty: s.totalQty, totalValue: s.totalValue, batchCount: s.batchCount }));
-    res.json({ success: true, data: top });
+    const top = summary.map(s => ({ medicine: s._id, totalQty: s.totalQty, totalValue: s.totalValue, batchCount: s.batchCount, schedule: s._id.schedule }));
+    const otcTotal = top.filter(t => t.schedule === 'OTC').reduce((sum, t) => sum + (t.totalQty || 0), 0);
+    const prescriptionTotal = top.filter(t => t.schedule !== 'OTC').reduce((sum, t) => sum + (t.totalQty || 0), 0);
+    res.json({ success: true, data: { top, otcTotal, prescriptionTotal } });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -24,7 +26,7 @@ router.get('/stock-summary', async (req, res) => {
 router.get('/low-stock', async (req, res) => {
   try {
     const filter = { branch: req.activeBranch || req.branch?._id, isExpired: false, qty: { $gt: 0 } };
-    const batches = await Batch.find(filter).populate('medicine', 'name reorderLevel manufacturer');
+    const batches = await Batch.find(filter).populate('medicine', 'name reorderLevel manufacturer schedule');
     const medicineMap = {};
     batches.forEach(b => {
       if (!medicineMap[b.medicine?._id]) {
@@ -33,7 +35,27 @@ router.get('/low-stock', async (req, res) => {
       medicineMap[b.medicine?._id].totalQty += b.qty;
     });
     const lowStock = Object.values(medicineMap).filter(m => m.medicine && m.medicine.reorderLevel > 0 && m.totalQty <= m.medicine.reorderLevel);
-    res.json({ success: true, data: lowStock });
+    const otcLowStock = Object.values(medicineMap).filter(m => m.medicine && m.medicine.schedule === 'OTC' && m.medicine.reorderLevel > 0 && m.totalQty <= m.medicine.reorderLevel);
+    res.json({ success: true, data: { all: lowStock, otc: otcLowStock } });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/otc-expiry-alert', async (req, res) => {
+  try {
+    const thirtyDays = new Date();
+    thirtyDays.setDate(thirtyDays.getDate() + 30);
+    const ninetyDays = new Date();
+    ninetyDays.setDate(ninetyDays.getDate() + 90);
+    const expiring = await Batch.find({
+      medicine: { $exists: true },
+      expiryDate: { $lte: ninetyDays, $gte: new Date() },
+      isExpired: false,
+      qty: { $gt: 0 }
+    }).populate('medicine', 'name schedule').populate('branch', 'name');
+    const otcExpiring = expiring.filter(b => b.medicine && b.medicine.schedule === 'OTC');
+    res.json({ success: true, data: { totalExpiring: expiring.length, otcExpiring: otcExpiring.length, details: otcExpiring } });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

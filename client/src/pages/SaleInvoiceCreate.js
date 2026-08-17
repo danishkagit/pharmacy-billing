@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { PageHeader, GlassCard, GlassModal } from '../components/ui';
+import MedicinePicker from '../components/MedicinePicker';
 
 export default function SaleInvoiceCreate() {
   const navigate = useNavigate();
@@ -10,7 +11,6 @@ export default function SaleInvoiceCreate() {
   const isRetail = company?.drugLicenseCategory === 'retail' || company?.drugLicenseCategory === 'both';
   const isWholesale = company?.drugLicenseCategory === 'wholesale' || company?.drugLicenseCategory === 'both';
 
-  const [medicines, setMedicines] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [prescriptions, setPrescriptions] = useState([]);
   const [batches, setBatches] = useState({});
@@ -24,42 +24,30 @@ export default function SaleInvoiceCreate() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
   const [showQuickCustomer, setShowQuickCustomer] = useState(false);
   const [quickCustomer, setQuickCustomer] = useState({ name: '', phone: '', type: 'retail' });
-  const searchTimeout = useRef(null);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   useEffect(() => {
     API.get('/customers', { params: { limit: 200 } }).then(r => { if (r.success) setCustomers(r.data); });
-    API.get('/medicines', { params: { limit: 500 } }).then(r => { if (r.success) setMedicines(r.data); });
     API.get('/prescriptions', { params: { limit: 200 } }).then(r => { if (r.success) setPrescriptions(r.data); });
-  }, []);
-
-  const searchMedicines = useCallback((term) => {
-    clearTimeout(searchTimeout.current);
-    searchTimeout.current = setTimeout(() => {
-      if (term.length >= 2) {
-        API.get('/medicines', { params: { search: term, limit: 20 } }).then(r => { if (r.success) setMedicines(r.data); });
-      }
-    }, 300);
   }, []);
 
   const addItem = () => setItems([...items, { medicine: '', batch: '', batchNo: '', qty: 1, rate: 0, mrp: 0, discountPercent: 0, gstRate: 12 }]);
   const removeItem = (idx) => setItems(items.filter((_, i) => i !== idx));
 
-  const handleMedicineSelect = async (idx, medicineId) => {
-    const med = medicines.find(m => m._id === medicineId);
-    if (!med) return;
+  const handleMedicineSelect = async (idx, med) => {
+    if (!med || !med._id) return;
     const updated = [...items];
     updated[idx] = { ...updated[idx], medicine: medicineId, medicineName: med.name, mrp: med.mrp, gstRate: med.gstRate || 12, schedule: med.schedule };
     if ((med.schedule === 'H' || med.schedule === 'H1' || med.schedule === 'X') && !form.prescription) {
       setError(`${med.name} requires a prescription. Please add prescription first.`);
     }
     try {
-      const res = await API.get(`/batches/stock/${medicineId}`);
+      const res = await API.get(`/batches/stock/${med._id}`);
       if (res.success) {
         const batchData = res.data || [];
-        setBatches(prev => ({ ...prev, [medicineId]: batchData }));
+        setBatches(prev => ({ ...prev, [med._id]: batchData }));
         if (batchData.length > 0) {
           batchData.sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
           const best = batchData[0];
@@ -119,6 +107,10 @@ export default function SaleInvoiceCreate() {
   const totalTax = items.reduce((s, i) => { const amt = (i.amount || 0); return s + (amt * (i.gstRate || 12)) / 100; }, 0);
   const totalAmount = Math.round(subtotal + totalTax);
 
+  const handleFileChange = (e) => {
+    setSelectedFile(e.target.files[0]);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (items.length === 0) return setError('At least one item required');
@@ -127,13 +119,35 @@ export default function SaleInvoiceCreate() {
     setLoading(true);
     setError('');
     try {
-      const res = await API.post('/sale-invoices', {
-        ...form,
-        items: items.map(i => ({
-          medicine: i.medicine, batch: i.batch, batchNo: i.batchNo,
-          qty: i.qty, rate: i.rate, discountPercent: i.discountPercent, mrp: i.mrp
-        }))
+      const formData = new FormData();
+      formData.append('type', form.type);
+      formData.append('customer', form.customer);
+      formData.append('customerName', form.customerName);
+      formData.append('customerPhone', form.customerPhone);
+      formData.append('customerGstin', form.customerGstin);
+      formData.append('prescription', form.prescription);
+      formData.append('prescriptionNo', form.prescriptionNo);
+      formData.append('doctorName', form.doctorName);
+      formData.append('patientName', form.patientName);
+      formData.append('invoiceDate', form.invoiceDate || new Date());
+      formData.append('dueDate', form.dueDate);
+      formData.append('paymentMode', form.paymentMode);
+      formData.append('isInterState', String(form.isInterState));
+      formData.append('notes', form.notes);
+      formData.append('creditDays', String(form.creditDays));
+      formData.append('billingAddress', form.billingAddress);
+      formData.append('deliveryAddress', form.deliveryAddress);
+      if (selectedFile) formData.append('billFile', selectedFile);
+      items.forEach((item, idx) => {
+        formData.append(`items[${idx}][medicine]`, item.medicine || '');
+        formData.append(`items[${idx}][batch]`, item.batch || '');
+        formData.append(`items[${idx}][batchNo]`, item.batchNo || '');
+        formData.append(`items[${idx}][qty]`, String(item.qty || 1));
+        formData.append(`items[${idx}][rate]`, String(item.rate || 0));
+        formData.append(`items[${idx}][discountPercent]`, String(item.discountPercent || 0));
+        formData.append(`items[${idx}][mrp]`, String(item.mrp || 0));
       });
+      const res = await API.post('/sale-invoices', formData, { headers: { 'Content-Type': false } });
       if (res.success) navigate(`/sales/${res.data._id}`);
     } catch (err) { setError(err?.error || 'Failed to create invoice'); }
     finally { setLoading(false); }
@@ -166,6 +180,14 @@ export default function SaleInvoiceCreate() {
             <button onClick={() => setError('')} className="ml-auto text-red-400 hover:text-red-600"><i className="fas fa-times"></i></button>
           </div>
         )}
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Bill File</label>
+            <input type="file" onChange={handleFileChange} className="glass-input w-full" />
+            {selectedFile && <p className="text-xs text-slate-500 mt-1">Selected: {selectedFile.name}</p>}
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
 
@@ -276,13 +298,19 @@ export default function SaleInvoiceCreate() {
                       {items.map((item, idx) => (
                         <tr key={idx}>
                           <td>
-                            <div className="flex flex-col gap-1">
-                              <select value={item.medicine} onChange={e => handleMedicineSelect(idx, e.target.value)} className="glass-select text-xs py-1.5 w-40">
-                                <option value="">Select</option>
-                                {medicines.map(m => <option key={m._id} value={m._id}>{m.name}</option>)}
-                              </select>
-                              <input placeholder="Search..." onChange={e => searchMedicines(e.target.value)} className="glass-input text-xs py-1 w-40" />
-                            </div>
+                            {item.medicine ? (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-medium text-slate-700 truncate max-w-[160px]">{item.medicineName}</span>
+                                <button type="button" onClick={() => { const u = [...items]; u[idx].medicine = ''; u[idx].medicineName = ''; u[idx].batch = ''; setItems(u); }} className="text-slate-400 hover:text-red-500 text-xs" title="Change medicine"><i className="fas fa-sync-alt"></i></button>
+                              </div>
+                            ) : (
+                              <MedicinePicker
+                                compact
+                                placeholder="Brand / salt (min 3)..."
+                                onSelect={(med) => handleMedicineSelect(idx, med)}
+                                autoFocus={items.length === 1 && idx === 0}
+                              />
+                            )}
                           </td>
                           <td>
                             {item.medicine && batches[item.medicine] ? (

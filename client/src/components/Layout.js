@@ -110,7 +110,7 @@ export default function Layout() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-100">
+    <div className="flex h-screen overflow-hidden">
       {/* Mobile overlay */}
       <div
         className={`fixed inset-0 bg-black/40 z-40 transition-opacity duration-200 lg:hidden ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
@@ -200,7 +200,7 @@ export default function Layout() {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
-        <header className="h-14 bg-white border-b border-slate-200 px-4 lg:px-6 flex items-center gap-4 flex-shrink-0 no-print z-30">
+        <header className="topbar h-14 px-4 lg:px-6 flex items-center gap-4 flex-shrink-0 no-print z-30">
           <button
             className="lg:hidden text-slate-500 hover:text-slate-700 p-1"
             onClick={() => setSidebarOpen(true)}
@@ -225,7 +225,7 @@ export default function Layout() {
 
           {/* GST Status */}
           {company?.gstin && (
-            <div className="hidden md:flex items-center gap-1.5 text-xs text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+            <div className="hidden md:flex items-center gap-1.5 text-xs text-slate-500 bg-white/60 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/70 shadow-sm">
               <span className={`w-1.5 h-1.5 rounded-full ${company?.drugLicenseCategory === 'retail' ? 'bg-pharma-400' : 'bg-blue-400'}`}></span>
               <span className="font-medium">{company.gstin.slice(0, 2)}</span>
               <span className="text-slate-300">|</span>

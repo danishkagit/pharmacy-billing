@@ -47,7 +47,7 @@ export default function Dashboard() {
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-24">
-      <div className="w-10 h-10 rounded-xl bg-pharma-500 flex items-center justify-center animate-pulse">
+      <div className="w-12 h-12 rounded-xl grad-accent flex items-center justify-center animate-pulse shadow-glow">
         <i className="fas fa-prescription-bottle-medical text-white"></i>
       </div>
       <p className="text-sm text-slate-400 mt-4">Loading dashboard...</p>
@@ -69,10 +69,10 @@ export default function Dashboard() {
 
       {/* Welcome banner */}
       <div className="app-card overflow-hidden">
-        <div className="relative p-6 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white">
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-pharma-400 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-pharma-600 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4"></div>
+        <div className="relative p-6 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden">
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-pharma-400 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 animate-drift"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-mint-400 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4 animate-float-slow"></div>
           </div>
           <div className="relative flex items-start justify-between flex-wrap gap-4">
             <div>
@@ -258,7 +258,7 @@ export default function Dashboard() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
               {(data?.recentMeds || []).slice(0, 6).map((med, i) => (
-                <Link to={`/medicines/${med._id}/edit`} key={i} className="p-3 rounded-xl border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all">
+                <Link to={`/medicines/${med._id}/edit`} key={i} className="p-3 rounded-xl border border-white/70 bg-white/60 backdrop-blur-md hover:border-pharma-300 hover:shadow-glow-soft hover:-translate-y-0.5 transition-all duration-200">
                   <div className="flex items-center gap-2 mb-1.5">
                     <span className={`badge text-[9px] ${med.schedule === 'X' ? 'badge-red' : med.schedule === 'H1' ? 'badge-orange' : med.schedule === 'H' ? 'badge-yellow' : 'badge-gray'}`}>
                       {med.schedule || 'OTC'}

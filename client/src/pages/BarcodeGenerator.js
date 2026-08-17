@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import API from '../utils/api';
+import { PageHeader, GlassCard } from '../components/ui';
 
 export default function BarcodeGenerator() {
   const [text, setText] = useState('');
@@ -17,26 +18,26 @@ export default function BarcodeGenerator() {
   };
 
   return (
-    <div className="max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Barcode Generator</h1>
-      <div className="bg-white rounded-xl shadow-sm p-6">
+    <div className="max-w-xl mx-auto space-y-5">
+      <PageHeader title="Barcode Generator" subtitle="Create Code 128 barcodes for products" />
+      <GlassCard>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Enter text for barcode</label>
-            <input value={text} onChange={e => setText(e.target.value)} placeholder="e.g., medicine ID or product code" className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" onKeyDown={e => e.key === 'Enter' && generate()} />
+            <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Enter text for barcode</label>
+            <input value={text} onChange={e => setText(e.target.value)} placeholder="e.g., medicine ID or product code" className="glass-input" onKeyDown={e => e.key === 'Enter' && generate()} />
           </div>
-          <button onClick={generate} disabled={loading} className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50">
-            {loading ? 'Generating...' : 'Generate Barcode'}
+          <button onClick={generate} disabled={loading} className="btn btn-primary btn-glow">
+            <i className="fas fa-barcode mr-1"></i>{loading ? 'Generating...' : 'Generate Barcode'}
           </button>
           {barcode && (
-            <div className="text-center p-6 border rounded-lg">
+            <div className="text-center p-6 surface-2 rounded-xl animate-fade-up">
               <img src={barcode} alt="Barcode" className="mx-auto" />
-              <p className="text-sm text-gray-500 mt-2">{text}</p>
-              <button onClick={() => { const link = document.createElement('a'); link.download = `barcode-${text}.png`; link.href = barcode; link.click(); }} className="mt-4 text-blue-600 text-sm hover:underline"><i className="fas fa-download mr-1"></i>Download</button>
+              <p className="text-sm text-slate-500 mt-2">{text}</p>
+              <button onClick={() => { const link = document.createElement('a'); link.download = `barcode-${text}.png`; link.href = barcode; link.click(); }} className="mt-4 btn btn-ghost btn-sm text-pharma-600"><i className="fas fa-download mr-1"></i>Download</button>
             </div>
           )}
         </div>
-      </div>
+      </GlassCard>
     </div>
   );
 }

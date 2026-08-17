@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import API from '../utils/api';
+import { PageHeader, GlassCard, GlassTable } from '../components/ui';
 
 export default function SalesmanList() {
   const [salesmen, setSalesmen] = useState([]);
@@ -51,106 +52,85 @@ export default function SalesmanList() {
     finally { setSaving(false); }
   };
 
+  const inputCls = "glass-input";
+  const labelCls = "block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5";
+
+  const columns = [
+    { label: 'Code', render: s => s.employeeCode || '-', tdClass: 'font-medium' },
+    { key: 'name', label: 'Name' },
+    { label: 'Phone', render: s => s.phone || '-' },
+    { label: 'Email', render: s => s.email || '-' },
+    { label: 'Commission', className: 'text-center', tdClass: 'text-center font-medium', render: s => `${s.commissionRate}%` },
+    { label: 'Territories', render: s => s.territory?.join(', ') || '-', tdClass: 'text-slate-500' },
+    { label: 'Branches', render: s => s.branches?.map(b => b.name).join(', ') || '-', tdClass: 'text-slate-500' },
+    { label: 'Actions', className: 'text-center', tdClass: 'text-center', render: s => (
+      <>
+        <button onClick={() => handleEdit(s)} className="btn btn-ghost btn-sm text-pharma-600 mr-1"><i className="fas fa-edit mr-1"></i>Edit</button>
+        <button onClick={() => handleDelete(s._id)} className="btn btn-ghost btn-sm text-red-400 hover:text-red-500"><i className="fas fa-trash mr-1"></i>Deactivate</button>
+      </>
+    ) },
+  ];
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Salesmen</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage sales representatives and their commission targets</p>
-        </div>
-        <button onClick={() => { setShowForm(!showForm); setEditingId(null); setForm({ name: '', employeeCode: '', phone: '', email: '', commissionRate: 0, branches: [], territory: '' }); }} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2">
+    <div className="space-y-5">
+      <PageHeader title="Salesmen" subtitle="Manage sales representatives and commission targets">
+        <button onClick={() => { setShowForm(!showForm); setEditingId(null); setForm({ name: '', employeeCode: '', phone: '', email: '', commissionRate: 0, branches: [], territory: '' }); }} className={`btn btn-sm ${showForm ? 'btn-secondary' : 'btn-primary'}`}>
           <i className={`fas ${showForm ? 'fa-times' : 'fa-plus'}`}></i> {showForm ? 'Cancel' : 'Add Salesman'}
         </button>
-      </div>
+      </PageHeader>
 
       {showForm && (
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">{editingId ? 'Edit Salesman' : 'New Salesman'}</h2>
+        <GlassCard className="animate-fade-up">
+          <h2 className="text-sm font-semibold text-slate-700 mb-4">{editingId ? 'Edit Salesman' : 'New Salesman'}</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-                <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" />
+                <label className={labelCls}>Name *</label>
+                <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required className={inputCls} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Employee Code</label>
-                <input value={form.employeeCode} onChange={e => setForm({ ...form, employeeCode: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none uppercase" />
+                <label className={labelCls}>Employee Code</label>
+                <input value={form.employeeCode} onChange={e => setForm({ ...form, employeeCode: e.target.value })} className={`${inputCls} uppercase`} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" />
+                <label className={labelCls}>Phone</label>
+                <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className={inputCls} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" />
+                <label className={labelCls}>Email</label>
+                <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className={inputCls} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Commission Rate (%)</label>
-                <input type="number" step="0.01" value={form.commissionRate} onChange={e => setForm({ ...form, commissionRate: parseFloat(e.target.value) || 0 })} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" />
+                <label className={labelCls}>Commission Rate (%)</label>
+                <input type="number" step="0.01" value={form.commissionRate} onChange={e => setForm({ ...form, commissionRate: parseFloat(e.target.value) || 0 })} className={inputCls} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Territories (comma separated)</label>
-                <input value={form.territory} onChange={e => setForm({ ...form, territory: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none" placeholder="e.g. North, South, East" />
+                <label className={labelCls}>Territories (comma separated)</label>
+                <input value={form.territory} onChange={e => setForm({ ...form, territory: e.target.value })} className={inputCls} placeholder="e.g. North, South, East" />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Assigned Branches</label>
+              <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Assigned Branches</label>
               <div className="flex flex-wrap gap-2">
                 {branches.map(b => (
-                  <label key={b._id} className="flex items-center gap-1 px-3 py-1.5 border rounded-lg text-sm cursor-pointer hover:bg-gray-50">
-                    <input type="checkbox" checked={form.branches.includes(b._id)} onChange={e => { const updated = e.target.checked ? [...form.branches, b._id] : form.branches.filter(id => id !== b._id); setForm({ ...form, branches: updated }); }} className="rounded" />
+                  <label key={b._id} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/60 border border-slate-200 text-sm cursor-pointer hover:border-pharma-300 transition-colors">
+                    <input type="checkbox" checked={form.branches.includes(b._id)} onChange={e => { const updated = e.target.checked ? [...form.branches, b._id] : form.branches.filter(id => id !== b._id); setForm({ ...form, branches: updated }); }} className="rounded accent-pharma-500" />
                     {b.name}
                   </label>
                 ))}
               </div>
             </div>
-            <div className="flex gap-3">
-              <button type="submit" disabled={saving} className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50">{saving ? 'Saving...' : (editingId ? 'Update' : 'Create')}</button>
-              <button type="button" onClick={() => { setShowForm(false); setEditingId(null); }} className="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-gray-200">Cancel</button>
+            <div className="flex flex-wrap gap-3">
+              <button type="submit" disabled={saving} className="btn btn-primary btn-glow">{saving ? 'Saving...' : (editingId ? 'Update' : 'Create')}</button>
+              <button type="button" onClick={() => { setShowForm(false); setEditingId(null); }} className="btn btn-secondary">Cancel</button>
             </div>
           </form>
-        </div>
+        </GlassCard>
       )}
 
-      <div className="bg-white rounded-xl shadow-sm p-5">
-        {loading ? <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div> : salesmen.length === 0 ? (
-          <p className="text-center text-gray-400 py-8">No salesmen yet. Click "Add Salesman" to create one.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-600">
-                <tr>
-                  <th className="text-left p-3 font-medium">Code</th>
-                  <th className="text-left p-3 font-medium">Name</th>
-                  <th className="text-left p-3 font-medium">Phone</th>
-                  <th className="text-left p-3 font-medium">Email</th>
-                  <th className="text-center p-3 font-medium">Commission</th>
-                  <th className="text-left p-3 font-medium">Territories</th>
-                  <th className="text-left p-3 font-medium">Branches</th>
-                  <th className="text-center p-3 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {salesmen.map(s => (
-                  <tr key={s._id} className="hover:bg-gray-50">
-                    <td className="p-3 font-medium">{s.employeeCode || '-'}</td>
-                    <td className="p-3">{s.name}</td>
-                    <td className="p-3">{s.phone || '-'}</td>
-                    <td className="p-3">{s.email || '-'}</td>
-                    <td className="p-3 text-center">{s.commissionRate}%</td>
-                    <td className="p-3">{s.territory?.join(', ') || '-'}</td>
-                    <td className="p-3">{s.branches?.map(b => b.name).join(', ') || '-'}</td>
-                    <td className="p-3 text-center">
-                      <button onClick={() => handleEdit(s)} className="text-blue-600 hover:underline text-xs mr-3"><i className="fas fa-edit mr-1"></i>Edit</button>
-                      <button onClick={() => handleDelete(s._id)} className="text-red-600 hover:underline text-xs"><i className="fas fa-trash mr-1"></i>Deactivate</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <GlassCard>
+        <GlassTable columns={columns} data={salesmen} loading={loading} emptyMessage={<>No salesmen yet. <button onClick={() => setShowForm(true)} className="text-pharma-600 font-medium hover:underline">Add one now.</button></>} />
+      </GlassCard>
     </div>
   );
 }

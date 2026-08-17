@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../utils/api';
+import { PageHeader, GlassCard, GlassTable } from '../components/ui';
 
 export default function PurchaseInvoiceList() {
   const [invoices, setInvoices] = useState([]);
@@ -17,54 +18,31 @@ export default function PurchaseInvoiceList() {
     }).catch(console.error).finally(() => setLoading(false));
   }, [from, to]);
 
+  const statusBadge = { paid: 'badge-green', partial: 'badge-yellow', unpaid: 'badge-red', pending: 'badge-red' };
+
+  const columns = [
+    { key: 'invoiceNo', label: 'Invoice No', tdClass: 'font-medium' },
+    { label: 'Supplier', render: inv => inv.supplier?.name || 'Unknown' },
+    { label: 'Date', render: inv => new Date(inv.invoiceDate).toLocaleDateString('en-IN'), tdClass: 'text-slate-500' },
+    { label: 'Amount', className: 'text-right', tdClass: 'text-right font-medium', render: inv => `₹${inv.totalAmount?.toFixed(2)}` },
+    { label: 'Status', className: 'text-center', tdClass: 'text-center', render: inv => <span className={`badge ${statusBadge[inv.paymentStatus] || 'badge-gray'}`}>{inv.paymentStatus}</span> },
+    { label: 'Actions', className: 'text-center', tdClass: 'text-center', render: inv => (
+      <button onClick={() => alert(JSON.stringify(inv, null, 2))} className="btn btn-ghost btn-sm text-pharma-600">View</button>
+    ) },
+  ];
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Purchase Invoices</h1>
-        <Link to="/purchases/new" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2">
-          <i className="fas fa-plus"></i> New Purchase
-        </Link>
-      </div>
-      <div className="bg-white rounded-xl shadow-sm p-5">
-        <div className="flex gap-4 mb-4">
-          <input type="date" value={from} onChange={e => setFrom(e.target.value)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm outline-none" />
-          <input type="date" value={to} onChange={e => setTo(e.target.value)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm outline-none" />
+    <div className="space-y-5">
+      <PageHeader title="Purchase Invoices" subtitle="Bills received from suppliers">
+        <Link to="/purchases/new" className="btn btn-primary"><i className="fas fa-plus"></i> New Purchase</Link>
+      </PageHeader>
+      <GlassCard>
+        <div className="flex flex-wrap gap-3 mb-4 items-center">
+          <input type="date" value={from} onChange={e => setFrom(e.target.value)} className="glass-input w-44" />
+          <input type="date" value={to} onChange={e => setTo(e.target.value)} className="glass-input w-44" />
         </div>
-        {loading ? (
-          <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-600">
-                <tr>
-                  <th className="text-left p-3 font-medium">Invoice No</th>
-                  <th className="text-left p-3 font-medium">Supplier</th>
-                  <th className="text-left p-3 font-medium">Date</th>
-                  <th className="text-right p-3 font-medium">Amount</th>
-                  <th className="text-center p-3 font-medium">Status</th>
-                  <th className="text-center p-3 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {invoices.map(inv => (
-                  <tr key={inv._id} className="hover:bg-gray-50">
-                    <td className="p-3 font-medium">{inv.invoiceNo}</td>
-                    <td className="p-3">{inv.supplier?.name || 'Unknown'}</td>
-                    <td className="p-3 text-gray-500">{new Date(inv.invoiceDate).toLocaleDateString('en-IN')}</td>
-                    <td className="p-3 text-right font-medium">₹{inv.totalAmount?.toFixed(2)}</td>
-                    <td className="p-3 text-center">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${inv.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' : inv.paymentStatus === 'partial' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>{inv.paymentStatus}</span>
-                    </td>
-                    <td className="p-3 text-center">
-                      <button onClick={() => alert(JSON.stringify(inv, null, 2))} className="text-blue-600 hover:underline text-xs">View</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+        <GlassTable columns={columns} data={invoices} loading={loading} emptyMessage="No purchase invoices found" />
+      </GlassCard>
     </div>
   );
 }

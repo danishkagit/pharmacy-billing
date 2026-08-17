@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../utils/api';
+import { PageHeader, GlassTable } from '../components/ui';
 
 export default function ExpenseList() {
   const [expenses, setExpenses] = useState([]);
@@ -14,46 +15,28 @@ export default function ExpenseList() {
     }).catch(console.error).finally(() => setLoading(false));
   }, [from, to]);
 
+  const columns = [
+    { label: 'Date', render: e => new Date(e.expenseDate).toLocaleDateString('en-IN') },
+    { label: 'Category', render: e => <span className="font-medium">{e.category}</span> },
+    { label: 'Description', className: 'text-slate-500', render: e => e.description || '-' },
+    { label: 'Vendor', className: 'text-slate-500', render: e => e.vendor || '-' },
+    { label: 'Mode', render: e => <span className="capitalize">{e.paymentMode}</span> },
+    { label: 'Amount', className: 'text-right', tdClass: 'text-right', render: e => <span className="font-medium">₹{e.totalAmount?.toFixed(2)}</span> },
+  ];
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Expenses</h1>
-        <Link to="/expenses/new" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"><i className="fas fa-plus mr-2"></i>Add Expense</Link>
+    <div className="space-y-5">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <PageHeader title="Expenses" subtitle="Track operational outgoings" />
+        <Link to="/expenses/new" className="btn btn-primary btn-glow"><i className="fas fa-plus mr-1"></i>Add Expense</Link>
       </div>
-      <div className="bg-white rounded-xl shadow-sm p-5">
-        <div className="flex gap-4 mb-4">
-          <input type="date" value={from} onChange={e => setFrom(e.target.value)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm outline-none" />
-          <input type="date" value={to} onChange={e => setTo(e.target.value)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm outline-none" />
-        </div>
-        {loading ? <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div> : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-600">
-                <tr>
-                  <th className="text-left p-3 font-medium">Date</th>
-                  <th className="text-left p-3 font-medium">Category</th>
-                  <th className="text-left p-3 font-medium">Description</th>
-                  <th className="text-left p-3 font-medium">Vendor</th>
-                  <th className="text-left p-3 font-medium">Mode</th>
-                  <th className="text-right p-3 font-medium">Amount</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {expenses.map(e => (
-                  <tr key={e._id} className="hover:bg-gray-50">
-                    <td className="p-3">{new Date(e.expenseDate).toLocaleDateString('en-IN')}</td>
-                    <td className="p-3 font-medium">{e.category}</td>
-                    <td className="p-3 text-gray-500">{e.description || '-'}</td>
-                    <td className="p-3 text-gray-500">{e.vendor || '-'}</td>
-                    <td className="p-3 capitalize">{e.paymentMode}</td>
-                    <td className="p-3 text-right font-medium">₹{e.totalAmount?.toFixed(2)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+      <div className="surface-1 rounded-xl p-4 flex flex-wrap gap-3 items-center">
+        <span className="text-sm font-medium text-slate-600">Filter by date:</span>
+        <input type="date" value={from} onChange={e => setFrom(e.target.value)} className="glass-input w-auto" />
+        <span className="text-slate-400">to</span>
+        <input type="date" value={to} onChange={e => setTo(e.target.value)} className="glass-input w-auto" />
       </div>
+      <GlassTable columns={columns} data={expenses} loading={loading} emptyMessage="No expenses recorded" />
     </div>
   );
 }

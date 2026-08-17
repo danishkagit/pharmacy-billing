@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import API from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { PageHeader, GlassTable } from '../components/ui';
 
 export default function StaffManagement() {
   const { hasPermission } = useAuth();
@@ -24,44 +25,24 @@ export default function StaffManagement() {
     } catch (err) { alert(err?.error || 'Failed'); }
   };
 
-  if (!hasPermission('staff')) return <div className="text-center py-12 text-gray-500"><i className="fas fa-lock text-4xl mb-4"></i><p>You don't have permission to manage staff.</p></div>;
+  if (!hasPermission('staff')) return <div className="text-center py-12 text-slate-500"><i className="fas fa-lock text-4xl mb-4 text-slate-300"></i><p>You don't have permission to manage staff.</p></div>;
+
+  const columns = [
+    { label: 'Name', render: s => <span className="font-medium">{s.name}</span> },
+    { label: 'Email', render: s => s.email },
+    { label: 'Role', render: s => <span className="badge badge-blue capitalize">{s.role}</span> },
+    { label: 'Branch', className: 'text-slate-500', render: s => s.branch?.name || '-' },
+    { label: 'Active', className: 'text-center', tdClass: 'text-center', render: s => s.isActive ? <span className="text-emerald-500"><i className="fas fa-check-circle"></i></span> : <span className="text-red-500"><i className="fas fa-times-circle"></i></span> },
+    { label: 'Last Login', className: 'text-slate-500', render: s => s.lastLogin ? new Date(s.lastLogin).toLocaleString('en-IN') : 'Never' },
+  ];
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Staff Management</h1>
-        <button onClick={addStaff} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"><i className="fas fa-user-plus mr-2"></i>Add Staff</button>
+    <div className="space-y-5">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <PageHeader title="Staff Management" subtitle="Manage users and their access roles" />
+        <button onClick={addStaff} className="btn btn-primary btn-glow"><i className="fas fa-user-plus mr-1"></i>Add Staff</button>
       </div>
-      <div className="bg-white rounded-xl shadow-sm p-5">
-        {loading ? <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div> : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-600">
-                <tr>
-                  <th className="text-left p-3 font-medium">Name</th>
-                  <th className="text-left p-3 font-medium">Email</th>
-                  <th className="text-left p-3 font-medium">Role</th>
-                  <th className="text-left p-3 font-medium">Branch</th>
-                  <th className="text-center p-3 font-medium">Active</th>
-                  <th className="text-left p-3 font-medium">Last Login</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {staff.map(s => (
-                  <tr key={s._id} className="hover:bg-gray-50">
-                    <td className="p-3 font-medium">{s.name}</td>
-                    <td className="p-3">{s.email}</td>
-                    <td className="p-3"><span className="px-2 py-0.5 rounded text-xs font-medium capitalize bg-blue-100 text-blue-700">{s.role}</span></td>
-                    <td className="p-3 text-gray-500">{s.branch?.name || '-'}</td>
-                    <td className="p-3 text-center">{s.isActive ? <span className="text-green-600"><i className="fas fa-check-circle"></i></span> : <span className="text-red-500"><i className="fas fa-times-circle"></i></span>}</td>
-                    <td className="p-3 text-gray-500">{s.lastLogin ? new Date(s.lastLogin).toLocaleString('en-IN') : 'Never'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <GlassTable columns={columns} data={staff} loading={loading} emptyMessage="No staff members yet" />
     </div>
   );
 }

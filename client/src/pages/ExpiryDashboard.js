@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import API from '../utils/api';
+import { PageHeader, GlassCard, GlassTable } from '../components/ui';
 
 export default function ExpiryDashboard() {
   const [batches, setBatches] = useState([]);
@@ -13,62 +13,29 @@ export default function ExpiryDashboard() {
     }).catch(console.error).finally(() => setLoading(false));
   }, [days]);
 
+  const columns = [
+    { label: 'Medicine', render: b => b.medicineName, tdClass: 'font-medium' },
+    { label: 'Manufacturer', render: b => b.manufacturer || '-', tdClass: 'text-slate-500' },
+    { label: 'Batch', render: b => b.batchNo, tdClass: 'text-slate-500' },
+    { label: 'Qty', className: 'text-center', tdClass: 'text-center', render: b => b.qty },
+    { label: 'MRP', className: 'text-center', tdClass: 'text-center', render: b => `₹${b.mrp}` },
+    { label: 'Expiry', className: 'text-center', tdClass: 'text-center', render: b => new Date(b.expiryDate).toLocaleDateString('en-IN') },
+    { label: 'Days Left', className: 'text-center', tdClass: 'text-center', render: b => <span className={`font-bold ${b.daysRemaining <= 30 ? 'text-red-600' : b.daysRemaining <= 60 ? 'text-orange-600' : 'text-yellow-600'}`}>{b.daysRemaining}</span> },
+    { label: 'Location', render: b => b.location || '-', tdClass: 'text-slate-500' },
+  ];
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Expiry Dashboard</h1>
-          <p className="text-gray-500 text-sm mt-1">{batches.length} batch(es) expiring within {days} days</p>
-        </div>
-        <div className="flex gap-2">
+    <div className="space-y-5">
+      <PageHeader title="Expiry Dashboard" subtitle={`${batches.length} batch(es) expiring within ${days} days`}>
+        <div className="inline-flex bg-white/60 backdrop-blur-md rounded-xl p-1 gap-0.5 shadow-sm border border-white/70">
           {[30, 60, 90].map(d => (
-            <button key={d} onClick={() => setDays(d)} className={`px-4 py-2 rounded-lg text-sm font-medium ${days === d ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{d} days</button>
+            <button key={d} onClick={() => setDays(d)} className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${days === d ? 'bg-white text-pharma-700 shadow glow-soft' : 'text-slate-500 hover:text-slate-700 hover:bg-white/70'}`}>{d} days</button>
           ))}
         </div>
-      </div>
-      <div className="bg-white rounded-xl shadow-sm p-5">
-        {loading ? (
-          <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
-        ) : batches.length === 0 ? (
-          <div className="text-center py-12">
-            <i className="fas fa-check-circle text-green-500 text-4xl mb-3"></i>
-            <p className="text-gray-500">No items expiring within {days} days</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-600">
-                <tr>
-                  <th className="text-left p-3 font-medium">Medicine</th>
-                  <th className="text-left p-3 font-medium">Manufacturer</th>
-                  <th className="text-left p-3 font-medium">Batch</th>
-                  <th className="text-center p-3 font-medium">Qty</th>
-                  <th className="text-center p-3 font-medium">MRP</th>
-                  <th className="text-center p-3 font-medium">Expiry</th>
-                  <th className="text-center p-3 font-medium">Days Left</th>
-                  <th className="text-left p-3 font-medium">Location</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {batches.map((b, i) => (
-                  <tr key={i} className={b.daysRemaining <= 30 ? 'bg-red-50' : b.daysRemaining <= 60 ? 'bg-orange-50' : 'bg-yellow-50'}>
-                    <td className="p-3 font-medium">{b.medicineName}</td>
-                    <td className="p-3 text-gray-500">{b.manufacturer || '-'}</td>
-                    <td className="p-3 text-gray-500">{b.batchNo}</td>
-                    <td className="p-3 text-center">{b.qty}</td>
-                    <td className="p-3 text-center">₹{b.mrp}</td>
-                    <td className="p-3 text-center">{new Date(b.expiryDate).toLocaleDateString('en-IN')}</td>
-                    <td className="p-3 text-center">
-                      <span className={`font-bold ${b.daysRemaining <= 30 ? 'text-red-600' : b.daysRemaining <= 60 ? 'text-orange-600' : 'text-yellow-600'}`}>{b.daysRemaining}</span>
-                    </td>
-                    <td className="p-3 text-gray-500">{b.location || '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      </PageHeader>
+      <GlassCard>
+        <GlassTable columns={columns} data={batches} loading={loading} emptyMessage={<>No items expiring within {days} days</>} />
+      </GlassCard>
     </div>
   );
 }

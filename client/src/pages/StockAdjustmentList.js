@@ -1,21 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../utils/api';
+import { PageHeader, GlassCard, GlassTable } from '../components/ui';
 
-const typeColors = {
-  write_off: 'bg-red-100 text-red-700',
-  damage: 'bg-orange-100 text-orange-700',
-  physical_count: 'bg-blue-100 text-blue-700',
-  theft: 'bg-purple-100 text-purple-700',
-  return_to_supplier: 'bg-indigo-100 text-indigo-700',
-  other: 'bg-gray-100 text-gray-700'
+const typeBadge = {
+  write_off: 'badge-red',
+  damage: 'badge-orange',
+  physical_count: 'badge-blue',
+  theft: 'badge-purple',
+  return_to_supplier: 'badge-purple',
+  other: 'badge-gray'
 };
 
-const statusColors = {
-  pending: 'bg-yellow-100 text-yellow-700',
-  approved: 'bg-green-100 text-green-700',
-  rejected: 'bg-red-100 text-red-700'
-};
+const statusBadge = { pending: 'badge-yellow', approved: 'badge-green', rejected: 'badge-red' };
 
 export default function StockAdjustmentList() {
   const [adjustments, setAdjustments] = useState([]);
@@ -27,48 +24,24 @@ export default function StockAdjustmentList() {
     }).catch(console.error).finally(() => setLoading(false));
   }, []);
 
+  const columns = [
+    { key: 'adjustmentNo', label: 'Adjustment No', tdClass: 'font-medium' },
+    { label: 'Type', render: a => <span className={`badge ${typeBadge[a.type] || 'badge-gray'}`}>{a.type?.replace(/_/g, ' ')}</span> },
+    { label: 'Items', render: a => `${a.items?.length || 0} item(s)` },
+    { label: 'Total Amount', className: 'text-right', tdClass: 'text-right font-medium', render: a => `₹${(a.totalAmount || 0).toFixed(2)}` },
+    { label: 'Reason', render: a => <span className="capitalize">{a.reason?.replace(/_/g, ' ') || '-'}</span> },
+    { label: 'Status', className: 'text-center', tdClass: 'text-center', render: a => <span className={`badge ${statusBadge[a.status] || 'badge-gray'}`}>{a.status}</span> },
+    { label: 'Date', render: a => new Date(a.createdAt || a.date).toLocaleDateString('en-IN'), tdClass: 'text-slate-500' },
+  ];
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Stock Adjustments</h1>
-        <Link to="/stock-adjustments/new" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2">
-          <i className="fas fa-plus"></i> New Adjustment
-        </Link>
-      </div>
-      <div className="bg-white rounded-xl shadow-sm p-5">
-        {loading ? <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div> : adjustments.length === 0 ? (
-          <p className="text-center text-gray-400 py-8">No stock adjustments yet</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-600">
-                <tr>
-                  <th className="text-left p-3 font-medium">Adjustment No</th>
-                  <th className="text-left p-3 font-medium">Type</th>
-                  <th className="text-left p-3 font-medium">Items</th>
-                  <th className="text-right p-3 font-medium">Total Amount</th>
-                  <th className="text-left p-3 font-medium">Reason</th>
-                  <th className="text-center p-3 font-medium">Status</th>
-                  <th className="text-left p-3 font-medium">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {adjustments.map(a => (
-                  <tr key={a._id} className="hover:bg-gray-50">
-                    <td className="p-3 font-medium">{a.adjustmentNo}</td>
-                    <td className="p-3"><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${typeColors[a.type]}`}>{a.type?.replace(/_/g, ' ')}</span></td>
-                    <td className="p-3">{a.items?.length || 0} item(s)</td>
-                    <td className="p-3 text-right font-medium">₹{(a.totalAmount || 0).toFixed(2)}</td>
-                    <td className="p-3 capitalize">{a.reason?.replace(/_/g, ' ') || '-'}</td>
-                    <td className="p-3 text-center"><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[a.status]}`}>{a.status}</span></td>
-                    <td className="p-3 text-gray-500">{new Date(a.createdAt || a.date).toLocaleDateString('en-IN')}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+    <div className="space-y-5">
+      <PageHeader title="Stock Adjustments" subtitle="Inventory corrections and counts">
+        <Link to="/stock-adjustments/new" className="btn btn-primary"><i className="fas fa-plus"></i> New Adjustment</Link>
+      </PageHeader>
+      <GlassCard>
+        <GlassTable columns={columns} data={adjustments} loading={loading} emptyMessage="No stock adjustments yet" />
+      </GlassCard>
     </div>
   );
 }

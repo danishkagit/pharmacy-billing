@@ -69,10 +69,10 @@ import SalesmanList from './pages/SalesmanList';
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-100">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pharma-500 to-pharma-600 flex items-center justify-center animate-pulse">
-          <i className="fas fa-prescription-bottle-medical text-white"></i>
+    <div className="flex items-center justify-center min-h-screen grad-mesh">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-14 h-14 rounded-2xl grad-accent flex items-center justify-center animate-pulse shadow-glow">
+          <i className="fas fa-prescription-bottle-medical text-white text-lg"></i>
         </div>
         <p className="text-sm text-slate-400">Loading...</p>
       </div>

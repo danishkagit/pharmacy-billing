@@ -42,16 +42,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
-  try {
-    const medicine = await Medicine.findOne({ _id: req.params.id, company: req.company._id }).populate('preferredSupplier', 'name');
-    if (!medicine) return res.status(404).json({ success: false, error: 'Medicine not found' });
-    res.json({ success: true, data: medicine });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
 router.post('/', hasPermission('inventory'), async (req, res) => {
   try {
     let data = { ...req.body, company: req.company._id };
@@ -101,6 +91,70 @@ router.delete('/:id', hasPermission('inventory'), async (req, res) => {
   }
 });
 
+// Suggestion/autocomplete search with salt-aware, prefix-ranked matching.
+// q: free-form query (>= 3 chars). Matches medicine name, salt/composition,
+// and manufacturer. Results ranked: exact name prefix > next doses/salts.
+router.get('/suggest', async (req, res) => {
+  try {
+    const { q } = req.query;
+    const need = 3;
+    if (!q || q.trim().length < need) return res.json({ success: true, data: [] });
+    const query = q.trim();
+    const tokens = query.split(/\s+/).filter(Boolean);
+    const qEsc = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const tokenEscs = tokens.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
+    // name-prefix regex (e.g. "azu" -> ^azu...)
+    const namePrefix = new RegExp(`^${qEsc}`, 'i');
+    // each token must match somewhere among name/composition/manufacturer
+    const tokenOr = tokenEscs.map(t => new RegExp(t, 'i'));
+    const filter = {
+      company: req.company._id,
+      isActive: true,
+      $and: tokenOr.map(re => ({
+        $or: [{ name: re }, { composition: re }, { manufacturer: re }]
+      }))
+    };
+
+    const medicines = await Medicine.find(filter)
+      .select('name composition manufacturer category schedule gstRate hsn mrp requiresPrescription')
+      .limit(60);
+
+    const score = (m) => {
+      const name = (m.name || '').toLowerCase();
+      const comp = (m.composition || '').toLowerCase();
+      const mfr = (m.manufacturer || '').toLowerCase();
+      const qq = query.toLowerCase();
+      let s = 0;
+      // Name is the strongest signal
+      if (name.startsWith(qq)) s += 10000;
+      else if (name.includes(qq)) s += 5000;
+      // Composition token prefix match (salt autocomplete)
+      const compTokens = comp.split(/[/+,&+\s-]+/).map(t => t.trim()).filter(Boolean);
+      const qToken = tokens[0].toLowerCase();
+      if (compTokens.some(t => t.toLowerCase().startsWith(qToken))) s += 4000;
+      else if (comp.includes(qq)) s += 2500;
+      // Manufacturer
+      if (mfr.startsWith(qToken)) s += 1500;
+      else if (mfr.includes(qq)) s += 800;
+      // Shorter composition = more specific salt, boost a bit
+      s += Math.max(0, 200 - comp.length);
+      return s;
+    };
+
+    const ranked = medicines
+      .map(m => ({ m, s: score(m) }))
+      .filter(x => x.s > 0)
+      .sort((a, b) => b.s - a.s)
+      .slice(0, 30)
+      .map(x => x.m);
+
+    res.json({ success: true, data: ranked, query, core: true });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 router.get('/batch/search', async (req, res) => {
   try {
     const { q } = req.query;
@@ -115,6 +169,16 @@ router.get('/batch/search', async (req, res) => {
       ]
     }).select('name composition manufacturer schedule hsn gstRate mrp requiresPrescription').limit(20);
     res.json({ success: true, data: medicines });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/:id', async (req, res) => {
+  try {
+    const medicine = await Medicine.findOne({ _id: req.params.id, company: req.company._id }).populate('preferredSupplier', 'name');
+    if (!medicine) return res.status(404).json({ success: false, error: 'Medicine not found' });
+    res.json({ success: true, data: medicine });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

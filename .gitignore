@@ -1,8 +1,46 @@
+# ==========================================
+# Pharmacy Billing - Gitignore
+# ==========================================
+
+# ==== Dependencies (Node.js) ====
 node_modules/
-build/
+package-lock.json
+
+# ==== Client Dependencies ====
+client/node_modules/
+client/build/
+
+# ==== Environment Variables (CRITICAL - NEVER COMMIT) ====
 .env
 .env.local
+.env.production
+
+# ==== Uploads (store in cloud, not repo) ====
+uploads/
+/uploads
+
+# ==== Logs
 *.log
+logs/
+
+# ==== IDE / Workspace
+.vscode/
+*.code-workspace
+
+# ==== Operating System
 .DS_Store
-server/uploads/*
-!server/uploads/.gitkeep
+Thumbs.db
+
+# ==== Test files
+__tests__/
+tests/
+
+# ==== SQL/Database specific
+*.sql
+*.db
+*.sqlite
+
+# ==== Docker
+.dockerignore
+
+# ==========================================

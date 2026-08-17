@@ -60,23 +60,27 @@ export default function LoginPage() {
       </div>
 
       {/* Right login form */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-white">
-        <div className="w-full max-w-sm">
+      <div className="flex-1 flex items-center justify-center p-6 relative">
+        <div className="absolute inset-0 opacity-60 pointer-events-none">
+          <div className="absolute top-10 right-10 w-72 h-72 bg-pharma-300/30 rounded-full blur-3xl animate-drift"></div>
+          <div className="absolute bottom-10 left-10 w-64 h-64 bg-focus-300/30 rounded-full blur-3xl animate-drift"></div>
+        </div>
+        <div className="w-full max-w-sm relative">
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pharma-500 to-pharma-600 flex items-center justify-center mx-auto mb-3">
+            <div className="w-12 h-12 rounded-xl grad-accent flex items-center justify-center mx-auto mb-3 shadow-glow">
               <i className="fas fa-prescription-bottle-medical text-white text-lg"></i>
             </div>
             <h1 className="text-xl font-bold text-slate-900">PharmacyBilling</h1>
           </div>
 
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-slate-900">Sign in</h2>
+            <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Sign in</h2>
             <p className="text-sm text-slate-500 mt-1.5">Enter your credentials to access your pharmacy dashboard</p>
           </div>
 
           {error && (
-            <div className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm mb-5 border border-red-100">
+            <div className="flex items-center gap-2 bg-red-50/80 backdrop-blur-sm text-red-600 px-4 py-3 rounded-xl text-sm mb-5 border border-red-100 animate-fade-in">
               <i className="fas fa-exclamation-circle"></i>
               {error}
             </div>
@@ -84,7 +88,7 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Email address</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email address</label>
               <input
                 type="email"
                 value={email}
@@ -96,7 +100,7 @@ export default function LoginPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Password</label>
               <input
                 type="password"
                 value={password}
@@ -109,7 +113,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full btn btn-primary py-2.5 text-sm"
+              className="w-full btn btn-primary btn-glow py-2.5 text-sm"
             >
               {loading ? (
                 <>
@@ -126,9 +130,9 @@ export default function LoginPage() {
           </form>
 
           <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div>
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-black/10"></div></div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-white px-3 text-slate-400">or</span>
+              <span className="px-3 text-slate-400">or</span>
             </div>
           </div>
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../utils/api';
+import { PageHeader, GlassCard, GlassTable } from '../components/ui';
 
 export default function SupplierList() {
   const [suppliers, setSuppliers] = useState([]);
@@ -13,52 +14,44 @@ export default function SupplierList() {
     }).catch(console.error).finally(() => setLoading(false));
   }, [search]);
 
+  const columns = [
+    { key: 'name', label: 'Name', tdClass: 'font-medium' },
+    { key: 'company', label: 'Company', render: s => s.company || '-' },
+    { key: 'phone', label: 'Phone', render: s => s.phone || '-' },
+    { key: 'gstin', label: 'GSTIN', render: s => s.gstin || '-' },
+    { key: 'dlNo', label: 'DL No', render: s => s.dlNo || '-' },
+    { key: 'creditDays', label: 'Credit Days', className: 'text-right', tdClass: 'text-right' },
+    {
+      label: 'Actions', className: 'text-center', tdClass: 'text-center',
+      render: s => (
+        <>
+          <Link to={`/suppliers/${s._id}/edit`} className="btn btn-ghost btn-sm text-pharma-600">Edit</Link>
+          <button onClick={() => { if (window.confirm('Deactivate?')) API.delete(`/suppliers/${s._id}`).then(() => setSuppliers(prev => prev.filter(x => x._id !== s._id))); }} className="btn btn-ghost btn-sm text-red-400 hover:text-red-500">Deactivate</button>
+        </>
+      ),
+    },
+  ];
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Suppliers</h1>
-        <Link to="/suppliers/new" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2">
+    <div className="space-y-5">
+      <PageHeader title="Suppliers" subtitle="Manage your vendors and purchase contacts">
+        <Link to="/suppliers/new" className="btn btn-primary">
           <i className="fas fa-plus"></i> Add Supplier
         </Link>
-      </div>
-      <div className="bg-white rounded-xl shadow-sm p-5">
-        <div className="flex gap-4 mb-4">
-          <input placeholder="Search by name, company or phone..." value={search} onChange={e => setSearch(e.target.value)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm outline-none" />
+      </PageHeader>
+      <GlassCard>
+        <div className="flex flex-wrap gap-3 mb-4">
+          <input placeholder="Search by name, company or phone..." value={search} onChange={e => setSearch(e.target.value)} className="glass-input flex-1 min-w-[220px]" />
         </div>
-        {loading ? <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div> : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-600">
-                <tr>
-                  <th className="text-left p-3 font-medium">Name</th>
-                  <th className="text-left p-3 font-medium">Company</th>
-                  <th className="text-left p-3 font-medium">Phone</th>
-                  <th className="text-left p-3 font-medium">GSTIN</th>
-                  <th className="text-left p-3 font-medium">DL No</th>
-                  <th className="text-right p-3 font-medium">Credit Days</th>
-                  <th className="text-center p-3 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {suppliers.map(s => (
-                  <tr key={s._id} className="hover:bg-gray-50">
-                    <td className="p-3 font-medium">{s.name}</td>
-                    <td className="p-3 text-gray-500">{s.company || '-'}</td>
-                    <td className="p-3 text-gray-500">{s.phone || '-'}</td>
-                    <td className="p-3 text-gray-500">{s.gstin || '-'}</td>
-                    <td className="p-3 text-gray-500">{s.dlNo || '-'}</td>
-                    <td className="p-3 text-right">{s.creditDays}</td>
-                    <td className="p-3 text-center">
-                      <Link to={`/suppliers/${s._id}/edit`} className="text-blue-600 hover:underline text-xs mr-2">Edit</Link>
-                      <button onClick={() => { if (window.confirm('Deactivate?')) API.delete(`/suppliers/${s._id}`).then(() => setSuppliers(prev => prev.filter(x => x._id !== s._id))); }} className="text-red-500 hover:underline text-xs">Deactivate</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+        <div className="overflow-x-auto">
+          <GlassTable
+            columns={columns}
+            data={suppliers}
+            loading={loading}
+            emptyMessage="No suppliers found"
+          />
+        </div>
+      </GlassCard>
     </div>
   );
 }

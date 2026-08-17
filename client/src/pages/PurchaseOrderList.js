@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../utils/api';
+import { PageHeader, GlassCard, GlassTable, GlassTabs } from '../components/ui';
 
-const statusColors = {
-  draft: 'bg-gray-100 text-gray-700',
-  pending: 'bg-yellow-100 text-yellow-700',
-  approved: 'bg-blue-100 text-blue-700',
-  received: 'bg-green-100 text-green-700',
-  cancelled: 'bg-red-100 text-red-700'
+const statusBadge = {
+  draft: 'badge-gray',
+  pending: 'badge-yellow',
+  approved: 'badge-blue',
+  received: 'badge-green',
+  cancelled: 'badge-red'
 };
 
 export default function PurchaseOrderList() {
@@ -26,68 +27,47 @@ export default function PurchaseOrderList() {
     }).catch(console.error).finally(() => setLoading(false));
   }, [search, statusFilter]);
 
+  const tabs = [
+    { key: '', label: 'All' },
+    { key: 'draft', label: 'Draft' },
+    { key: 'pending', label: 'Pending' },
+    { key: 'approved', label: 'Approved' },
+    { key: 'received', label: 'Received' },
+    { key: 'cancelled', label: 'Cancelled' },
+  ];
+
+  const columns = [
+    { key: 'poNo', label: 'PO No', tdClass: 'font-medium' },
+    { label: 'Supplier', render: po => po.supplier?.name || 'Unknown' },
+    { label: 'Date', render: po => new Date(po.orderDate).toLocaleDateString('en-IN'), tdClass: 'text-slate-500' },
+    { label: 'Items', className: 'text-center', tdClass: 'text-center', render: po => po.items?.length || 0 },
+    { label: 'Total', className: 'text-right', tdClass: 'text-right font-medium', render: po => `₹${(po.totalAmount || 0).toFixed(2)}` },
+    { label: 'Status', className: 'text-center', tdClass: 'text-center', render: po => <span className={`badge ${statusBadge[po.status] || 'badge-gray'}`}>{po.status}</span> },
+    {
+      label: 'Actions', className: 'text-center', tdClass: 'text-center',
+      render: po => (
+        <>
+          <Link to={`/purchase-orders/${po._id}`} className="btn btn-ghost btn-sm text-pharma-600">View</Link>
+          {po.status !== 'cancelled' && po.status !== 'received' && (
+            <button onClick={() => { if (window.confirm('Cancel this PO?')) API.delete(`/purchase-orders/${po._id}`).then(() => setOrders(prev => prev.map(x => x._id === po._id ? { ...x, status: 'cancelled' } : x))); }} className="btn btn-ghost btn-sm text-red-400 hover:text-red-500">Cancel</button>
+          )}
+        </>
+      ),
+    },
+  ];
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Purchase Orders</h1>
-        <Link to="/purchase-orders/new" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2">
-          <i className="fas fa-plus"></i> New Purchase Order
-        </Link>
-      </div>
-      <div className="bg-white rounded-xl shadow-sm p-5">
-        <div className="flex gap-4 mb-4">
-          <input placeholder="Search by supplier name..." value={search} onChange={e => setSearch(e.target.value)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm outline-none" />
-          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm outline-none">
-            <option value="">All Status</option>
-            <option value="draft">Draft</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="received">Received</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+    <div className="space-y-5">
+      <PageHeader title="Purchase Orders" subtitle="Procurement orders to suppliers">
+        <Link to="/purchase-orders/new" className="btn btn-primary"><i className="fas fa-plus"></i> New Purchase Order</Link>
+      </PageHeader>
+      <GlassCard>
+        <div className="flex flex-wrap gap-3 mb-4 items-center">
+          <input placeholder="Search by supplier name..." value={search} onChange={e => setSearch(e.target.value)} className="glass-input flex-1 min-w-[220px]" />
+          <GlassTabs tabs={tabs} active={statusFilter} onChange={setStatusFilter} />
         </div>
-        {loading ? (
-          <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
-        ) : orders.length === 0 ? (
-          <div className="text-center py-8 text-gray-400">No purchase orders found. <Link to="/purchase-orders/new" className="text-blue-600 hover:underline">Create one</Link></div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-600">
-                <tr>
-                  <th className="text-left p-3 font-medium">PO No</th>
-                  <th className="text-left p-3 font-medium">Supplier</th>
-                  <th className="text-left p-3 font-medium">Date</th>
-                  <th className="text-center p-3 font-medium">Items</th>
-                  <th className="text-right p-3 font-medium">Total</th>
-                  <th className="text-center p-3 font-medium">Status</th>
-                  <th className="text-center p-3 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {orders.map(po => (
-                  <tr key={po._id} className="hover:bg-gray-50">
-                    <td className="p-3 font-medium">{po.poNo}</td>
-                    <td className="p-3">{po.supplier?.name || 'Unknown'}</td>
-                    <td className="p-3 text-gray-500">{new Date(po.orderDate).toLocaleDateString('en-IN')}</td>
-                    <td className="p-3 text-center">{po.items?.length || 0}</td>
-                    <td className="p-3 text-right font-medium">₹{(po.totalAmount || 0).toFixed(2)}</td>
-                    <td className="p-3 text-center">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[po.status] || 'bg-gray-100 text-gray-700'}`}>{po.status}</span>
-                    </td>
-                    <td className="p-3 text-center">
-                      <Link to={`/purchase-orders/${po._id}`} className="text-blue-600 hover:underline text-xs mr-2">View</Link>
-                      {po.status !== 'cancelled' && po.status !== 'received' && (
-                        <button onClick={() => { if (window.confirm('Cancel this PO?')) API.delete(`/purchase-orders/${po._id}`).then(() => setOrders(prev => prev.map(x => x._id === po._id ? { ...x, status: 'cancelled' } : x))); }} className="text-red-500 hover:underline text-xs">Cancel</button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+        <GlassTable columns={columns} data={orders} loading={loading} emptyMessage={<>No purchase orders found. <Link to="/purchase-orders/new" className="text-pharma-600 font-medium hover:underline">Create one</Link></>} />
+      </GlassCard>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import API from '../utils/api';
+import { PageHeader, GlassCard } from '../components/ui';
 
 export default function DoctorList() {
   const [doctors, setDoctors] = useState([]);
@@ -13,9 +14,8 @@ export default function DoctorList() {
   }, [search]);
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Doctors</h1>
+    <div className="space-y-5">
+      <PageHeader title="Doctors" subtitle="Prescribers registered in the system">
         <button onClick={async () => {
           const name = prompt('Doctor name:');
           if (name) {
@@ -24,23 +24,37 @@ export default function DoctorList() {
               if (res.success) setDoctors([...doctors, res.data]);
             } catch (e) { alert(e?.error || 'Failed'); }
           }
-        }} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"><i className="fas fa-plus mr-2"></i>Add Doctor</button>
-      </div>
-      <div className="bg-white rounded-xl shadow-sm p-5">
-        <input placeholder="Search doctors..." value={search} onChange={e => setSearch(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm outline-none mb-4" />
-        {loading ? <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div> : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        }} className="btn btn-primary btn-sm"><i className="fas fa-plus mr-1"></i>Add Doctor</button>
+      </PageHeader>
+      <GlassCard>
+        <input placeholder="Search by name, reg no or hospital..." value={search} onChange={e => setSearch(e.target.value)} className="glass-input mb-4 max-w-md" />
+        {loading ? (
+          <div className="flex justify-center py-14"><div className="animate-spin rounded-full h-8 w-8 border-2 border-slate-200 border-t-pharma-500"></div></div>
+        ) : doctors.length === 0 ? (
+          <div className="text-center py-14 text-slate-400">
+            <div className="w-14 h-14 rounded-2xl grad-accent-soft flex items-center justify-center mx-auto mb-3"><i className="fas fa-user-md text-pharma-400"></i></div>
+            <p className="font-medium">No doctors found. Add one to get started.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 stagger">
             {doctors.map(d => (
-              <div key={d._id} className="p-4 border border-gray-200 rounded-lg hover:shadow-sm">
-                <h3 className="font-medium">{d.name}</h3>
-                <p className="text-sm text-gray-500">{d.specialization || 'General'} {d.regNo ? `| Reg: ${d.regNo}` : ''}</p>
-                <p className="text-sm text-gray-400">{d.hospital || ''}</p>
-                {d.phone && <p className="text-sm text-gray-400">{d.phone}</p>}
+              <div key={d._id} className="app-card app-card-hover p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl grad-accent-soft flex items-center justify-center flex-shrink-0">
+                    <i className="fas fa-user-md text-pharma-600"></i>
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-slate-800 truncate">{d.name}</h3>
+                    <p className="text-xs text-slate-500">{d.specialization || 'General'} {d.regNo ? `| Reg: ${d.regNo}` : ''}</p>
+                  </div>
+                </div>
+                {d.hospital && <p className="text-xs text-slate-400 mt-2"><i className="fas fa-hospital-alt mr-1"></i>{d.hospital}</p>}
+                {d.phone && <p className="text-xs text-slate-400"><i className="fas fa-phone-alt mr-1"></i>{d.phone}</p>}
               </div>
             ))}
           </div>
         )}
-      </div>
+      </GlassCard>
     </div>
   );
 }

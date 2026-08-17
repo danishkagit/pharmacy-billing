@@ -11,6 +11,7 @@ const NarcoticsRegister = require('../models/NarcoticsRegister');
 const { hasPermission } = require('../middleware/rbac');
 const { calculateGST, roundOff } = require('../utils/helpers');
 const { sendSMS, sendWhatsApp } = require('../utils/sms');
+const upload = require('../middleware/upload');
 
 router.get('/', async (req, res) => {
   try {
@@ -58,7 +59,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.post('/', hasPermission('billing'), async (req, res) => {
+router.post('/', hasPermission('billing'), upload.single('billFile'), async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
@@ -135,6 +136,8 @@ router.post('/', hasPermission('billing'), async (req, res) => {
     const invoiceBase = subtotal + totalTax - (req.body.discountAmount || 0);
     const roundOffVal = roundOff(invoiceBase) - invoiceBase;
 
+    const billFile = req.file ? `/uploads/${req.file.filename}` : undefined;
+
     const invoice = await SaleInvoice.create([{
       invoiceNo,
       type: req.body.type || 'retail',
@@ -148,6 +151,7 @@ router.post('/', hasPermission('billing'), async (req, res) => {
       patientName: req.body.patientName,
       invoiceDate: req.body.invoiceDate || new Date(),
       dueDate: req.body.dueDate,
+      billFile,
       items,
       subtotal,
       discountAmount: (req.body.discountAmount || 0) + totalDiscount,
