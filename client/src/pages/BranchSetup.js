@@ -24,7 +24,7 @@ export default function BranchSetup() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <PageHeader title="Branches" subtitle="Manage multi-location pharmacy outlets" />
+        <PageHeader icon="code-branch" title="Branches" subtitle="Manage multi-location pharmacy outlets" />
         {hasPermission('settings') && <button onClick={addBranch} className="btn btn-primary btn-glow"><i className="fas fa-plus mr-1"></i>Add Branch</button>}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

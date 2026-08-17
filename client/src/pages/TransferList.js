@@ -62,7 +62,7 @@ export default function TransferList() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Inter-Branch Transfers" subtitle="Move stock between branches">
+      <PageHeader icon="exchange-alt" title="Inter-Branch Transfers" subtitle="Move stock between branches">
         <Link to="/transfers/new" className="btn btn-primary"><i className="fas fa-plus"></i> New Transfer</Link>
       </PageHeader>
       <GlassCard>

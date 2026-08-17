@@ -34,7 +34,7 @@ export default function SupplierList() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Suppliers" subtitle="Manage your vendors and purchase contacts">
+      <PageHeader icon="truck" title="Suppliers" subtitle="Manage your vendors and purchase contacts">
         <Link to="/suppliers/new" className="btn btn-primary">
           <i className="fas fa-plus"></i> Add Supplier
         </Link>

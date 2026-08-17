@@ -25,7 +25,7 @@ export default function PrescriptionList() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Prescriptions" subtitle="Manage patient prescriptions">
+      <PageHeader icon="prescription" title="Prescriptions" subtitle="Manage patient prescriptions">
         <Link to="/prescriptions/new" className="btn btn-primary"><i className="fas fa-plus"></i> Add Prescription</Link>
       </PageHeader>
       <GlassCard>

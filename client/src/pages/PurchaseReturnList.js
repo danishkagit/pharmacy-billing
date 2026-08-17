@@ -27,7 +27,7 @@ export default function PurchaseReturnList() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Purchase Returns" subtitle="Returns to suppliers">
+      <PageHeader icon="undo" title="Purchase Returns" subtitle="Returns to suppliers">
         <Link to="/purchase-returns/new" className="btn btn-primary"><i className="fas fa-plus"></i> New Return</Link>
       </PageHeader>
       <GlassCard>

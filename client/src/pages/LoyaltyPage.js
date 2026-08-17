@@ -56,7 +56,7 @@ export default function LoyaltyPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Loyalty Management" subtitle="Track points, rewards, and redemption" />
+      <PageHeader icon="gift" title="Loyalty Management" subtitle="Track points, rewards, and redemption" />
 
       <GlassCard>
         <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Select Customer</label>

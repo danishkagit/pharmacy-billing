@@ -23,7 +23,7 @@ export default function Settings() {
 
   return (
     <div className="max-w-xl mx-auto space-y-5">
-      <PageHeader title="Settings" subtitle="Manage your account and password" />
+      <PageHeader icon="cog" title="Settings" subtitle="Manage your account and password" />
 
       <GlassCard>
         <h2 className="text-base font-semibold text-slate-700 mb-4 flex items-center gap-2"><i className="fas fa-user-circle text-pharma-500"></i>Account</h2>

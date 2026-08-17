@@ -24,7 +24,7 @@ export default function PatientList() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Patients" subtitle="Registered patients and health profiles" />
+      <PageHeader icon="hospital-user" title="Patients" subtitle="Registered patients and health profiles" />
       <GlassCard>
         <input placeholder="Search by name, phone or ABHA ID..." value={search} onChange={e => setSearch(e.target.value)} className="glass-input mb-4 max-w-md" />
         <GlassTable columns={columns} data={patients} loading={loading} emptyMessage="No patients found" />

@@ -86,7 +86,7 @@ export default function TransferCreate() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="New Inter-Branch Transfer" subtitle="Move stock from one branch to another" />
+      <PageHeader icon="exchange-alt" title="New Inter-Branch Transfer" subtitle="Move stock from one branch to another" />
       <GlassCard>
         {error && <div className="animate-fade-up bg-red-50/80 text-red-600 px-4 py-3 rounded-xl text-sm mb-4 flex items-center gap-2 border border-red-200"><i className="fas fa-exclamation-circle"></i>{error}</div>}
         <form onSubmit={handleSubmit} className="space-y-6">

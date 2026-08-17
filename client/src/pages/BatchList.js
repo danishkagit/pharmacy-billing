@@ -99,7 +99,7 @@ export default function BatchList() {
 
   return (
     <div>
-      <PageHeader title="Batches" subtitle="Stock batches with expiry tracking">
+      <PageHeader icon="boxes" title="Batches" subtitle="Stock batches with expiry tracking">
         <div className="text-sm text-gray-500">{stats.total} batches | {stats.totalQty} units in stock</div>
       </PageHeader>
       <GlassCard>

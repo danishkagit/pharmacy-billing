@@ -27,7 +27,7 @@ export default function NarcoticsRegister() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Narcotics Register (Schedule X)" subtitle="Daily balance record for Schedule X drugs" />
+      <PageHeader icon="ski-boot" title="Narcotics Register (Schedule X)" subtitle="Daily balance record for Schedule X drugs" />
       <div className="flex items-center gap-2 p-4 rounded-xl bg-red-50/70 border border-red-200 text-sm text-red-700 animate-fade-up">
         <i className="fas fa-exclamation-triangle"></i>
         <span>Legal requirement: Maintain daily balance for all Schedule X drugs</span>

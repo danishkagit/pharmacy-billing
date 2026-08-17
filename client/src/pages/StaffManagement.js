@@ -39,7 +39,7 @@ export default function StaffManagement() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <PageHeader title="Staff Management" subtitle="Manage users and their access roles" />
+        <PageHeader icon="user-cog" title="Staff Management" subtitle="Manage users and their access roles" />
         <button onClick={addStaff} className="btn btn-primary btn-glow"><i className="fas fa-user-plus mr-1"></i>Add Staff</button>
       </div>
       <GlassTable columns={columns} data={staff} loading={loading} emptyMessage="No staff members yet" />

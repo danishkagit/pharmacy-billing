@@ -71,7 +71,7 @@ export default function CustomerList() {
 
   return (
     <div>
-      <PageHeader title="Customers" subtitle="Manage your customers and patients">
+      <PageHeader icon="users" title="Customers" subtitle="Manage your customers and patients">
         <Link to="/customers/new" className="btn-primary">
           <i className="fas fa-plus"></i> Add Customer
         </Link>

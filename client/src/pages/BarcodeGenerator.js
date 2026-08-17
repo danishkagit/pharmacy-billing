@@ -19,7 +19,7 @@ export default function BarcodeGenerator() {
 
   return (
     <div className="max-w-xl mx-auto space-y-5">
-      <PageHeader title="Barcode Generator" subtitle="Create Code 128 barcodes for products" />
+      <PageHeader icon="barcode" title="Barcode Generator" subtitle="Create Code 128 barcodes for products" />
       <GlassCard>
         <div className="space-y-4">
           <div>

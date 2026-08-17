@@ -27,7 +27,7 @@ export default function ExpenseList() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <PageHeader title="Expenses" subtitle="Track operational outgoings" />
+        <PageHeader icon="wallet" title="Expenses" subtitle="Track operational outgoings" />
         <Link to="/expenses/new" className="btn btn-primary btn-glow"><i className="fas fa-plus mr-1"></i>Add Expense</Link>
       </div>
       <div className="surface-1 rounded-xl p-4 flex flex-wrap gap-3 items-center">

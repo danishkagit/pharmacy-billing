@@ -36,7 +36,7 @@ export default function StockAdjustmentList() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Stock Adjustments" subtitle="Inventory corrections and counts">
+      <PageHeader icon="sliders-h" title="Stock Adjustments" subtitle="Inventory corrections and counts">
         <Link to="/stock-adjustments/new" className="btn btn-primary"><i className="fas fa-plus"></i> New Adjustment</Link>
       </PageHeader>
       <GlassCard>

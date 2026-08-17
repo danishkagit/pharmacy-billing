@@ -28,7 +28,7 @@ export default function SaleReturnList() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Sale Returns" subtitle="Returns from customers">
+      <PageHeader icon="rotate-left" title="Sale Returns" subtitle="Returns from customers">
         <Link to="/sale-returns/new" className="btn btn-primary"><i className="fas fa-plus"></i> New Return</Link>
       </PageHeader>
       <GlassCard>

@@ -39,7 +39,7 @@ export default function AuditTrail() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Audit Trail" subtitle="Security events and change history" />
+      <PageHeader icon="history" title="Audit Trail" subtitle="Security events and change history" />
       <GlassCard>
         <GlassTable columns={columns} data={logs} loading={loading} emptyMessage="No audit logs found" />
       </GlassCard>

@@ -32,7 +32,7 @@ export default function CreditNoteList() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <PageHeader title="Credit / Debit Notes" subtitle="Manage all return-related financial documents" />
+        <PageHeader icon="file-alt" title="Credit / Debit Notes" subtitle="Manage all return-related financial documents" />
         <div className="flex gap-2 surface-1 rounded-xl p-1.5">
           <button onClick={() => setType('')} className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${!type ? 'bg-white text-pharma-700 shadow glow-soft' : 'text-slate-500 hover:text-slate-700'}`}>Credit Notes</button>
           <button onClick={() => setType('debit')} className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${type === 'debit' ? 'bg-white text-pharma-700 shadow glow-soft' : 'text-slate-500 hover:text-slate-700'}`}>Debit Notes</button>

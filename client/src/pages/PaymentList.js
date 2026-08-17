@@ -24,7 +24,7 @@ export default function PaymentList() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Payments" subtitle="Receive and pay party amounts" />
+      <PageHeader icon="rupee-sign" title="Payments" subtitle="Receive and pay party amounts" />
       <GlassCard>
         <div className="flex flex-wrap gap-3 mb-4 items-center">
           <select value={filter.type} onChange={e => setFilter({ ...filter, type: e.target.value })} className="glass-select w-40"><option value="">All</option><option value="receipt">Receipts</option><option value="payment">Payments</option></select>

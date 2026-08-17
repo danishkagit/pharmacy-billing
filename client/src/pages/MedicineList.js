@@ -66,7 +66,7 @@ export default function MedicineList() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Medicines" subtitle={`${total} medicines in catalog`}>
+      <PageHeader icon="pills" title="Medicines" subtitle={`${total} medicines in catalog`}>
         <Link to="/medicines/new" className="btn btn-primary"><i className="fas fa-plus"></i> Add New</Link>
         <Link to="/medicines/import" className="btn btn-secondary"><i className="fas fa-upload"></i> Import</Link>
       </PageHeader>

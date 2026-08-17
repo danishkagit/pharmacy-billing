@@ -42,7 +42,7 @@ export default function PrescriptionForm() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">
-      <PageHeader title="Add Prescription" subtitle="Record doctor prescriptions for billing" />
+      <PageHeader icon="prescription" title="Add Prescription" subtitle="Record doctor prescriptions for billing" />
       <GlassCard>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

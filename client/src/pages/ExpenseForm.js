@@ -20,7 +20,7 @@ export default function ExpenseForm() {
 
   return (
     <div className="max-w-xl mx-auto space-y-5">
-      <PageHeader title="Add Expense" subtitle="Record an operational expense" />
+      <PageHeader icon="plus" title="Add Expense" subtitle="Record an operational expense" />
       <GlassCard>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

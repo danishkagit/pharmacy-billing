@@ -73,7 +73,7 @@ export default function SalesmanList() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Salesmen" subtitle="Manage sales representatives and commission targets">
+      <PageHeader icon="id-badge" title="Salesmen" subtitle="Manage sales representatives and commission targets">
         <button onClick={() => { setShowForm(!showForm); setEditingId(null); setForm({ name: '', employeeCode: '', phone: '', email: '', commissionRate: 0, branches: [], territory: '' }); }} className={`btn btn-sm ${showForm ? 'btn-secondary' : 'btn-primary'}`}>
           <i className={`fas ${showForm ? 'fa-times' : 'fa-plus'}`}></i> {showForm ? 'Cancel' : 'Add Salesman'}
         </button>

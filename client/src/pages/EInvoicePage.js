@@ -95,7 +95,7 @@ export default function EInvoicePage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="E-Invoice & E-Way Bill" subtitle="Generate IRN and E-Way Bill for B2B invoices above ₹50,000">
+      <PageHeader icon="cloud-upload-alt" title="E-Invoice & E-Way Bill" subtitle="Generate IRN and E-Way Bill for B2B invoices above ₹50,000">
         <div className="flex flex-wrap gap-2 items-center">
           <select value={month} onChange={e => setMonth(parseInt(e.target.value))} className="glass-select w-36">
             {months.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}

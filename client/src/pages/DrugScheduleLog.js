@@ -28,7 +28,7 @@ export default function DrugScheduleLog() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Drug Compliance Logs" subtitle="Schedule H, H1 and X dispensing records" />
+      <PageHeader icon="shield-alt" title="Drug Compliance Logs" subtitle="Schedule H, H1 and X dispensing records" />
       <GlassCard>
         <div className="mb-4 flex flex-wrap gap-3 items-center">
           <select value={schedule} onChange={e => setSchedule(e.target.value)} className="glass-select w-44">

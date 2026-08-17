@@ -63,7 +63,7 @@ export default function SaleInvoiceView() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6 no-print flex-wrap gap-3">
-        <PageHeader title={`Invoice #${invoice.invoiceNo}`} subtitle={`${new Date(invoice.invoiceDate).toLocaleDateString('en-IN')} • ${invoice.paymentStatus}`} />
+        <PageHeader icon="receipt" title={`Invoice #${invoice.invoiceNo}`} subtitle={`${new Date(invoice.invoiceDate).toLocaleDateString('en-IN')} • ${invoice.paymentStatus}`} />
         <div className="flex gap-2">
           {upiId && (
             <button onClick={genUPI} disabled={upiLoading} className="btn btn-primary btn-glow">

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import API from '../utils/api';
+import { PageHeader } from '../components/ui';
 
 export default function MedicineForm() {
   const { id } = useParams();
@@ -75,12 +76,7 @@ export default function MedicineForm() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">{isEdit ? 'Edit Medicine' : 'Add Medicine'}</h1>
-          <p className="text-sm text-slate-500 mt-0.5">{isEdit ? 'Update medicine details' : 'Add a new medicine to your inventory'}</p>
-        </div>
-      </div>
+      <PageHeader icon={isEdit ? 'pen' : 'pills'} title={isEdit ? 'Edit Medicine' : 'Add Medicine'} subtitle={isEdit ? 'Update medicine details' : 'Add a new medicine to your inventory'} />
       <div className="app-card p-6">
         {error && (
           <div className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm mb-5 border border-red-100">

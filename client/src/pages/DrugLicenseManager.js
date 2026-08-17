@@ -45,7 +45,7 @@ export default function DrugLicenseManager() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-5">
-      <PageHeader title="Drug License Management" subtitle="Track license validity and renewals" />
+      <PageHeader icon="certificate" title="Drug License Management" subtitle="Track license validity and renewals" />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className={`glass-card surface-glass p-5 ${dlDays !== null && dlDays <= 90 ? 'ring-1 ring-red-400' : ''}`}>

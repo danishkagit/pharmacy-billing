@@ -28,7 +28,7 @@ export default function GSTR1Report() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="GSTR-1 Report" subtitle="Outward supplies statement">
+      <PageHeader icon="file-invoice-dollar" title="GSTR-1 Report" subtitle="Outward supplies statement">
         <div className="flex flex-wrap gap-2 items-center">
           <select value={month} onChange={e => setMonth(parseInt(e.target.value))} className="glass-select w-36">
             {months.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}

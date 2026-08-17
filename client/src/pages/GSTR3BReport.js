@@ -20,7 +20,7 @@ export default function GSTR3BReport() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="GSTR-3B Report" subtitle="Monthly summary of outward supplies">
+      <PageHeader icon="file-contract" title="GSTR-3B Report" subtitle="Monthly summary of outward supplies">
         <div className="flex flex-wrap gap-2 items-center">
           <select value={month} onChange={e => setMonth(parseInt(e.target.value))} className="glass-select w-36">
             {months.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}

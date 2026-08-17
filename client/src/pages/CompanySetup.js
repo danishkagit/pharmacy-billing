@@ -39,7 +39,7 @@ export default function CompanySetup() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-5">
-      <PageHeader title="Company Settings" subtitle="Business identity and license details" />
+      <PageHeader icon="building" title="Company Settings" subtitle="Business identity and license details" />
       <GlassCard>
         {saved && <div className="animate-fade-up bg-green-50/80 text-green-700 px-4 py-3 rounded-xl text-sm mb-4 flex items-center gap-2 border border-green-200"><i className="fas fa-check-circle"></i>Settings saved successfully</div>}
         <form onSubmit={handleSubmit} className="space-y-4">

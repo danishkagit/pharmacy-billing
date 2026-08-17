@@ -39,7 +39,7 @@ export default function DeliveryOrderList() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Delivery Orders" subtitle="Track order fulfilment status" />
+      <PageHeader icon="shipping-fast" title="Delivery Orders" subtitle="Track order fulfilment status" />
       <GlassCard>
         <GlassTable columns={columns} data={orders} loading={loading} emptyMessage="No delivery orders" />
       </GlassCard>

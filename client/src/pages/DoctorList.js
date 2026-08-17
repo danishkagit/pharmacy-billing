@@ -15,7 +15,7 @@ export default function DoctorList() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Doctors" subtitle="Prescribers registered in the system">
+      <PageHeader icon="user-md" title="Doctors" subtitle="Prescribers registered in the system">
         <button onClick={async () => {
           const name = prompt('Doctor name:');
           if (name) {

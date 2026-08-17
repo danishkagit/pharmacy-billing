@@ -101,12 +101,11 @@ export default function MedicineImport() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Import Medicines</h1>
+      <PageHeader icon="file-import" title="Import Medicines" subtitle="Import medicine master data from web, CSV or bulk scrape">
         <button onClick={() => navigate('/medicines')} className="text-sm text-gray-500 hover:text-gray-700">
           <i className="fas fa-arrow-left mr-1"></i> Back to Medicines
         </button>
-      </div>
+      </PageHeader>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="md:col-span-2 glass-card p-5">

@@ -23,7 +23,7 @@ export default function OutstandingReport() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Outstanding Receivables" subtitle="Due amounts from customers">
+      <PageHeader icon="hand-holding-usd" title="Outstanding Receivables" subtitle="Due amounts from customers">
         {data && <div className="text-lg font-bold text-red-600"><i className="fas fa-arrow-down mr-1"></i>₹{data.totalReceivable?.toFixed(2)}</div>}
       </PageHeader>
       <GlassCard>

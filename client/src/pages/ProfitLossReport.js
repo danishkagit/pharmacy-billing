@@ -17,7 +17,7 @@ export default function ProfitLossReport() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Profit & Loss Statement" subtitle="Financial performance summary">
+      <PageHeader icon="chart-bar" title="Profit & Loss Statement" subtitle="Financial performance summary">
         <div className="inline-flex bg-white/60 backdrop-blur-md rounded-xl p-1 gap-0.5 shadow-sm border border-white/70">
           {FILTERS.map(f => (
             <button key={f} onClick={() => setFilter(f)} className={`px-4 py-2 rounded-lg text-sm font-semibold capitalize transition-all duration-200 ${filter === f ? 'bg-white text-pharma-700 shadow glow-soft' : 'text-slate-500 hover:text-slate-700 hover:bg-white/70'}`}>{f}</button>

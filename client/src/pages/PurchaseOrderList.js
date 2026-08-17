@@ -58,7 +58,7 @@ export default function PurchaseOrderList() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Purchase Orders" subtitle="Procurement orders to suppliers">
+      <PageHeader icon="clipboard-list" title="Purchase Orders" subtitle="Procurement orders to suppliers">
         <Link to="/purchase-orders/new" className="btn btn-primary"><i className="fas fa-plus"></i> New Purchase Order</Link>
       </PageHeader>
       <GlassCard>

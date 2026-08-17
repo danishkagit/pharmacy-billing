@@ -92,7 +92,7 @@ export default function StockAdjustmentCreate() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-5">
-      <PageHeader title="New Stock Adjustment" subtitle="Correct inventory quantities" />
+      <PageHeader icon="sliders-h" title="New Stock Adjustment" subtitle="Correct inventory quantities" />
       <GlassCard>
         {error && <div className="animate-fade-up bg-red-50/80 text-red-600 px-4 py-3 rounded-xl text-sm mb-4 flex items-center gap-2 border border-red-200"><i className="fas fa-exclamation-circle"></i>{error}</div>}
         <form onSubmit={handleSubmit} className="space-y-6">

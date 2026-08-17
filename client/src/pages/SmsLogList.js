@@ -39,7 +39,7 @@ export default function SmsLogList() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="SMS / WhatsApp Logs" subtitle="Outbound messaging history" />
+      <PageHeader icon="sms" title="SMS / WhatsApp Logs" subtitle="Outbound messaging history" />
       <GlassCard>
         <div className="flex flex-wrap gap-3 mb-4 items-center">
           <select value={filter.type} onChange={e => { setFilter({ ...filter, type: e.target.value }); setPage(1); }} className="glass-select w-44">

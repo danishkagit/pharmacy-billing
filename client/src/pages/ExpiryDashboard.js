@@ -26,7 +26,7 @@ export default function ExpiryDashboard() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Expiry Dashboard" subtitle={`${batches.length} batch(es) expiring within ${days} days`}>
+      <PageHeader icon="clock" title="Expiry Dashboard" subtitle={`${batches.length} batch(es) expiring within ${days} days`}>
         <div className="flex items-center gap-2">
           <div className="inline-flex bg-white/60 backdrop-blur-md rounded-xl p-1 gap-0.5 shadow-sm border border-white/70">
             {[30, 60, 90].map(d => (
