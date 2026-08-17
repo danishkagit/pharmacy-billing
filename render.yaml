@@ -15,5 +15,3 @@ services:
         value: 7d
       - key: CLIENT_URL
         value: https://pharmacy-billing.vercel.app
-      - key: PORT
-        value: 5000
