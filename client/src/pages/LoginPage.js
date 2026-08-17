@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -100,15 +101,31 @@ export default function LoginPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                className="app-input"
-                placeholder="Enter your password"
-              />
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-sm font-semibold text-slate-700">Password</label>
+                <Link to="/forgot-password" className="text-xs font-semibold text-pharma-600 hover:text-pharma-700 hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  className="app-input pr-11"
+                  placeholder="Enter your password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(v => !v)}
+                  className="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-pharma-600 transition-colors"
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'} text-sm`}></i>
+                </button>
+              </div>
             </div>
             <button
               type="submit"
