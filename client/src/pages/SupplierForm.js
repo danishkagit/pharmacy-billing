@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import API from '../utils/api';
 import { PageHeader, GlassCard } from '../components/ui';
@@ -10,6 +10,11 @@ export default function SupplierForm() {
   const [form, setForm] = useState({ name: '', company: '', gstin: '', pan: '', dlNo: '', address: '', city: '', state: '', pincode: '', phone: '', email: '', zone: '', creditDays: 0, creditLimit: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [gstinFetching, setGstinFetching] = useState(false);
+  const [gstinInfo, setGstinInfo] = useState(null);
+  const lastFetchedRef = useRef('');
+
+  const GstinPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
 
   useEffect(() => {
     if (isEdit) {
@@ -34,6 +39,41 @@ export default function SupplierForm() {
     }
   }, [form.pincode]);
 
+  useEffect(() => {
+    const gstin = (form.gstin || '').toUpperCase().trim();
+    if (isEdit) return;
+    if (!GstinPattern.test(gstin)) {
+      setGstinInfo(null);
+      lastFetchedRef.current = '';
+      return;
+    }
+    if (gstin === lastFetchedRef.current) return;
+    let active = true;
+    lastFetchedRef.current = gstin;
+    setGstinFetching(true);
+    setGstinInfo(null);
+    API.get(`/lookup/gstin/${gstin}`).then(r => {
+      if (!active) return;
+      if (r.success && r.data) {
+        const d = r.data;
+        setForm(f => ({
+          ...f,
+          name: f.name || d.tradeName || d.legalName || '',
+          company: f.company || d.legalName || '',
+          address: f.address || d.address || '',
+          pincode: f.pincode || d.pincode || '',
+          state: f.state || d.state || ''
+        }));
+        setGstinInfo(d);
+      } else {
+        setGstinInfo({ error: r.error || 'Lookup failed' });
+      }
+    }).catch(err => {
+      if (active) setGstinInfo({ error: err?.error || 'GSTIN lookup failed' });
+    }).finally(() => { if (active) setGstinFetching(false); });
+    return () => { active = false; };
+  }, [form.gstin, isEdit]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -55,8 +95,26 @@ export default function SupplierForm() {
             <div className="sm:col-span-2"><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Supplier Name *</label><input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required className="glass-input" /></div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Company</label><input value={form.company} onChange={e => setForm({ ...form, company: e.target.value })} className="glass-input" /></div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Phone</label><input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="glass-input" /></div>
-            <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">GSTIN</label><input value={form.gstin} onChange={e => setForm({ ...form, gstin: e.target.value })} className="glass-input uppercase" /></div>
+            <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">GSTIN</label><input value={form.gstin} onChange={e => setForm({ ...form, gstin: e.target.value.toUpperCase() })} className="glass-input uppercase" /></div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Drug License No</label><input value={form.dlNo} onChange={e => setForm({ ...form, dlNo: e.target.value })} className="glass-input uppercase" /></div>
+            {gstinFetching && (
+              <div className="sm:col-span-2 animate-fade-up bg-sky-50/80 text-sky-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2 border border-sky-200">
+                <i className="fas fa-spinner fa-spin"></i>Verifying GSTIN with GST portal...
+              </div>
+            )}
+            {!gstinFetching && gstinInfo?.error && (
+              <div className="sm:col-span-2 animate-fade-up bg-amber-50/80 text-amber-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2 border border-amber-200">
+                <i className="fas fa-exclamation-triangle"></i>{gstinInfo.error} — fill details manually.
+              </div>
+            )}
+            {!gstinFetching && gstinInfo?.legalName && (
+              <div className="sm:col-span-2 animate-fade-up bg-emerald-50/80 text-emerald-800 px-4 py-3 rounded-xl text-sm border border-emerald-200 flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span className="font-semibold flex items-center gap-1.5"><i className="fas fa-check-circle text-emerald-600"></i>{(gstinInfo.tradeName || gstinInfo.legalName).toUpperCase()}</span>
+                <span className="text-emerald-600 font-medium">{gstinInfo.legalName}</span>
+                <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${gstinInfo.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}`}>{gstinInfo.status}</span>
+                <span className="text-emerald-700/80 ml-auto">Details auto-filled — edit if needed</span>
+              </div>
+            )}
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Credit Days</label><input type="number" value={form.creditDays} onChange={e => setForm({ ...form, creditDays: parseInt(e.target.value) || 0 })} min={0} className="glass-input" /></div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Credit Limit</label><input type="number" value={form.creditLimit} onChange={e => setForm({ ...form, creditLimit: parseFloat(e.target.value) || 0 })} min={0} className="glass-input" /></div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Zone</label><input value={form.zone} onChange={e => setForm({ ...form, zone: e.target.value })} className="glass-input" /></div>
