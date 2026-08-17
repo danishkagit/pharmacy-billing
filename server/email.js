@@ -1,5 +1,4 @@
 const Imap = require('imap');
-const { simpleParser } = require('mailer-debugger');
 const async = require('async');
 
 /**

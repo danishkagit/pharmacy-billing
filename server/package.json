@@ -8,6 +8,7 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
+    "async": "^3.2.6",
     "axios": "^1.6.0",
     "bcryptjs": "^2.4.3",
     "bwip-js": "^4.3.0",
@@ -26,7 +27,6 @@
     "node-cron": "^3.0.3",
     "pdfkit": "^0.13.0",
     "pdfkit-table": "^0.1.99",
-    "pdfplumber": "^0.0.1-security",
     "text-table": "^0.2.0"
   }
 }

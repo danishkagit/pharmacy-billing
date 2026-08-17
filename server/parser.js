@@ -3,7 +3,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const pdf = require('pdfplumber');
 
 /**
  * Parse CSV bill template
@@ -161,6 +160,12 @@ async function parsePdfTemplate(pdfPath) {
   };
   
   const fullPath = pdfPath;
+  let pdf;
+  try {
+    pdf = require('pdfplumber');
+  } catch (e) {
+    throw new Error('PDF parsing is unavailable: the pdfplumber module could not be loaded.');
+  }
   const pdfData = await pdf.open(fullPath);
   
   const page = pdfData.pages[0];
