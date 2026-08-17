@@ -60,7 +60,8 @@ router.get('/gstin/:gstin', async (req, res) => {
       const errText = await r.text();
       return res.status(502).json({ success: false, error: `GSTIN lookup failed (${r.status})${errText ? `: ${errText.slice(0, 160)}` : ''}` });
     }
-    const d = await r.json();
+    const body = await r.json();
+    const d = body && body.data && typeof body.data === 'object' ? body.data : body;
     const stateCode = String(d.state_code || '').padStart(2, '0');
     res.json({
       success: true,
@@ -73,6 +74,7 @@ router.get('/gstin/:gstin', async (req, res) => {
         state: STATE_CODES[stateCode] || d.state_jurisdiction || null,
         address: d.address || null,
         pincode: d.pincode || null,
+        city: d.city || null,
         registrationDate: d.registration_date || null
       }
     });

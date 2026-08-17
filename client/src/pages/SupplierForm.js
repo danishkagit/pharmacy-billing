@@ -62,6 +62,7 @@ export default function SupplierForm() {
           company: f.company || d.legalName || '',
           address: f.address || d.address || '',
           pincode: f.pincode || d.pincode || '',
+          city: f.city || d.city || '',
           state: f.state || d.state || ''
         }));
         setGstinInfo(d);
