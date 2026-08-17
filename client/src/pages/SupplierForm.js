@@ -22,6 +22,18 @@ export default function SupplierForm() {
     }
   }, [id, isEdit]);
 
+  useEffect(() => {
+    if (/^\d{6}$/.test(form.pincode || '') && !form.city && !form.state) {
+      let active = true;
+      API.get(`/lookup/pincode/${form.pincode}`).then(r => {
+        if (r.success && r.data && active) {
+          setForm(f => ({ ...f, city: f.city || r.data.city || '', state: f.state || r.data.state || '' }));
+        }
+      }).catch(() => {});
+      return () => { active = false; };
+    }
+  }, [form.pincode]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);

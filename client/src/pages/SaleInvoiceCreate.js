@@ -98,7 +98,7 @@ export default function SaleInvoiceCreate() {
   const handleMedicineSelect = async (idx, med) => {
     if (!med || !med._id) return;
     const updated = [...items];
-    updated[idx] = { ...updated[idx], medicine: medicineId, medicineName: med.name, mrp: med.mrp, gstRate: med.gstRate || 12, schedule: med.schedule };
+    updated[idx] = { ...updated[idx], medicine: med._id, medicineName: med.name, mrp: med.mrp, gstRate: med.gstRate || 12, schedule: med.schedule };
     if ((med.schedule === 'H' || med.schedule === 'H1' || med.schedule === 'X') && !form.prescription) {
       setError(`${med.name} requires a prescription. Please add prescription first.`);
     }

@@ -51,6 +51,7 @@ router.get('/:id', async (req, res) => {
     const invoice = await SaleInvoice.findOne({ _id: req.params.id, companyRef: req.company._id })
       .populate('customer', 'name phone gstin address')
       .populate('prescription', 'prescriptionNo doctorName')
+      .populate('companyRef', 'name gstin dlNo upiId invoiceNote')
       .populate('createdBy', 'name');
     if (!invoice) return res.status(404).json({ success: false, error: 'Invoice not found' });
     res.json({ success: true, data: invoice });
@@ -75,17 +76,14 @@ router.post('/', hasPermission('billing'), upload.fields([{ name: 'billFile', ma
     let subtotal = 0, totalDiscount = 0, totalCgst = 0, totalSgst = 0, totalIgst = 0, totalTax = 0;
     let hasScheduleH1 = false, hasScheduleX = false;
 
+    const branchId = req.activeBranch || req.branch?._id;
+
     for (const item of req.body.items) {
       const medicine = await Medicine.findById(item.medicine).session(session);
       if (!medicine) throw new Error(`Medicine ${item.medicine} not found`);
 
-      const batch = await Batch.findOne({
-        _id: item.batch,
-        medicine: item.medicine,
-        isExpired: false,
-        qty: { $gte: item.qty }
-      }).session(session);
-      if (!batch) throw new Error(`Insufficient stock for ${medicine.name} batch ${item.batch}`);
+      const qty = parseInt(item.qty) || 0;
+      if (qty <= 0) throw new Error(`Invalid quantity for ${medicine.name}`);
 
       if (medicine.schedule === 'H' && !req.body.prescription) {
         throw new Error(`Schedule H drug ${medicine.name} requires a prescription`);
@@ -99,38 +97,82 @@ router.post('/', hasPermission('billing'), upload.fields([{ name: 'billFile', ma
         if (!req.body.prescription) throw new Error(`Schedule X drug ${medicine.name} requires a prescription`);
       }
 
-      batch.qty -= item.qty;
-      await batch.save({ session });
+      // Resolve sale batches: honor the chosen batch when valid, otherwise fall
+      // back to FEFO (oldest-expiry first). Split across batches when a single
+      // batch lacks enough stock, so oldest stock moves first.
+      const soldBatches = [];
+      let remaining = qty;
 
-      const amount = (item.qty || 0) * (item.rate || 0);
-      const discAmount = (amount * (item.discountPercent || 0)) / 100;
-      const netAmount = amount - discAmount;
-      const gst = calculateGST(netAmount, medicine.gstRate || 12, req.body.isInterState);
-      const itemTax = (netAmount * (medicine.gstRate || 12)) / 100;
+      if (item.batch) {
+        const start = await Batch.findOne({
+          _id: item.batch,
+          medicine: item.medicine,
+          branch: branchId,
+          isExpired: false,
+          status: 'active',
+          expiryDate: { $gte: new Date() },
+          qty: { $gt: 0 }
+        }).session(session);
+        if (!start) throw new Error(`Batch ${item.batchNo || item.batch} of ${medicine.name} is unavailable (expired, damaged or returned)`);
+        const take = Math.min(start.qty, remaining);
+        soldBatches.push({ batch: start, qty: take });
+        remaining -= take;
+      }
 
-      subtotal += netAmount;
-      totalDiscount += discAmount;
-      totalCgst += gst.cgst;
-      totalSgst += gst.sgst;
-      totalIgst += gst.igst;
-      totalTax += itemTax;
+      if (remaining > 0) {
+        const excludeId = soldBatches[0]?.batch?._id;
+        const rest = await Batch.find({
+          medicine: item.medicine,
+          branch: branchId,
+          ...(excludeId ? { _id: { $ne: excludeId } } : {}),
+          isExpired: false,
+          status: 'active',
+          expiryDate: { $gte: new Date() },
+          qty: { $gt: 0 }
+        }).sort({ expiryDate: 1 }).session(session);
+        for (const b of rest) {
+          if (remaining <= 0) break;
+          const take = Math.min(b.qty, remaining);
+          soldBatches.push({ batch: b, qty: take });
+          remaining -= take;
+        }
+        if (remaining > 0) throw new Error(`Insufficient stock for ${medicine.name} (need ${qty}, available ${qty - remaining})`);
+      }
 
-      items.push({
-        medicine: item.medicine,
-        medicineName: medicine.name,
-        batch: batch._id,
-        batchNo: batch.batchNo,
-        expiryDate: batch.expiryDate,
-        mrp: item.mrp || batch.mrp,
-        rate: item.rate || batch.saleRate || batch.purchaseRate,
-        qty: item.qty,
-        gstRate: medicine.gstRate || 12,
-        gstAmount: itemTax,
-        amount: netAmount,
-        discount: discAmount,
-        discountPercent: item.discountPercent || 0,
-        schedule: medicine.schedule
-      });
+      for (const { batch, qty: bQty } of soldBatches) {
+        batch.qty -= bQty;
+        await batch.save({ session });
+
+        const amount = bQty * (item.rate || batch.saleRate || batch.purchaseRate);
+        const discAmount = (amount * (item.discountPercent || 0)) / 100;
+        const netAmount = amount - discAmount;
+        const gst = calculateGST(netAmount, medicine.gstRate || 12, req.body.isInterState);
+        const itemTax = (netAmount * (medicine.gstRate || 12)) / 100;
+
+        subtotal += netAmount;
+        totalDiscount += discAmount;
+        totalCgst += gst.cgst;
+        totalSgst += gst.sgst;
+        totalIgst += gst.igst;
+        totalTax += itemTax;
+
+        items.push({
+          medicine: item.medicine,
+          medicineName: medicine.name,
+          batch: batch._id,
+          batchNo: batch.batchNo,
+          expiryDate: batch.expiryDate,
+          mrp: item.mrp || batch.mrp,
+          rate: item.rate || batch.saleRate || batch.purchaseRate,
+          qty: bQty,
+          gstRate: medicine.gstRate || 12,
+          gstAmount: itemTax,
+          amount: netAmount,
+          discount: discAmount,
+          discountPercent: item.discountPercent || 0,
+          schedule: medicine.schedule
+        });
+      }
     }
 
     const invoiceBase = subtotal + totalTax - (req.body.discountAmount || 0);

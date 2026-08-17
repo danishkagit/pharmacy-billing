@@ -1,13 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API, { fileUrl } from '../utils/api';
-import { PageHeader } from '../components/ui';
+import { PageHeader, GlassModal } from '../components/ui';
+import { useAuth } from '../context/AuthContext';
 
 export default function SaleInvoiceView() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { company } = useAuth();
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showQr, setShowQr] = useState(false);
+  const [upiPayload, setUpiPayload] = useState(null);
+  const [upiLoading, setUpiLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     API.get(`/sale-invoices/${id}`).then(res => {
@@ -18,11 +24,55 @@ export default function SaleInvoiceView() {
   if (loading) return <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-pharma-500"></div></div>;
   if (!invoice) return <div className="text-center py-12 text-slate-500">Invoice not found</div>;
 
+  const store = invoice.companyRef?.name || company?.name || 'Pharmacy';
+  const upiId = invoice.companyRef?.upiId || company?.upiId;
+
+  const waPhone = (p) => {
+    let d = String(p || '').replace(/[^\d]/g, '');
+    if (d.startsWith('0')) d = d.slice(1);
+    if (d.length === 10) d = '91' + d;
+    return d;
+  };
+
+  const genUPI = async () => {
+    if (!upiId) return;
+    setUpiLoading(true);
+    try {
+      const res = await API.post('/barcode/upi-qr', {
+        upiId,
+        merchantName: store,
+        amount: invoice.totalAmount || 0,
+        note: `Invoice ${invoice.invoiceNo}`
+      });
+      if (res.success) { setUpiPayload(res.data); setShowQr(true); }
+    } catch (err) { alert(err?.error || 'Could not generate UPI QR'); }
+    finally { setUpiLoading(false); }
+  };
+
+  const shareWhatsApp = () => {
+    const phone = waPhone(invoice.customerPhone);
+    if (!phone) return alert('No customer phone on this invoice');
+    let msg = `*Invoice ${invoice.invoiceNo}* from ${store}\nAmount: ₹${(invoice.totalAmount || 0).toFixed(2)}\nPayment: ${invoice.paymentMode}\nStatus: ${invoice.paymentStatus}\n\nThank you for your purchase!`;
+    if (upiId) {
+      const note = encodeURIComponent(`Invoice ${invoice.invoiceNo}`);
+      msg += `\n\nPay online: upi://pay?pa=${upiId}&am=${invoice.totalAmount || 0}&cu=INR&tn=${note}`;
+    }
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6 no-print flex-wrap gap-3">
         <PageHeader title={`Invoice #${invoice.invoiceNo}`} subtitle={`${new Date(invoice.invoiceDate).toLocaleDateString('en-IN')} • ${invoice.paymentStatus}`} />
         <div className="flex gap-2">
+          {upiId && (
+            <button onClick={genUPI} disabled={upiLoading} className="btn btn-primary btn-glow">
+              <i className="fas fa-qrcode mr-1"></i>{upiLoading ? 'Generating...' : 'UPI QR'}
+            </button>
+          )}
+          <button onClick={shareWhatsApp} className="btn btn-secondary" style={{ background: '#25D366', color: '#fff', borderColor: '#25D366' }}>
+            <i className="fab fa-whatsapp mr-1"></i>Share on WhatsApp
+          </button>
           <button onClick={() => window.print()} className="btn btn-secondary"><i className="fas fa-print mr-1"></i>Print</button>
           <button onClick={() => navigate('/sales')} className="btn btn-secondary"><i className="fas fa-arrow-left mr-1"></i>Back</button>
         </div>
@@ -126,6 +176,26 @@ export default function SaleInvoiceView() {
           </div>
         )}
       </div>
+
+      <GlassModal open={showQr} onClose={() => setShowQr(false)} title="Scan to Pay via UPI" size="sm">
+        {upiPayload && (
+          <div className="text-center space-y-4 py-2">
+            <img src={upiPayload.qr} alt="UPI QR" className="mx-auto w-56 h-56 rounded-2xl border border-gray-200 shadow-sm" />
+            <div>
+              <p className="text-sm text-slate-500">Pay <span className="font-bold text-slate-800">₹{(invoice.totalAmount || 0).toFixed(2)}</span> to {store}</p>
+              <p className="text-xs text-slate-400 mt-1">Scan with any UPI app (GPay, PhonePe, Paytm, BHIM)</p>
+            </div>
+            <div className="flex gap-2 justify-center">
+              <a href={upiPayload.uri} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-glow">
+                <i className="fas fa-mobile-alt mr-1"></i>Pay Now
+              </a>
+              <button onClick={() => { navigator.clipboard?.writeText(upiPayload.uri); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="btn btn-secondary">
+                <i className="fas fa-copy mr-1"></i>{copied ? 'Copied!' : 'Copy Link'}
+              </button>
+            </div>
+          </div>
+        )}
+      </GlassModal>
     </div>
   );
 }

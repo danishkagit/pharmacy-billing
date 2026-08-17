@@ -5,15 +5,27 @@ import { PageHeader, GlassCard } from '../components/ui';
 
 export default function CompanySetup() {
   const { company } = useAuth();
-  const [form, setForm] = useState({ name: '', legalName: '', address: '', city: '', state: '', pincode: '', phone: '', email: '', gstin: '', pan: '', dlNo: '', fssaiNo: '', dlExpiryDate: '', fssaiExpiryDate: '', drugLicenseCategory: 'both', invoiceNote: '' });
+  const [form, setForm] = useState({ name: '', legalName: '', address: '', city: '', state: '', pincode: '', phone: '', email: '', gstin: '', pan: '', dlNo: '', fssaiNo: '', dlExpiryDate: '', fssaiExpiryDate: '', drugLicenseCategory: 'both', invoiceNote: '', upiId: '' });
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (company) {
-      setForm({ name: company.name || '', legalName: company.legalName || '', address: company.address || '', city: company.city || '', state: company.state || '', pincode: company.pincode || '', phone: company.phone || '', email: company.email || '', gstin: company.gstin || '', pan: company.pan || '', dlNo: company.dlNo || '', fssaiNo: company.fssaiNo || '', dlExpiryDate: company.dlExpiryDate ? company.dlExpiryDate.split('T')[0] : '', fssaiExpiryDate: company.fssaiExpiryDate ? company.fssaiExpiryDate.split('T')[0] : '', drugLicenseCategory: company.drugLicenseCategory || 'both', invoiceNote: company.invoiceNote || 'Thank you for your business!' });
+      setForm({ name: company.name || '', legalName: company.legalName || '', address: company.address || '', city: company.city || '', state: company.state || '', pincode: company.pincode || '', phone: company.phone || '', email: company.email || '', gstin: company.gstin || '', pan: company.pan || '', dlNo: company.dlNo || '', fssaiNo: company.fssaiNo || '', dlExpiryDate: company.dlExpiryDate ? company.dlExpiryDate.split('T')[0] : '', fssaiExpiryDate: company.fssaiExpiryDate ? company.fssaiExpiryDate.split('T')[0] : '', drugLicenseCategory: company.drugLicenseCategory || 'both', invoiceNote: company.invoiceNote || 'Thank you for your business!', upiId: company.upiId || '' });
     }
   }, [company]);
+
+  useEffect(() => {
+    if (/^\d{6}$/.test(form.pincode || '') && !form.city && !form.state) {
+      let active = true;
+      API.get(`/lookup/pincode/${form.pincode}`).then(r => {
+        if (r.success && r.data && active) {
+          setForm(f => ({ ...f, city: f.city || r.data.city || '', state: f.state || r.data.state || '' }));
+        }
+      }).catch(() => {});
+      return () => { active = false; };
+    }
+  }, [form.pincode]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -50,6 +62,7 @@ export default function CompanySetup() {
             <div className="sm:col-span-2"><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Address</label><textarea value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} rows={2} className="glass-input" /></div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">City</label><input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} className="glass-input" /></div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Pincode</label><input value={form.pincode} onChange={e => setForm({ ...form, pincode: e.target.value })} className="glass-input" /></div>
+            <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">UPI ID</label><input value={form.upiId} onChange={e => setForm({ ...form, upiId: e.target.value })} className="glass-input" placeholder="yourname@okbank" /></div>
             <div className="sm:col-span-2"><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Invoice Footer Note</label><textarea value={form.invoiceNote} onChange={e => setForm({ ...form, invoiceNote: e.target.value })} rows={2} className="glass-input" /></div>
           </div>
           <button type="submit" disabled={loading} className="btn btn-primary btn-glow"><i className="fas fa-save mr-1"></i>{loading ? 'Saving...' : 'Save Settings'}</button>

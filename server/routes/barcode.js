@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { generateBarcode } = require('../utils/barcode');
+const { generateBarcode, generateUPIQR, upiDeepLink } = require('../utils/barcode');
 
 router.post('/generate', async (req, res) => {
   try {
@@ -18,6 +18,18 @@ router.post('/batch-qr', async (req, res) => {
     const { generateBatchQR } = require('../utils/barcode');
     const qr = await generateBatchQR(req.body);
     res.json({ success: true, data: { qr: `data:image/png;base64,${qr}` } });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post('/upi-qr', async (req, res) => {
+  try {
+    const { upiId, merchantName, amount, note } = req.body;
+    if (!upiId) return res.status(400).json({ success: false, error: 'UPI ID is required (set it in Company Settings)' });
+    const uri = upiDeepLink({ upiId, merchantName, amount, note });
+    const qr = await generateUPIQR({ upiId, merchantName, amount, note });
+    res.json({ success: true, data: { uri, qr: `data:image/png;base64,${qr}` } });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

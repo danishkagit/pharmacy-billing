@@ -110,4 +110,32 @@ router.get('/expiry-report', async (req, res) => {
   }
 });
 
+router.get('/expiry-report/pdf', async (req, res) => {
+  try {
+    const { days = 30 } = req.query;
+    const future = new Date();
+    future.setDate(future.getDate() + parseInt(days));
+    const filter = { expiryDate: { $lte: future, $gte: new Date() }, isExpired: false };
+    if (req.activeBranch) filter.branch = req.activeBranch;
+    const batches = await Batch.find(filter)
+      .populate('medicine', 'name manufacturer mrp')
+      .sort({ expiryDate: 1 })
+      .limit(500);
+    const items = batches.map(b => ({
+      medicineName: b.medicine?.name || 'Unknown',
+      batchNo: b.batchNo,
+      expiryDate: b.expiryDate,
+      qty: b.qty,
+      mrp: b.mrp
+    }));
+    const { generateExpiryReport } = require('../utils/pdf');
+    const buffer = await generateExpiryReport(items);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=expiry-report-${days}days-${new Date().toISOString().slice(0, 10)}.pdf`);
+    res.send(buffer);
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;

@@ -29,4 +29,18 @@ function generateBatchQR(batchData) {
   return generateBarcode(qrData, { bcid: 'qrcode', scale: 5, height: 10, includetext: false });
 }
 
-module.exports = { generateBarcode, generateBatchQR };
+function upiDeepLink({ upiId, merchantName = '', amount, note = '' }) {
+  const params = new URLSearchParams();
+  params.set('pa', upiId || '');
+  if (merchantName) params.set('pn', merchantName);
+  if (amount && amount > 0) params.set('am', String(amount));
+  params.set('cu', 'INR');
+  if (note) params.set('tn', note);
+  return `upi://pay?${params.toString()}`;
+}
+
+function generateUPIQR(payload) {
+  return generateBarcode(upiDeepLink(payload), { bcid: 'qrcode', scale: 6, height: 10, includetext: false });
+}
+
+module.exports = { generateBarcode, generateBatchQR, upiDeepLink, generateUPIQR };

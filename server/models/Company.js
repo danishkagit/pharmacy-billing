@@ -20,6 +20,7 @@ const companySchema = new mongoose.Schema({
   invoicePrefix: { type: String, default: 'PH' },
   invoiceNote: { type: String, default: 'Thank you for your business!' },
   gstType: { type: String, enum: ['regular', 'composition'], default: 'regular' },
+  upiId: { type: String, trim: true },
   isActive: { type: Boolean, default: true }
 }, { timestamps: true });
 
