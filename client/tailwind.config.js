@@ -60,7 +60,14 @@ module.exports = {
         'grad-mesh': 'radial-gradient(1200px 700px at 8% -8%, rgba(20,163,148,0.16), transparent 55%), radial-gradient(1000px 620px at 105% 0%, rgba(99,102,241,0.14), transparent 50%), radial-gradient(900px 700px at 50% 118%, rgba(61,208,162,0.14), transparent 55%)',
         'grad-accent': 'linear-gradient(135deg, #14a394 0%, #0ea296 45%, #4a6ff0 100%)',
         'grad-accent-soft': 'linear-gradient(135deg, rgba(20,163,148,0.14), rgba(99,102,241,0.12))',
+        'grad-brand': 'linear-gradient(135deg, #0d827a 0%, #0ea296 35%, #4a6ff0 100%)',
+        'grad-brand-soft': 'linear-gradient(135deg, rgba(20,163,148,0.16), rgba(99,102,241,0.15))',
+        'grad-hero': 'linear-gradient(135deg, #0f766e 0%, #14a394 28%, #6366f1 72%, #8b5cf6 100%)',
+        'grad-cool': 'linear-gradient(135deg, #38bdf8 0%, #6366f1 60%, #8b5cf6 100%)',
+        'grad-warm': 'linear-gradient(135deg, #f97316 0%, #f43f5e 100%)',
+        'grad-gold': 'linear-gradient(135deg, #f59e0b 0%, #f97316 100%)',
         'text-grad': 'linear-gradient(120deg, #0d827a 0%, #18b69b 45%, #6366f1 100%)',
+        'text-grad-bright': 'linear-gradient(120deg, #38cbb7 0%, #7de8d6 40%, #a5b4fc 100%)',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out',
@@ -72,6 +79,7 @@ module.exports = {
         'drift': 'drift 26s ease-in-out infinite',
         'pulse-soft': 'pulseSoft 3s ease-in-out infinite',
         'shimmer': 'shimmer 2.4s linear infinite',
+        'gradient-x': 'gradientX 8s ease infinite',
       },
       keyframes: {
         fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
@@ -82,6 +90,10 @@ module.exports = {
         drift: { '0%,100%': { transform: 'translate(0, 0)' }, '50%': { transform: 'translate(-40px, 30px)' } },
         pulseSoft: { '0%,100%': { opacity: '1' }, '50%': { opacity: '0.6' } },
         shimmer: { '0%': { transform: 'translateX(-100%)' }, '100%': { transform: 'translateX(100%)' } },
+        gradientX: {
+          '0%,100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+        },
       },
     },
   },

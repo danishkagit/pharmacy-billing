@@ -229,7 +229,7 @@ export default function SaleInvoiceCreate() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={form.type === 'retail' ? 'New Retail Sale' : 'New Wholesale Invoice'}
+      <PageHeader icon="cash-register" title={form.type === 'retail' ? 'New Retail Sale' : 'New Wholesale Invoice'}
         subtitle="Create a new sale invoice with medicine items">
         <div className="flex gap-2">
           {isRetail && isWholesale && (
@@ -392,7 +392,12 @@ export default function SaleInvoiceCreate() {
           {/* Items Table */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-gray-500 uppercase">Sale Items</span>
+              <span className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-2">
+                <span className="color-block color-block-sm grad-brand text-white">
+                  <i className="fas fa-cart-plus text-[11px]"></i>
+                </span>
+                Sale Items
+              </span>
               <button type="button" onClick={addItem} className="btn-primary text-xs py-1.5 px-3">
                 <i className="fas fa-plus"></i> Add Item
               </button>
@@ -401,13 +406,15 @@ export default function SaleInvoiceCreate() {
             <GlassCard className="overflow-hidden p-0">
               {items.length === 0 ? (
                 <div className="py-12 text-center text-gray-400">
-                  <i className="fas fa-cart-plus text-2xl mb-2"></i>
+                  <div className="color-block color-block-lg grad-brand-soft text-pharma-500 mx-auto mb-3">
+                    <i className="fas fa-cart-plus text-xl"></i>
+                  </div>
                   <p className="text-sm">No items added yet</p>
                   <button type="button" onClick={addItem} className="text-primary-500 text-xs hover:underline mt-1">Add the first item</button>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="table-wrap">
+                  <table className="app-table">
                     <thead>
                       <tr>
                         <th>Medicine</th>
@@ -466,15 +473,15 @@ export default function SaleInvoiceCreate() {
 
           {/* Totals */}
           <div className="flex justify-end">
-            <div className="w-64 space-y-1.5 bg-gray-50/50 rounded-morph-xs p-4">
+            <div className="w-72 space-y-1.5 grad-brand-soft rounded-morph-md p-4 border border-pharma-200/60">
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Subtotal:</span><span className="font-medium">₹{subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm text-gray-600">
                 <span>GST:</span><span className="font-medium">₹{totalTax.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-base font-bold text-gray-800 pt-2 border-t border-gray-200">
-                <span>Total:</span><span>₹{totalAmount.toFixed(2)}</span>
+              <div className="flex justify-between text-base font-bold text-gray-800 pt-2 border-t border-pharma-200">
+                <span>Total:</span><span className="grad-brand bg-clip-text text-transparent text-lg">₹{totalAmount.toFixed(2)}</span>
               </div>
             </div>
           </div>

@@ -3,21 +3,21 @@ import GlassCard from './GlassCard';
 export default function GlassTable({ columns, data, onRowClick, loading, emptyMessage = 'No data found' }) {
   if (loading) {
     return (
-      <div className="glass-card text-center py-14">
+      <GlassCard className="text-center py-14">
         <div className="animate-spin rounded-full h-8 w-8 border-2 border-slate-200 border-t-pharma-500 mx-auto"></div>
         <p className="text-sm text-slate-400 mt-3">Loading...</p>
-      </div>
+      </GlassCard>
     );
   }
 
   if (!data || data.length === 0) {
     return (
-      <div className="glass-card text-center py-14">
-        <div className="w-14 h-14 rounded-2xl grad-accent-soft flex items-center justify-center mx-auto mb-3">
-          <i className="fas fa-inbox text-xl text-pharma-400"></i>
+      <GlassCard className="text-center py-14">
+        <div className="color-block color-block-lg grad-brand-soft text-pharma-500 mx-auto mb-3">
+          <i className="fas fa-inbox text-xl"></i>
         </div>
         <p className="text-sm text-slate-500 font-medium">{emptyMessage}</p>
-      </div>
+      </GlassCard>
     );
   }
 

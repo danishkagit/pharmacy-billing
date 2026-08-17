@@ -5,7 +5,7 @@ export default function GlassTabs({ tabs, active, onChange }) {
         <button key={tab.key} onClick={() => onChange(tab.key)}
           className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200
             ${active === tab.key
-              ? 'bg-white text-pharma-700 shadow glow-soft'
+              ? 'grad-brand text-white shadow-glow-sm'
               : 'text-slate-500 hover:text-slate-700 hover:bg-white/70'
             }`}>
           {tab.icon && <i className={`fas fa-${tab.icon} mr-1.5`}></i>}

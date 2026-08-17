@@ -121,13 +121,16 @@ export default function Layout() {
       <aside className={`sidebar fixed lg:static inset-y-0 left-0 z-50 flex flex-col ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 ${collapsed ? 'collapsed' : ''}`}>
         {/* Brand header */}
         <div className="flex items-center gap-3 px-5 h-16 border-b border-white/8 flex-shrink-0">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-pharma-400 to-pharma-600 flex items-center justify-center text-white flex-shrink-0">
+          <div className="w-9 h-9 rounded-lg grad-hero flex items-center justify-center text-white flex-shrink-0 shadow-glow-sm">
             <i className="fas fa-prescription-bottle-medical text-sm"></i>
           </div>
           {!collapsed && (
             <div className="min-w-0">
               <h1 className="text-sm font-bold text-white truncate leading-tight">{company?.name || 'Pharmacy'}</h1>
-              <p className="text-[10px] text-slate-500 truncate">{branch?.name || 'Main Branch'}</p>
+              <p className="text-[10px] text-slate-500 truncate flex items-center gap-1">
+                <span className="inline-block w-1.5 h-1.5 rounded-full grad-brand"></span>
+                {branch?.name || 'Main Branch'}
+              </p>
             </div>
           )}
           <button
@@ -167,7 +170,7 @@ export default function Layout() {
         <div className="border-t border-white/8 p-3 flex-shrink-0">
           {!collapsed ? (
             <div className="flex items-center gap-3 px-2 py-2">
-              <div className="w-8 h-8 rounded-lg bg-pharma-600/20 border border-pharma-500/30 flex items-center justify-center text-pharma-400 text-xs font-semibold flex-shrink-0">
+              <div className="w-8 h-8 rounded-lg grad-hero flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 shadow-glow-sm">
                 {getInitials(user?.name)}
               </div>
               <div className="flex-1 min-w-0">

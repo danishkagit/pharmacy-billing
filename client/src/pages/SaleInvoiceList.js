@@ -37,7 +37,7 @@ export default function SaleInvoiceList() {
     { label: 'Customer', className: 'text-left', render: row => row.customerName || row.customer?.name || 'Walk-in', tdClass: '' },
     {
       label: 'Type', className: 'text-center', tdClass: 'text-center',
-      render: row => <span className={`badge-${row.type === 'wholesale' ? 'purple' : 'blue'}`}>{row.type}</span>,
+      render: row => <span className={`badge badge-${row.type === 'wholesale' ? 'purple' : 'blue'}`}>{row.type}</span>,
     },
     {
       label: 'Date', className: 'text-left', tdClass: 'text-gray-500',
@@ -50,7 +50,7 @@ export default function SaleInvoiceList() {
     { key: 'paymentMode', label: 'Payment Mode', className: 'text-center', tdClass: 'text-center capitalize' },
     {
       label: 'Status', className: 'text-center', tdClass: 'text-center',
-      render: row => <span className={`badge-${statusColor[row.paymentStatus] || 'gray'}`}>{row.paymentStatus}</span>,
+      render: row => <span className={`badge badge-${statusColor[row.paymentStatus] || 'gray'}`}>{row.paymentStatus}</span>,
     },
     {
       label: 'Actions', className: 'text-center', tdClass: 'text-center',
@@ -60,7 +60,7 @@ export default function SaleInvoiceList() {
 
   return (
     <div>
-      <PageHeader title="Sales" subtitle="Manage sale invoices">
+      <PageHeader icon="receipt" title="Sales" subtitle="Manage sale invoices">
         <Link to="/sales/new" className="btn-primary">
           <i className="fas fa-plus"></i> New Sale
         </Link>

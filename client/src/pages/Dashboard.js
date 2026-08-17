@@ -10,12 +10,12 @@ function Greeting() {
   return 'Good Evening';
 }
 
-function KpiCard({ icon, iconBg, iconColor, label, value, sub, link }) {
+function KpiCard({ icon, iconBg, iconColor, label, value, sub, link, grad }) {
   const Card = link ? Link : 'div';
   return (
-    <Card to={link} className={`app-card p-5 flex items-start gap-4 ${link ? 'app-card-hover cursor-pointer' : ''}`}>
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: iconBg, color: iconColor }}>
-        <i className={`fas fa-${icon} text-base`}></i>
+    <Card to={link} className={`glass-accent p-5 flex items-start gap-4 grad-edge ${link ? 'app-card-hover cursor-pointer' : ''}`}>
+      <div className={`color-block color-block-md ${grad || 'grad-hero'} text-white flex-shrink-0`}>
+        <i className={`fas fa-${icon} text-sm`}></i>
       </div>
       <div className="min-w-0">
         <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</p>
@@ -68,28 +68,33 @@ export default function Dashboard() {
     <div className="space-y-6 max-w-[1400px]">
 
       {/* Welcome banner */}
-      <div className="app-card overflow-hidden">
-        <div className="relative p-6 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden">
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-pharma-400 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 animate-drift"></div>
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-mint-400 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4 animate-float-slow"></div>
+      <div className="glass-accent overflow-hidden shimmer-sweep">
+        <div className="relative p-6 grad-hero animate-gradient-x text-white overflow-hidden">
+          <div className="absolute inset-0 opacity-25">
+            <div className="absolute top-0 right-0 w-72 h-72 bg-white rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 animate-drift"></div>
+            <div className="absolute bottom-0 left-10 w-52 h-52 bg-mint-300 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4 animate-float-slow"></div>
+            <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-focus-300 rounded-full blur-3xl animate-float-slower"></div>
           </div>
           <div className="relative flex items-start justify-between flex-wrap gap-4">
             <div>
-              <h1 className="text-xl font-bold">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-white/70 mb-1.5">
+                <i className="fas fa-store mr-1.5"></i>{company?.name || 'Pharmacy'}
+              </p>
+              <h1 className="text-2xl font-extrabold tracking-tight">
                 {Greeting()}, {user?.name?.split(' ')[0] || 'User'}
               </h1>
-              <p className="text-sm text-slate-400 mt-1">
-                {company?.name || 'Pharmacy'} &middot; {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              <p className="text-sm text-white/75 mt-1.5">
+                {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-xs font-medium backdrop-blur-sm">
-                <span className="w-1.5 h-1.5 rounded-full bg-pharma-400"></span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/15 text-xs font-medium backdrop-blur-sm border border-white/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-300"></span>
                 {company?.drugLicenseCategory === 'retail' ? 'Retail' : 'Pharmacy'} License Active
               </span>
               {company?.gstin && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 text-xs font-medium backdrop-blur-sm">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/15 text-xs font-medium backdrop-blur-sm border border-white/20">
+                  <i className="fas fa-receipt"></i>
                   GSTIN: {company.gstin}
                 </span>
               )}
@@ -99,18 +104,18 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-4 gap-4">
-        <KpiCard icon="indian-rupee-sign" iconBg="#f0fdfa" iconColor="#0d9488" label="Today's Sales" value={`₹${todaySales.toLocaleString('en-IN')}`} sub={`${todayBills} bills today`} link="/sales" />
-        <KpiCard icon="chart-line" iconBg="#eff6ff" iconColor="#2563eb" label="Monthly Sales" value={`₹${monthSales.toLocaleString('en-IN')}`} sub={`${monthBills} bills this month`} link="/reports/sales" />
-        <KpiCard icon="pills" iconBg="#f5f3ff" iconColor="#7c3aed" label="Medicines" value={totalMedicines} sub="In your catalog" link="/medicines" />
-        <KpiCard icon="users" iconBg="#fefce8" iconColor="#ca8a04" label="Customers" value={totalCustomers} sub="Registered" link="/customers" />
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-4 gap-4 stagger">
+        <KpiCard icon="indian-rupee-sign" grad="grad-hero" label="Today's Sales" value={`₹${todaySales.toLocaleString('en-IN')}`} sub={`${todayBills} bills today`} link="/sales" />
+        <KpiCard icon="chart-line" grad="grad-cool" label="Monthly Sales" value={`₹${monthSales.toLocaleString('en-IN')}`} sub={`${monthBills} bills this month`} link="/reports/sales" />
+        <KpiCard icon="pills" grad="grad-warm" label="Medicines" value={totalMedicines} sub="In your catalog" link="/medicines" />
+        <KpiCard icon="users" grad="grad-gold" label="Customers" value={totalCustomers} sub="Registered" link="/customers" />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KpiCard icon="indian-rupee-sign" iconBg="#fef2f2" iconColor="#dc2626" label="Outstanding" value={`₹${outstanding.toLocaleString('en-IN')}`} sub="Receivable amount" link="/reports/outstanding" />
-        <KpiCard icon="exclamation-triangle" iconBg="#fff7ed" iconColor="#ea580c" label="Low Stock" value={lowStockCount} sub="Items below reorder" link="/stock-adjustments" />
-        <KpiCard icon="clock" iconBg="#fefce8" iconColor="#ca8a04" label="Expiring Soon" value={expiringCount} sub="Within 30 days" link="/expiry" />
-        <KpiCard icon="shield-alt" iconBg="#f0fdfa" iconColor="#0d9488" label="Compliance" value={expiringCount === 0 ? 'OK' : expiringCount} sub={expiringCount === 0 ? 'All clear' : 'Items need review'} link="/compliance" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 stagger">
+        <KpiCard icon="indian-rupee-sign" grad="grad-cool" label="Outstanding" value={`₹${outstanding.toLocaleString('en-IN')}`} sub="Receivable amount" link="/reports/outstanding" />
+        <KpiCard icon="exclamation-triangle" grad="grad-gold" label="Low Stock" value={lowStockCount} sub="Items below reorder" link="/stock-adjustments" />
+        <KpiCard icon="clock" grad="grad-warm" label="Expiring Soon" value={expiringCount} sub="Within 30 days" link="/expiry" />
+        <KpiCard icon="shield-alt" grad="grad-hero" label="Compliance" value={expiringCount === 0 ? 'OK' : expiringCount} sub={expiringCount === 0 ? 'All clear' : 'Items need review'} link="/compliance" />
       </div>
 
       {/* Main content */}
@@ -120,54 +125,59 @@ export default function Dashboard() {
         <div className="lg:col-span-1 space-y-5">
 
           {/* Quick Actions */}
-          <div className="app-card p-5">
-            <h3 className="text-sm font-semibold text-slate-700 mb-4">Quick Actions</h3>
+          <div className="glass-accent p-5 grad-edge">
+            <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
+              <span className="color-block color-block-sm grad-hero text-white">
+                <i className="fas fa-bolt text-[11px]"></i>
+              </span>
+              Quick Actions
+            </h3>
             <div className="grid grid-cols-3 gap-2.5">
-              <Link to="/sales/new" className="flex flex-col items-center gap-2 p-3 rounded-xl bg-pharma-50 text-pharma-700 hover:bg-pharma-100 transition-colors">
-                <div className="w-9 h-9 rounded-lg bg-pharma-500/10 flex items-center justify-center">
+              <Link to="/sales/new" className="flex flex-col items-center gap-2 p-3 rounded-xl grad-brand text-white hover:-translate-y-0.5 hover:shadow-glow transition-all duration-200">
+                <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center">
                   <i className="fas fa-cash-register"></i>
                 </div>
-                <span className="text-[11px] font-medium">New Sale</span>
+                <span className="text-[11px] font-semibold">New Sale</span>
               </Link>
-              <Link to="/purchases/new" className="flex flex-col items-center gap-2 p-3 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors">
-                <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center">
+              <Link to="/purchases/new" className="flex flex-col items-center gap-2 p-3 rounded-xl grad-cool text-white hover:-translate-y-0.5 hover:shadow-glow-indigo transition-all duration-200">
+                <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center">
                   <i className="fas fa-cart-plus"></i>
                 </div>
-                <span className="text-[11px] font-medium">Purchase</span>
+                <span className="text-[11px] font-semibold">Purchase</span>
               </Link>
-              <Link to="/medicines/new" className="flex flex-col items-center gap-2 p-3 rounded-xl bg-violet-50 text-violet-700 hover:bg-violet-100 transition-colors">
-                <div className="w-9 h-9 rounded-lg bg-violet-500/10 flex items-center justify-center">
+              <Link to="/medicines/new" className="flex flex-col items-center gap-2 p-3 rounded-xl grad-warm text-white hover:-translate-y-0.5 hover:shadow-glow transition-all duration-200">
+                <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center">
                   <i className="fas fa-pills"></i>
                 </div>
-                <span className="text-[11px] font-medium">Add Medicine</span>
+                <span className="text-[11px] font-semibold">Add Medicine</span>
               </Link>
-              <Link to="/prescriptions/new" className="flex flex-col items-center gap-2 p-3 rounded-xl bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors">
-                <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center">
+              <Link to="/prescriptions/new" className="flex flex-col items-center gap-2 p-3 rounded-xl grad-gold text-white hover:-translate-y-0.5 hover:shadow-glow transition-all duration-200">
+                <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center">
                   <i className="fas fa-prescription"></i>
                 </div>
-                <span className="text-[11px] font-medium">Prescription</span>
+                <span className="text-[11px] font-semibold">Prescription</span>
               </Link>
-              <Link to="/customers/new" className="flex flex-col items-center gap-2 p-3 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors">
-                <div className="w-9 h-9 rounded-lg bg-rose-500/10 flex items-center justify-center">
+              <Link to="/customers/new" className="flex flex-col items-center gap-2 p-3 rounded-xl grad-warm text-white hover:-translate-y-0.5 hover:shadow-glow transition-all duration-200">
+                <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center">
                   <i className="fas fa-user-plus"></i>
                 </div>
-                <span className="text-[11px] font-medium">Customer</span>
+                <span className="text-[11px] font-semibold">Customer</span>
               </Link>
-              <Link to="/gst/gstr1" className="flex flex-col items-center gap-2 p-3 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors">
-                <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+              <Link to="/gst/gstr1" className="flex flex-col items-center gap-2 p-3 rounded-xl grad-hero text-white hover:-translate-y-0.5 hover:shadow-glow transition-all duration-200">
+                <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center">
                   <i className="fas fa-file-invoice-dollar"></i>
                 </div>
-                <span className="text-[11px] font-medium">GSTR-1</span>
+                <span className="text-[11px] font-semibold">GSTR-1</span>
               </Link>
             </div>
           </div>
 
           {/* Low Stock Alerts */}
-          <div className="app-card p-5 border-l-4 border-l-orange-400">
+          <div className="glass-accent p-5 grad-edge border-l-4 border-l-orange-400">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-md bg-orange-100 flex items-center justify-center">
-                  <i className="fas fa-exclamation-triangle text-orange-500 text-xs"></i>
+                <span className="color-block color-block-sm grad-gold text-white">
+                  <i className="fas fa-exclamation-triangle text-[11px]"></i>
                 </span>
                 Low Stock Alerts
               </h3>
@@ -200,11 +210,11 @@ export default function Dashboard() {
         <div className="lg:col-span-2 space-y-5">
 
           {/* Expiring Batches */}
-          <div className="app-card p-5">
+          <div className="glass-accent p-5 grad-edge">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-md bg-amber-100 flex items-center justify-center">
-                  <i className="fas fa-clock text-amber-500 text-xs"></i>
+                <span className="color-block color-block-sm grad-gold text-white">
+                  <i className="fas fa-clock text-[11px]"></i>
                 </span>
                 Expiring in 30 Days
               </h3>
@@ -246,11 +256,11 @@ export default function Dashboard() {
           </div>
 
           {/* Medicine Catalog */}
-          <div className="app-card p-5">
+          <div className="glass-accent p-5 grad-edge">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-md bg-violet-100 flex items-center justify-center">
-                  <i className="fas fa-pills text-violet-500 text-xs"></i>
+                <span className="color-block color-block-sm grad-warm text-white">
+                  <i className="fas fa-pills text-[11px]"></i>
                 </span>
                 Recent Medicines
               </h3>
@@ -279,33 +289,33 @@ export default function Dashboard() {
       </div>
 
       {/* Bottom Stats Row */}
-      <div className="app-card p-5">
+      <div className="glass-accent p-5 grad-edge">
         <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
-          <span className="w-6 h-6 rounded-md bg-slate-100 flex items-center justify-center">
-            <i className="fas fa-chart-bar text-slate-500 text-xs"></i>
+          <span className="color-block color-block-sm grad-cool text-white">
+            <i className="fas fa-chart-bar text-[11px]"></i>
           </span>
           Quick Stats
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="text-center p-4 rounded-xl bg-pharma-50/60 border border-pharma-100">
-            <p className="text-2xl font-bold text-pharma-600">{totalCustomers}</p>
-            <p className="text-[11px] text-slate-500 mt-1 font-medium">Customers</p>
+          <div className="text-center p-4 rounded-xl grad-hero text-white shadow-glow-sm">
+            <p className="text-2xl font-bold">{totalCustomers}</p>
+            <p className="text-[11px] mt-1 font-medium text-white/80">Customers</p>
           </div>
-          <div className="text-center p-4 rounded-xl bg-blue-50/60 border border-blue-100">
-            <p className="text-2xl font-bold text-blue-600">{monthBills}</p>
-            <p className="text-[11px] text-slate-500 mt-1 font-medium">Monthly Bills</p>
+          <div className="text-center p-4 rounded-xl grad-cool text-white shadow-glow-indigo">
+            <p className="text-2xl font-bold">{monthBills}</p>
+            <p className="text-[11px] mt-1 font-medium text-white/80">Monthly Bills</p>
           </div>
-          <div className="text-center p-4 rounded-xl bg-violet-50/60 border border-violet-100">
-            <p className="text-2xl font-bold text-violet-600">{totalMedicines}</p>
-            <p className="text-[11px] text-slate-500 mt-1 font-medium">Stock Items</p>
+          <div className="text-center p-4 rounded-xl grad-brand text-white shadow-glow-sm">
+            <p className="text-2xl font-bold">{totalMedicines}</p>
+            <p className="text-[11px] mt-1 font-medium text-white/80">Stock Items</p>
           </div>
-          <div className="text-center p-4 rounded-xl bg-orange-50/60 border border-orange-100">
-            <p className="text-2xl font-bold text-orange-600">{expiringCount}</p>
-            <p className="text-[11px] text-slate-500 mt-1 font-medium">Expiring Soon</p>
+          <div className="text-center p-4 rounded-xl grad-gold text-white shadow-glow-sm">
+            <p className="text-2xl font-bold">{expiringCount}</p>
+            <p className="text-[11px] mt-1 font-medium text-white/80">Expiring Soon</p>
           </div>
-          <div className="text-center p-4 rounded-xl bg-rose-50/60 border border-rose-100">
-            <p className="text-2xl font-bold text-rose-600">{lowStockCount}</p>
-            <p className="text-[11px] text-slate-500 mt-1 font-medium">Low Stock</p>
+          <div className="text-center p-4 rounded-xl grad-warm text-white shadow-glow-sm">
+            <p className="text-2xl font-bold">{lowStockCount}</p>
+            <p className="text-[11px] mt-1 font-medium text-white/80">Low Stock</p>
           </div>
         </div>
       </div>
