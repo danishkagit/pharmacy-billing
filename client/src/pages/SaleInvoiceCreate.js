@@ -29,8 +29,63 @@ export default function SaleInvoiceCreate() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [prescriptionFile, setPrescriptionFile] = useState(null);
   const [prescriptionPreview, setPrescriptionPreview] = useState(null);
+  const [showCamera, setShowCamera] = useState(false);
   const cameraInputRef = useRef(null);
   const fileInputRef = useRef(null);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const cameraStreamRef = useRef(null);
+  const isMobile = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+  const stopCamera = () => {
+    if (cameraStreamRef.current) {
+      cameraStreamRef.current.getTracks().forEach(track => track.stop());
+      cameraStreamRef.current = null;
+    }
+    setShowCamera(false);
+  };
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } } });
+      cameraStreamRef.current = stream;
+      setShowCamera(true);
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => {});
+        }
+      }, 0);
+    } catch (err) {
+      setError('Camera unavailable. Use "Upload Image / PDF" instead.');
+      cameraInputRef.current?.click();
+    }
+  };
+
+  const handleTakePhoto = () => {
+    if (isMobile) {
+      cameraInputRef.current?.click();
+      return;
+    }
+    startCamera();
+  };
+
+  const capturePhoto = () => {
+    const video = videoRef.current;
+    if (!video || video.videoWidth === 0) return;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    canvas.toBlob(blob => {
+      if (!blob) return;
+      const file = new File([blob], `prescription-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      setPrescriptionFile(file);
+      stopCamera();
+    }, 'image/jpeg', 0.92);
+  };
+
+  useEffect(() => () => stopCamera(), []);
 
   useEffect(() => {
     API.get('/customers', { params: { limit: 200 } }).then(r => { if (r.success) setCustomers(r.data); });
@@ -288,7 +343,7 @@ export default function SaleInvoiceCreate() {
             <div className="flex flex-wrap items-center gap-3">
               <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" hidden onChange={handlePrescriptionFileChange} />
               <input ref={fileInputRef} type="file" accept="image/*,.pdf,application/pdf" hidden onChange={handlePrescriptionFileChange} />
-              <button type="button" onClick={() => cameraInputRef.current?.click()} className="btn-secondary text-xs py-2 px-3">
+              <button type="button" onClick={handleTakePhoto} className="btn-secondary text-xs py-2 px-3">
                 <i className="fas fa-camera mr-1"></i>Take Photo
               </button>
               <button type="button" onClick={() => fileInputRef.current?.click()} className="btn-secondary text-xs py-2 px-3">
@@ -309,6 +364,30 @@ export default function SaleInvoiceCreate() {
               )}
             </div>
           </div>
+
+          {showCamera && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={stopCamera}>
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                  <span className="text-sm font-semibold text-slate-700"><i className="fas fa-video mr-2 text-pharma-600"></i>Take Photo</span>
+                  <button type="button" onClick={stopCamera} className="text-slate-400 hover:text-slate-600"><i className="fas fa-times"></i></button>
+                </div>
+                <div className="relative bg-black aspect-square">
+                  <video ref={videoRef} playsInline muted autoPlay className="w-full h-full object-cover" />
+                  <canvas ref={canvasRef} className="hidden" />
+                  {!isMobile && (
+                    <span className="absolute bottom-2 right-2 text-[10px] text-white/60 bg-black/40 px-2 py-0.5 rounded-full">Webcam preview</span>
+                  )}
+                </div>
+                <div className="flex items-center justify-center gap-4 py-4">
+                  <button type="button" onClick={capturePhoto} className="h-14 w-14 rounded-full bg-pharma-600 text-white shadow-lg flex items-center justify-center hover:bg-pharma-700 transition" title="Capture">
+                    <i className="fas fa-camera"></i>
+                  </button>
+                  <button type="button" onClick={stopCamera} className="text-xs text-slate-500 hover:text-slate-700">Cancel</button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Items Table */}
           <div>
