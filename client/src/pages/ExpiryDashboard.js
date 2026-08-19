@@ -27,10 +27,10 @@ export default function ExpiryDashboard() {
   return (
     <div className="space-y-5">
       <PageHeader icon="clock" title="Expiry Dashboard" subtitle={`${batches.length} batch(es) expiring within ${days} days`}>
-        <div className="flex items-center gap-2">
-          <div className="inline-flex bg-white/60 backdrop-blur-md rounded-xl p-1 gap-0.5 shadow-sm border border-white/70">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="inline-flex max-w-full flex-wrap bg-white/60 backdrop-blur-md rounded-xl p-1 gap-0.5 shadow-sm border border-white/70">
             {[30, 60, 90].map(d => (
-              <button key={d} onClick={() => setDays(d)} className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${days === d ? 'bg-white text-pharma-700 shadow glow-soft' : 'text-slate-500 hover:text-slate-700 hover:bg-white/70'}`}>{d} days</button>
+              <button key={d} onClick={() => setDays(d)} className={`px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all duration-200 ${days === d ? 'bg-white text-pharma-700 shadow glow-soft' : 'text-slate-500 hover:text-slate-700 hover:bg-white/70'}`}>{d} days</button>
             ))}
           </div>
           <button onClick={() => window.open(`${API_BASE}/batches/expiry-report/pdf?days=${days}`, '_blank')} className="btn btn-secondary">
