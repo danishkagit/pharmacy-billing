@@ -35,4 +35,18 @@ const upload = multer({
   fileFilter
 });
 
-module.exports = upload;
+const uploadCsv = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = /csv|pdf/;
+    const extname = allowed.test(path.extname(file.originalname).toLowerCase());
+    if (extname) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only CSV and PDF files are allowed'), false);
+    }
+  }
+});
+
+module.exports = { upload, uploadCsv };

@@ -7,7 +7,7 @@ const Medicine = require('../models/Medicine');
 const path = require('path');
 const fs = require('fs');
 const { hasPermission } = require('../middleware/rbac');
-const upload = require('../middleware/upload');
+const { upload, uploadCsv } = require('../middleware/upload');
 const { parseCsvTemplate, parsePdfTemplate } = require('../parser');
 const { fetchSupplierEmails, parseEmailCsv } = require('../email');
 
@@ -141,7 +141,7 @@ router.put('/:id', hasPermission('purchase'), async (req, res) => {
   }
 });
 
-router.post('/parse-template', hasPermission('purchase'), upload.single('templateFile'), async (req, res) => {
+router.post('/parse-template', hasPermission('purchase'), uploadCsv.single('templateFile'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ success: false, error: 'No template file uploaded' });
     
@@ -216,7 +216,7 @@ router.post('/parse-template', hasPermission('purchase'), upload.single('templat
   }
 });
 
-router.post('/parse-csv', hasPermission('purchase'), upload.single('templateFile'), async (req, res) => {
+router.post('/parse-csv', hasPermission('purchase'), uploadCsv.single('templateFile'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ success: false, error: 'No CSV file uploaded' });
 
