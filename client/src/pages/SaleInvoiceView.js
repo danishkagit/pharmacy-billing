@@ -132,7 +132,8 @@ export default function SaleInvoiceView() {
         <div className="flex justify-end mt-6">
           <div className="w-60 space-y-1 text-sm">
             <div className="flex justify-between"><span className="text-slate-500">Subtotal:</span><span className="text-slate-700">₹{invoice.subtotal?.toFixed(2)}</span></div>
-            {invoice.discountAmount > 0 && <div className="flex justify-between"><span className="text-slate-500">Discount:</span><span className="text-slate-700">-₹{invoice.discountAmount?.toFixed(2)}</span></div>}
+            {(invoice.discountAmount - (invoice.customerDiscount || 0)) > 0 && <div className="flex justify-between"><span className="text-slate-500">Item Discount:</span><span className="text-slate-700">-₹{(invoice.discountAmount - (invoice.customerDiscount || 0)).toFixed(2)}</span></div>}
+            {invoice.customerDiscount > 0 && <div className="flex justify-between text-emerald-700"><span className="text-slate-500">Customer Discount ({invoice.customerDiscountPercent}%):</span><span>-₹{invoice.customerDiscount?.toFixed(2)}</span></div>}
             {invoice.cgst > 0 && <div className="flex justify-between"><span className="text-slate-500">CGST:</span><span className="text-slate-700">₹{invoice.cgst?.toFixed(2)}</span></div>}
             {invoice.sgst > 0 && <div className="flex justify-between"><span className="text-slate-500">SGST:</span><span className="text-slate-700">₹{invoice.sgst?.toFixed(2)}</span></div>}
             {invoice.igst > 0 && <div className="flex justify-between"><span className="text-slate-500">IGST:</span><span className="text-slate-700">₹{invoice.igst?.toFixed(2)}</span></div>}

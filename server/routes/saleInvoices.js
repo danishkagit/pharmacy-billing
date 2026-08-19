@@ -175,11 +175,21 @@ router.post('/', hasPermission('billing'), upload.fields([{ name: 'billFile', ma
       }
     }
 
-    // Automatic customer discount: retail sales get a common discount based on
-    // the total MRP value of the bill (>= Rs 100 => 15%, below Rs 100 => 10%).
+    // Automatic customer discount for retail sales based on total MRP slabs
+    // configured in Settings (discountSlabs on the company).
     const totalMRP = items.reduce((s, it) => s + (it.qty || 0) * (it.mrp || it.rate || 0), 0);
-    const customerDiscountPercent = req.body.type === 'wholesale' ? 0 : (totalMRP >= 100 ? 15 : 10);
-    const customerDiscount = subtotal > 0 ? (subtotal * customerDiscountPercent) / 100 : 0;
+    let customerDiscountPercent = 0;
+    let customerDiscount = 0;
+    if (req.body.type !== 'wholesale') {
+      const slabs = (req.company.discountSlabs && req.company.discountSlabs.length)
+        ? req.company.discountSlabs
+        : [{ minMRP: 0, discountPercent: 10 }, { minMRP: 100, discountPercent: 15 }];
+      const slab = slabs.filter(s => totalMRP >= (s.minMRP || 0)).sort((a, b) => (b.minMRP || 0) - (a.minMRP || 0))[0];
+      if (slab) {
+        customerDiscountPercent = slab.discountPercent || 0;
+        customerDiscount = subtotal > 0 ? (subtotal * customerDiscountPercent) / 100 : 0;
+      }
+    }
 
     const invoiceBase = subtotal + totalTax - customerDiscount - (req.body.discountAmount || 0);
     const roundOffVal = roundOff(invoiceBase) - invoiceBase;

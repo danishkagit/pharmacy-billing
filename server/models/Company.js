@@ -21,6 +21,13 @@ const companySchema = new mongoose.Schema({
   invoiceNote: { type: String, default: 'Thank you for your business!' },
   gstType: { type: String, enum: ['regular', 'composition'], default: 'regular' },
   upiId: { type: String, trim: true },
+  discountSlabs: {
+    type: [{
+      minMRP: { type: Number, default: 0 },
+      discountPercent: { type: Number, default: 0 }
+    }],
+    default: [{ minMRP: 0, discountPercent: 10 }, { minMRP: 100, discountPercent: 15 }]
+  },
   isActive: { type: Boolean, default: true }
 }, { timestamps: true });
 

@@ -33,6 +33,8 @@ const saleInvoiceSchema = new mongoose.Schema({
   }],
   subtotal: { type: Number, default: 0 },
   discountAmount: { type: Number, default: 0 },
+  customerDiscount: { type: Number, default: 0 },
+  customerDiscountPercent: { type: Number, default: 0 },
   cgst: { type: Number, default: 0 },
   sgst: { type: Number, default: 0 },
   igst: { type: Number, default: 0 },

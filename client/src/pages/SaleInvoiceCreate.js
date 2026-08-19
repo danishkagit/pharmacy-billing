@@ -166,7 +166,12 @@ export default function SaleInvoiceCreate() {
 
   const subtotal = items.reduce((s, i) => s + (i.amount || 0), 0);
   const totalTax = items.reduce((s, i) => { const amt = (i.amount || 0); return s + (amt * (i.gstRate || 12)) / 100; }, 0);
-  const totalAmount = Math.round(subtotal + totalTax);
+  const totalMRP = items.reduce((s, i) => s + (i.qty || 0) * (i.mrp || i.rate || 0), 0);
+  const slabs = (company?.discountSlabs && company.discountSlabs.length) ? company.discountSlabs : [{ minMRP: 0, discountPercent: 10 }, { minMRP: 100, discountPercent: 15 }];
+  const slab = [...slabs].filter(s => totalMRP >= (s.minMRP || 0)).sort((a, b) => (b.minMRP || 0) - (a.minMRP || 0))[0];
+  const customerDiscountPercent = form.type === 'wholesale' ? 0 : (slab?.discountPercent || 0);
+  const customerDiscount = subtotal > 0 ? (subtotal * customerDiscountPercent) / 100 : 0;
+  const totalAmount = Math.round(subtotal + totalTax - customerDiscount);
 
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]);
@@ -537,6 +542,12 @@ export default function SaleInvoiceCreate() {
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Subtotal:</span><span className="font-medium">₹{subtotal.toFixed(2)}</span>
               </div>
+              {customerDiscount > 0 && (
+                <div className="flex justify-between text-sm text-emerald-700">
+                  <span className="flex items-center gap-1">Customer Discount ({customerDiscountPercent}%) <i className="fas fa-badge-percent text-[10px]"></i></span>
+                  <span className="font-medium">-₹{customerDiscount.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm text-gray-600">
                 <span>GST:</span><span className="font-medium">₹{totalTax.toFixed(2)}</span>
               </div>
