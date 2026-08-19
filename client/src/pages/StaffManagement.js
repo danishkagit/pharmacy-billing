@@ -29,11 +29,11 @@ export default function StaffManagement() {
 
   const columns = [
     { label: 'Name', render: s => <span className="font-medium">{s.name}</span> },
-    { label: 'Email', render: s => s.email },
+    { label: 'Email', className: 'hidden md:table-cell', tdClass: 'hidden md:table-cell', render: s => s.email },
     { label: 'Role', render: s => <span className="badge badge-blue capitalize">{s.role}</span> },
     { label: 'Branch', className: 'text-slate-500', render: s => s.branch?.name || '-' },
     { label: 'Active', className: 'text-center', tdClass: 'text-center', render: s => s.isActive ? <span className="text-emerald-500"><i className="fas fa-check-circle"></i></span> : <span className="text-red-500"><i className="fas fa-times-circle"></i></span> },
-    { label: 'Last Login', className: 'text-slate-500', render: s => s.lastLogin ? new Date(s.lastLogin).toLocaleString('en-IN') : 'Never' },
+    { label: 'Last Login', className: 'text-slate-500 hidden md:table-cell', tdClass: 'text-slate-500 hidden md:table-cell', render: s => s.lastLogin ? new Date(s.lastLogin).toLocaleString('en-IN') : 'Never' },
   ];
 
   return (

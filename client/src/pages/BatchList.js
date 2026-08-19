@@ -51,8 +51,8 @@ export default function BatchList() {
     },
     {
       label: 'Supplier',
-      className: 'text-left',
-      tdClass: 'text-gray-500',
+      className: 'text-left hidden md:table-cell',
+      tdClass: 'text-gray-500 hidden md:table-cell',
       render: row => row.supplier?.name || '-',
     },
     {
@@ -63,8 +63,8 @@ export default function BatchList() {
     },
     {
       label: 'MRP',
-      className: 'text-center',
-      tdClass: 'text-center',
+      className: 'text-center hidden md:table-cell',
+      tdClass: 'text-center hidden md:table-cell',
       render: row => `₹${row.mrp}`,
     },
     {
@@ -103,12 +103,12 @@ export default function BatchList() {
         <div className="text-sm text-gray-500">{stats.total} batches | {stats.totalQty} units in stock</div>
       </PageHeader>
       <GlassCard>
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-center gap-4 mb-4 flex-wrap">
           <input
             placeholder="Search by medicine name..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="glass-input flex-1"
+            className="glass-input flex-1 min-w-[180px]"
           />
           <GlassTabs tabs={tabs} active={statusTab} onChange={setStatusTab} />
         </div>
