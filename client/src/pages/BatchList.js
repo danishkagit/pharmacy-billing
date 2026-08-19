@@ -73,19 +73,22 @@ export default function BatchList() {
       tdClass: 'text-center',
       render: row => {
         const days = dayDiff(row.expiryDate);
+        let dateCls = '';
+        let note = null;
+        if (row.isExpired || days <= 0) { dateCls = 'text-red-600 font-semibold'; note = <div className="text-[10px] text-red-600 font-semibold">Expired</div>; }
+        else if (days <= 30) { dateCls = 'text-orange-600 font-semibold'; note = <div className="text-[10px] text-orange-600">in {days}d</div>; }
         return (
           <div className="text-center">
-            <div className="text-xs whitespace-nowrap">{new Date(row.expiryDate).toLocaleDateString('en-IN')}</div>
-            {days <= 30 && days > 0 && <div className="text-[10px] text-orange-600">in {days}d</div>}
-            {days <= 0 && <div className="text-[10px] text-red-600 font-semibold">Expired</div>}
+            <div className={`text-xs whitespace-nowrap ${dateCls}`}>{new Date(row.expiryDate).toLocaleDateString('en-IN')}</div>
+            {note}
           </div>
         );
       },
     },
     {
       label: 'Status',
-      className: 'text-center',
-      tdClass: 'text-center',
+      className: 'text-center hidden md:table-cell',
+      tdClass: 'text-center hidden md:table-cell',
       render: row => {
         const days = dayDiff(row.expiryDate);
         let cls = 'badge-green';
