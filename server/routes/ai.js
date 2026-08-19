@@ -3,7 +3,7 @@ const router = express.Router();
 const fs = require('fs');
 const Medicine = require('../models/Medicine');
 const { isGeminiConfigured, geminiText, geminiVision } = require('../utils/gemini');
-const upload = require('../middleware/upload');
+const { upload } = require('../middleware/upload');
 
 const OCR_PROMPT = `You are a pharmacy assistant reading a handwritten or printed prescription.
 Extract every medicine line into strict JSON.

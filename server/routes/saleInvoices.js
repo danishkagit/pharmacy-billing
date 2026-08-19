@@ -11,7 +11,7 @@ const NarcoticsRegister = require('../models/NarcoticsRegister');
 const { hasPermission } = require('../middleware/rbac');
 const { calculateGST, roundOff } = require('../utils/helpers');
 const { sendSMS, sendWhatsApp } = require('../utils/sms');
-const upload = require('../middleware/upload');
+const { upload } = require('../middleware/upload');
 
 router.get('/', async (req, res) => {
   try {
@@ -175,7 +175,13 @@ router.post('/', hasPermission('billing'), upload.fields([{ name: 'billFile', ma
       }
     }
 
-    const invoiceBase = subtotal + totalTax - (req.body.discountAmount || 0);
+    // Automatic customer discount: retail sales get a common discount based on
+    // the total MRP value of the bill (>= Rs 100 => 15%, below Rs 100 => 10%).
+    const totalMRP = items.reduce((s, it) => s + (it.qty || 0) * (it.mrp || it.rate || 0), 0);
+    const customerDiscountPercent = req.body.type === 'wholesale' ? 0 : (totalMRP >= 100 ? 15 : 10);
+    const customerDiscount = subtotal > 0 ? (subtotal * customerDiscountPercent) / 100 : 0;
+
+    const invoiceBase = subtotal + totalTax - customerDiscount - (req.body.discountAmount || 0);
     const roundOffVal = roundOff(invoiceBase) - invoiceBase;
 
     const billFile = req.files?.billFile?.[0] ? `/uploads/${req.files.billFile[0].filename}` : undefined;
@@ -198,13 +204,15 @@ router.post('/', hasPermission('billing'), upload.fields([{ name: 'billFile', ma
       prescriptionFile,
       items,
       subtotal,
-      discountAmount: (req.body.discountAmount || 0) + totalDiscount,
+      discountAmount: (req.body.discountAmount || 0) + totalDiscount + customerDiscount,
+      customerDiscount,
+      customerDiscountPercent,
       cgst: totalCgst,
       sgst: totalSgst,
       igst: totalIgst,
       taxAmount: totalTax,
       roundOff: roundOffVal,
-      totalAmount: Math.round(subtotal + totalTax - (req.body.discountAmount || 0)),
+      totalAmount: Math.round(subtotal + totalTax - customerDiscount - (req.body.discountAmount || 0)),
       paymentMode: req.body.paymentMode || 'cash',
       paymentStatus: req.body.paymentStatus || (req.body.paymentMode === 'credit' ? 'pending' : 'paid'),
       paidAmount: req.body.paidAmount || 0,
