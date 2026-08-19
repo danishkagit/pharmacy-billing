@@ -43,6 +43,9 @@ export default function PurchaseInvoiceCreate() {
           rate: i.rate,
           qty: i.qty,
           freeQty: i.freeQty,
+          freeMode: 'N',
+          freePct: 0,
+          freeNText: '',
           schemeDisc: i.schemeDisc,
           gstRate: i.gstRate
         })));
@@ -63,16 +66,45 @@ export default function PurchaseInvoiceCreate() {
   };
 
   const addItem = () => {
-    setItems([...items, { medicine: '', medicineName: '', batchNo: '', mfgDate: '', expiryDate: '', mrp: 0, rate: 0, qty: 1, freeQty: 0, schemeDisc: 0 }]);
+    setItems([...items, { medicine: '', medicineName: '', batchNo: '', mfgDate: '', expiryDate: '', mrp: 0, rate: 0, qty: 1, freeQty: 0, freeMode: 'N', freePct: 0, freeNText: '', schemeDisc: 0 }]);
   };
 
   const removeItem = (idx) => setItems(items.filter((_, i) => i !== idx));
+
+  const computeFreeFromPct = (qty, pct) => {
+    if (qty <= 0 || !pct) return 0;
+    return Math.round(qty * pct / (100 - pct) * 2) / 2;
+  };
+
+  const setFreeMode = (idx, mode) => {
+    const updated = [...items];
+    updated[idx] = { ...updated[idx], freeMode: mode };
+    if (mode === '%') updated[idx].freeQty = computeFreeFromPct(updated[idx].qty, updated[idx].freePct);
+    setItems(updated);
+  };
+
+  const setFreePct = (idx, pct) => {
+    const updated = [...items];
+    updated[idx] = { ...updated[idx], freePct: pct, freeQty: computeFreeFromPct(updated[idx].qty, pct) };
+    setItems(updated);
+  };
+
+  const setFreeN = (idx, raw) => {
+    const updated = [...items];
+    const v = raw.trim().toUpperCase();
+    updated[idx].freeNText = raw;
+    updated[idx].freeQty = v === 'N' ? 0.5 : (parseFloat(raw) || 0);
+    setItems(updated);
+  };
 
   const updateItem = (idx, field, value) => {
     const updated = [...items];
     updated[idx] = { ...updated[idx], [field]: value };
     if (field === 'qty' || field === 'rate') {
       updated[idx].amount = (updated[idx].qty || 0) * (updated[idx].rate || 0);
+    }
+    if (field === 'qty' && updated[idx].freeMode === '%') {
+      updated[idx].freeQty = computeFreeFromPct(updated[idx].qty, updated[idx].freePct);
     }
     setItems(updated);
   };
@@ -164,7 +196,7 @@ export default function PurchaseInvoiceCreate() {
         formData.append(`items[${idx}][rate]`, String(item.rate || 0));
         formData.append(`items[${idx}][qty]`, String(item.qty || 0));
         formData.append(`items[${idx}][freeQty]`, String(item.freeQty || 0));
-        formData.append(`items[${idx}][schemeDisc]`, String(item.schemeDisc || 0));
+        formData.append(`items[${idx}][schemeDisc]`, item.freeMode === '%' ? String(item.freePct || 0) : String(item.schemeDisc || 0));
         formData.append(`items[${idx}][gstRate]`, String(item.gstRate || 0));
       });
       const res = await API.post('/purchase-invoices', formData, { headers: { 'Content-Type': false } });
@@ -257,7 +289,20 @@ export default function PurchaseInvoiceCreate() {
                         <td className="p-2"><input type="number" value={item.mrp} onChange={e => updateItem(idx, 'mrp', parseFloat(e.target.value) || 0)} className="glass-input w-20" /></td>
                         <td className="p-2"><input type="number" value={item.rate} onChange={e => updateItem(idx, 'rate', parseFloat(e.target.value) || 0)} className="glass-input w-20" /></td>
                         <td className="p-2"><input type="number" value={item.qty} onChange={e => updateItem(idx, 'qty', parseInt(e.target.value) || 0)} min={0} className="glass-input w-16" /></td>
-                        <td className="p-2"><input type="number" value={item.freeQty} onChange={e => updateItem(idx, 'freeQty', parseInt(e.target.value) || 0)} min={0} className="glass-input w-16" /></td>
+                        <td className="p-2">
+                          <div className="flex items-center gap-1">
+                            <div className="flex rounded-lg overflow-hidden border border-slate-200 shrink-0">
+                              <button type="button" onClick={() => setFreeMode(idx, 'N')} className={`px-1.5 py-0.5 text-[10px] font-semibold transition-colors ${item.freeMode !== '%' ? 'bg-pharma-600 text-white' : 'bg-white text-slate-500'}`} title="Free quantity as units (N = half)">N</button>
+                              <button type="button" onClick={() => setFreeMode(idx, '%')} className={`px-1.5 py-0.5 text-[10px] font-semibold transition-colors ${item.freeMode === '%' ? 'bg-pharma-600 text-white' : 'bg-white text-slate-500'}`} title="Free quantity as scheme %">%</button>
+                            </div>
+                            {item.freeMode === '%' ? (
+                              <input type="number" value={item.freePct} onChange={e => setFreePct(idx, parseFloat(e.target.value) || 0)} min={0} max={100} placeholder="16.66" className="glass-input w-14" />
+                            ) : (
+                              <input value={item.freeNText ?? (item.freeQty || '')} onChange={e => setFreeN(idx, e.target.value)} placeholder="N/0" inputMode="decimal" className="glass-input w-14" />
+                            )}
+                          </div>
+                          {item.freeMode === '%' && item.freeQty > 0 && <div className="text-[10px] text-slate-400 mt-0.5">≈ {item.freeQty} free</div>}
+                        </td>
                         <td className="p-2 text-right font-medium">₹{((item.qty || 0) * (item.rate || 0)).toFixed(2)}</td>
                         <td className="p-2 text-center"><button type="button" onClick={() => removeItem(idx)} className="btn btn-ghost btn-sm text-red-400 hover:text-red-600"><i className="fas fa-times"></i></button></td>
                       </tr>
