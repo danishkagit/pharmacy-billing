@@ -11,14 +11,47 @@ export default function PurchaseInvoiceCreate() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [billImage, setBillImage] = useState(null);
   const [parsing, setParsing] = useState(false);
+  const [ocrParsing, setOcrParsing] = useState(false);
   const [templateMsg, setTemplateMsg] = useState('');
   const templateInputRef = useRef(null);
+  const billImageInputRef = useRef(null);
 
   useEffect(() => {
     API.get('/suppliers', { params: { limit: 200 } }).then(res => { if (res.success) setSuppliers(res.data); });
   }, []);
+
+  const applyParsed = (d, sourceName, imageFile) => {
+    setItems(d.items.map(i => ({
+      medicine: i.medicine,
+      medicineName: i.medicineName,
+      batchNo: i.batchNo,
+      mfgDate: '',
+      expiryDate: i.expiryDate,
+      mrp: i.mrp,
+      rate: i.rate,
+      qty: i.qty,
+      freeQty: i.freeQty,
+      freeMode: 'N',
+      freePct: 0,
+      freeNText: '',
+      schemeDisc: i.schemeDisc || 0,
+      gstRate: i.gstRate
+    })));
+    if (d.invoiceDate) {
+      const m = String(d.invoiceDate).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      setForm(f => ({ ...f, invoiceDate: m ? `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}` : d.invoiceDate }));
+    }
+    if (d.invoiceNo) setForm(f => ({ ...f, invoiceNo: d.invoiceNo }));
+    const freightTotal = (d.freight || 0) + (d.platformFees || 0) + (d.codCharges || 0);
+    if (freightTotal) setForm(f => ({ ...f, freight: +freightTotal.toFixed(2) }));
+    if (d.discount) setForm(f => ({ ...f, discountPercent: d.discount }));
+    const newTotals = d.items.reduce((s, i) => s + (i.qty || 0) * (i.rate || 0), 0);
+    setForm(f => ({ ...f, discountAmount: newTotals > 0 ? Math.round(newTotals * (f.discountPercent || 0) / 100 * 100) / 100 : 0 }));
+    if (imageFile) setBillImage(imageFile);
+    setTemplateMsg(`Parsed ${d.total} items from ${sourceName} (${d.matched} matched to stock). Review, link any unmatched, then save.`);
+  };
 
   const handleTemplateUpload = async (e) => {
     const file = e.target.files[0];
@@ -32,29 +65,7 @@ export default function PurchaseInvoiceCreate() {
       fd.append('templateFile', file);
       const res = await API.post('/purchase-invoices/parse-csv', fd, { headers: { 'Content-Type': false } });
       if (res.success) {
-        const d = res.data;
-        setItems(d.items.map(i => ({
-          medicine: i.medicine,
-          medicineName: i.medicineName,
-          batchNo: i.batchNo,
-          mfgDate: '',
-          expiryDate: i.expiryDate,
-          mrp: i.mrp,
-          rate: i.rate,
-          qty: i.qty,
-          freeQty: i.freeQty,
-          freeMode: 'N',
-          freePct: 0,
-          freeNText: '',
-          schemeDisc: i.schemeDisc,
-          gstRate: i.gstRate
-        })));
-        if (d.invoiceDate) setForm(f => ({ ...f, invoiceDate: d.invoiceDate }));
-        if (d.invoiceNo) setForm(f => ({ ...f, invoiceNo: d.invoiceNo }));
-        if (d.freight || d.platformFees || d.codCharges) setForm(f => ({ ...f, freight: +(d.freight + d.platformFees + d.codCharges).toFixed(2) }));
-        const newTotals = d.items.reduce((s, i) => s + (i.qty || 0) * (i.rate || 0), 0);
-        setForm(f => ({ ...f, discountAmount: newTotals > 0 ? Math.round(newTotals * (f.discountPercent || 0) / 100 * 100) / 100 : 0 }));
-        setTemplateMsg(`Parsed ${d.total} items from ${file.name} (${d.matched} matched to stock). Review, link any unmatched, then save.`);
+        applyParsed(res.data, file.name);
       } else {
         setTemplateMsg(res.error || 'Parsing failed');
       }
@@ -62,6 +73,33 @@ export default function PurchaseInvoiceCreate() {
       setTemplateMsg(err?.error || 'Failed to parse template');
     } finally {
       setParsing(false);
+    }
+  };
+
+  const handleBillImageUpload = async (e) => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!form.supplier) return setTemplateMsg('Select a supplier first, then upload the bill image.');
+    setOcrParsing(true);
+    setTemplateMsg('');
+    try {
+      const fd = new FormData();
+      fd.append('billImage', file);
+      const res = await API.post('/purchase-invoices/ocr-bill', fd, { headers: { 'Content-Type': false } });
+      if (res.success) {
+        if (!res.data.items.length) {
+          setTemplateMsg('Could not read any medicine lines from that bill image. Try a clearer photo.');
+        } else {
+          applyParsed(res.data, file.name, file);
+        }
+      } else {
+        setTemplateMsg(res.error || 'OCR failed');
+      }
+    } catch (err) {
+      setTemplateMsg(err?.error || 'Failed to read bill image');
+    } finally {
+      setOcrParsing(false);
     }
   };
 
@@ -163,10 +201,6 @@ export default function PurchaseInvoiceCreate() {
     setForm(f => ({ ...f, supplier: val, discountPercent: pct, discountAmount: Math.round(amt * 100) / 100 }));
   };
 
-  const handleFileChange = (e) => {
-    setSelectedFile(e.target.files[0]);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.supplier || items.length === 0) return setError('Supplier and at least one item required');
@@ -185,7 +219,7 @@ export default function PurchaseInvoiceCreate() {
       formData.append('discountAmount', String(form.discountAmount));
       formData.append('freight', String(form.freight));
       formData.append('notes', form.notes);
-      if (selectedFile) formData.append('billFile', selectedFile);
+      if (billImage) formData.append('billFile', billImage);
       items.forEach((item, idx) => {
         formData.append(`items[${idx}][medicine]`, item.medicine || '');
         formData.append(`items[${idx}][medicineName]`, item.medicineName || '');
@@ -227,17 +261,15 @@ export default function PurchaseInvoiceCreate() {
               <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Invoice Date</label>
               <input type="date" value={form.invoiceDate} onChange={e => setForm({ ...form, invoiceDate: e.target.value })} className="glass-input" />
             </div>
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Bill File *</label>
-              <input type="file" onChange={handleFileChange} className="glass-input w-full" />
-              {selectedFile && <p className="text-xs text-slate-500 mt-1">Selected: {selectedFile.name}</p>}
-            </div>
           </div>
 
           <div className="surface-2 rounded-xl overflow-hidden">
             <div className="bg-white/60 backdrop-blur-md px-4 py-3 flex items-center justify-between border-b border-white/70">
               <span className="font-semibold text-sm text-slate-700">Items</span>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={() => billImageInputRef.current?.click()} disabled={ocrParsing} className="btn btn-sm btn-secondary text-pharma-600">
+                  <i className={`fas ${ocrParsing ? 'fa-spinner fa-spin' : 'fa-camera'} mr-1`}></i>{ocrParsing ? 'Reading bill...' : 'Upload Bill Image'}
+                </button>
                 <button type="button" onClick={() => templateInputRef.current?.click()} disabled={parsing} className="btn btn-sm btn-secondary text-pharma-600">
                   <i className={`fas ${parsing ? 'fa-spinner fa-spin' : 'fa-file-csv'} mr-1`}></i>{parsing ? 'Parsing...' : 'Upload Supplier CSV'}
                 </button>
@@ -245,6 +277,12 @@ export default function PurchaseInvoiceCreate() {
               </div>
             </div>
             <input type="file" ref={templateInputRef} accept=".csv" className="hidden" onChange={handleTemplateUpload} />
+            <input type="file" ref={billImageInputRef} accept="image/*" className="hidden" onChange={handleBillImageUpload} />
+            {billImage && (
+              <div className="px-4 py-2 text-xs bg-sky-50/70 text-sky-700 flex items-center gap-2 border-b border-white/70">
+                <i className="fas fa-paperclip"></i>Bill photo attached: {billImage.name} (saved with this invoice)
+              </div>
+            )}
             {templateMsg && (
               <div className={`px-4 py-2.5 text-xs flex items-center gap-2 border-b border-white/70 ${templateMsg.includes('Parsed') ? 'bg-emerald-50/70 text-emerald-700' : 'bg-amber-50/70 text-amber-700'}`}>
                 <i className={`fas ${templateMsg.includes('Parsed') ? 'fa-check-circle' : 'fa-exclamation-circle'}`}></i>{templateMsg}

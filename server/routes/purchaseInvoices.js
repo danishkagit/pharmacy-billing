@@ -8,6 +8,7 @@ const path = require('path');
 const fs = require('fs');
 const { hasPermission } = require('../middleware/rbac');
 const { upload, uploadCsv } = require('../middleware/upload');
+const { isGeminiConfigured, geminiVision } = require('../utils/gemini');
 const { parseCsvTemplate, parsePdfTemplate } = require('../parser');
 const { fetchSupplierEmails, parseEmailCsv } = require('../email');
 
@@ -278,6 +279,70 @@ router.post('/parse-csv', hasPermission('purchase'), uploadCsv.single('templateF
     });
   } catch (error) {
     try { fs.unlinkSync(req.file?.path); } catch {}
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post('/ocr-bill', hasPermission('purchase'), upload.single('billImage'), async (req, res) => {
+  try {
+    if (!isGeminiConfigured()) return res.status(503).json({ success: false, error: 'AI not configured (add GEMINI_API_KEY)' });
+    if (!req.file) return res.status(400).json({ success: false, error: 'Bill image required' });
+
+    const imageBase64 = fs.readFileSync(req.file.path).toString('base64');
+    const prompt = `You are reading a pharmaceutical supplier purchase bill / stockist invoice.
+Extract every medicine line into strict JSON.
+Return ONLY a JSON object - no markdown, no code fences, no commentary - with these keys:
+invoiceNo (string or null), invoiceDate (string dd/mm/yyyy or null), discount (number or null), freight (number or null), items (array).
+Each item must be: {"name":"medicine brand or generic name","pack":"pack size if present, else null","batch":"batch number or null","expiry":"expiry in MM/YY if present, else null","mrp":number or null,"rate":number or null,"qty":number or null,"free":number or null,"gst":number or null}.
+Only include medicine lines, skip headers/footers/totals. If you cannot read anything, return {"items":[]}.`;
+
+    const text = await geminiVision(imageBase64, req.file.mimetype || 'image/jpeg', prompt);
+    try { fs.unlinkSync(req.file.path); } catch (e) {}
+
+    const cleaned = text.replace(/```(?:json)?/g, '').trim();
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    let parsed = {};
+    if (start !== -1 && end > start) {
+      try { parsed = JSON.parse(cleaned.slice(start, end + 1)); } catch (e) { parsed = {}; }
+    }
+    if (!parsed.items || !Array.isArray(parsed.items)) parsed.items = [];
+
+    const names = parsed.items.map(i => String(i?.name || '').trim()).filter(Boolean);
+    const medicines = await Medicine.find({ companyRef: req.company._id, name: { $in: names } }).select('name mrp gstRate');
+    const medMap = new Map(medicines.map(m => [m.name.toLowerCase(), m]));
+
+    const items = parsed.items.map(it => {
+      const raw = String(it?.name || '').trim();
+      const med = medMap.get(raw.toLowerCase());
+      const rate = parseFloat(it?.rate) || 0;
+      return {
+        medicine: med?._id || '',
+        medicineName: raw,
+        batchNo: String(it?.batch || '').trim(),
+        expiryDate: String(it?.expiry || '').trim(),
+        mrp: parseFloat(it?.mrp) || med?.mrp || 0,
+        rate,
+        qty: parseInt(it?.qty) || 0,
+        freeQty: parseFloat(it?.free) || 0,
+        gstRate: parseFloat(it?.gst) || med?.gstRate || 12
+      };
+    });
+
+    res.json({
+      success: true,
+      data: {
+        invoiceNo: String(parsed.invoiceNo || '').trim(),
+        invoiceDate: String(parsed.invoiceDate || '').trim(),
+        discount: parseFloat(parsed.discount) || 0,
+        freight: parseFloat(parsed.freight) || 0,
+        items,
+        matched: items.filter(i => i.medicine).length,
+        total: items.length
+      }
+    });
+  } catch (error) {
+    try { if (req.file?.path) fs.unlinkSync(req.file.path); } catch (e) {}
     res.status(500).json({ success: false, error: error.message });
   }
 });
