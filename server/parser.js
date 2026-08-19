@@ -98,8 +98,11 @@ function parseCsvTemplate(csvPath) {
  * Shared column layout for SWIL 2.2 and RS/Sastasundar exports (0-indexed):
  *   0=T  1=dealer|RS  2=manufacturer  3=item code  5=medicine name  6=pack size
  *   8=batch no  9=expiry (DDMMYYYY)  11=rate  12=MRP  15=qty  16=free qty
- *   17=scheme%(RS)  21=net amount  22=CGST%  26=SGST%  27=GST amount
- *   30=HSN  31=EAN
+ *   17=rate discount%  19=S.Disc scheme%  21=net amount  22=CGST%  26=SGST%
+ *   27=GST amount  30=HSN  31=EAN
+ * Net amount = rate * qty * (1 - rateDisc/100) * (1 - sDisc/100).
+ * S.Disc is a free-quantity scheme: effective discount % = free/(buy+free), so
+ * free = qty * sDisc / (100 - sDisc). E.g. 16.67% = 5+1 or 3+0.5.
  * @param {array} row - CSV row array
  * @returns {object} - Parsed medicine item
  */
@@ -115,7 +118,10 @@ function parseCsvMedicineItem(row) {
   const sgstPercent = parseFloat(row[26]) || cgstPercent;
   const gstRate = cgstPercent + sgstPercent;
   const netRate = qty > 0 && amount > 0 ? amount / qty : rate;
-  const schemeDisc = rate > netRate ? +(rate - netRate).toFixed(2) : 0;
+  const sDiscPercent = parseFloat(row[19]) || 0;
+  // Derive free quantity from the S.Disc scheme (round to nearest 0.5 unit).
+  const derivedFree = qty > 0 && sDiscPercent > 0 ? qty * sDiscPercent / (100 - sDiscPercent) : 0;
+  const freeQty = parseFloat(row[16]) || 0 || Math.round(derivedFree * 2) / 2;
 
   return {
     medicineName,
@@ -126,8 +132,9 @@ function parseCsvMedicineItem(row) {
     mrp,
     rate: +netRate.toFixed(2),
     qty,
-    freeQty: parseInt(row[16], 10) || 0,
-    schemeDisc,
+    freeQty,
+    schemeDisc: +(rate - netRate).toFixed(2),
+    schemeDiscPercent: sDiscPercent,
     amount: +(amount || qty * netRate).toFixed(2),
     gstPercent: gstRate,
     cgstPercent,
