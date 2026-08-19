@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../utils/api';
 import MedicinePicker from '../components/MedicinePicker';
@@ -12,10 +12,53 @@ export default function PurchaseInvoiceCreate() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
+  const [parsing, setParsing] = useState(false);
+  const [templateMsg, setTemplateMsg] = useState('');
+  const templateInputRef = useRef(null);
 
   useEffect(() => {
     API.get('/suppliers', { params: { limit: 200 } }).then(res => { if (res.success) setSuppliers(res.data); });
   }, []);
+
+  const handleTemplateUpload = async (e) => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!form.supplier) return setTemplateMsg('Select a supplier first, then upload the CSV.');
+    setParsing(true);
+    setTemplateMsg('');
+    try {
+      const fd = new FormData();
+      fd.append('templateFile', file);
+      const res = await API.post('/purchase-invoices/parse-csv', fd, { headers: { 'Content-Type': false } });
+      if (res.success) {
+        const d = res.data;
+        setItems(d.items.map(i => ({
+          medicine: i.medicine,
+          medicineName: i.medicineName,
+          batchNo: i.batchNo,
+          mfgDate: '',
+          expiryDate: i.expiryDate,
+          mrp: i.mrp,
+          rate: i.rate,
+          qty: i.qty,
+          freeQty: i.freeQty,
+          schemeDisc: i.schemeDisc,
+          gstRate: i.gstRate
+        })));
+        if (d.invoiceDate) setForm(f => ({ ...f, invoiceDate: d.invoiceDate }));
+        if (d.invoiceNo) setForm(f => ({ ...f, invoiceNo: d.invoiceNo }));
+        if (d.freight || d.platformFees || d.codCharges) setForm(f => ({ ...f, freight: +(d.freight + d.platformFees + d.codCharges).toFixed(2) }));
+        setTemplateMsg(`Parsed ${d.total} items from ${file.name} (${d.matched} matched to stock). Review, link any unmatched, then save.`);
+      } else {
+        setTemplateMsg(res.error || 'Parsing failed');
+      }
+    } catch (err) {
+      setTemplateMsg(err?.error || 'Failed to parse template');
+    } finally {
+      setParsing(false);
+    }
+  };
 
   const addItem = () => {
     setItems([...items, { medicine: '', medicineName: '', batchNo: '', mfgDate: '', expiryDate: '', mrp: 0, rate: 0, qty: 1, freeQty: 0, schemeDisc: 0 }]);
@@ -69,6 +112,7 @@ export default function PurchaseInvoiceCreate() {
         formData.append(`items[${idx}][qty]`, String(item.qty || 0));
         formData.append(`items[${idx}][freeQty]`, String(item.freeQty || 0));
         formData.append(`items[${idx}][schemeDisc]`, String(item.schemeDisc || 0));
+        formData.append(`items[${idx}][gstRate]`, String(item.gstRate || 0));
       });
       const res = await API.post('/purchase-invoices', formData, { headers: { 'Content-Type': false } });
       if (res.success) navigate('/purchases');
@@ -108,8 +152,19 @@ export default function PurchaseInvoiceCreate() {
           <div className="surface-2 rounded-xl overflow-hidden">
             <div className="bg-white/60 backdrop-blur-md px-4 py-3 flex items-center justify-between border-b border-white/70">
               <span className="font-semibold text-sm text-slate-700">Items</span>
-              <button type="button" onClick={addItem} className="btn btn-sm btn-secondary text-pharma-600"><i className="fas fa-plus mr-1"></i>Add Item</button>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => templateInputRef.current?.click()} disabled={parsing} className="btn btn-sm btn-secondary text-pharma-600">
+                  <i className={`fas ${parsing ? 'fa-spinner fa-spin' : 'fa-file-csv'} mr-1`}></i>{parsing ? 'Parsing...' : 'Upload Supplier CSV'}
+                </button>
+                <button type="button" onClick={addItem} className="btn btn-sm btn-secondary text-pharma-600"><i className="fas fa-plus mr-1"></i>Add Item</button>
+              </div>
             </div>
+            <input type="file" ref={templateInputRef} accept=".csv" className="hidden" onChange={handleTemplateUpload} />
+            {templateMsg && (
+              <div className={`px-4 py-2.5 text-xs flex items-center gap-2 border-b border-white/70 ${templateMsg.includes('Parsed') ? 'bg-emerald-50/70 text-emerald-700' : 'bg-amber-50/70 text-amber-700'}`}>
+                <i className={`fas ${templateMsg.includes('Parsed') ? 'fa-check-circle' : 'fa-exclamation-circle'}`}></i>{templateMsg}
+              </div>
+            )}
             {items.length === 0 ? (
               <div className="p-10 text-center text-slate-400">
                 <i className="fas fa-cart-plus text-3xl mb-3 text-slate-300"></i>

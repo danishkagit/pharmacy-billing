@@ -6,13 +6,17 @@ const path = require('path');
 
 /**
  * Parse CSV bill template
+ * Supports two stockist export formats:
+ *  - SWIL 2.2 (e.g. Scintilla)  : H,T,F records, dealer code in col1 of T rows
+ *  - RS / Sastasundar style     : H,T,F records, 'RS' in col1 of T rows
+ * Both share the same column layout on the T rows (see parseCsvMedicineItem).
  * @param {string} csvPath - Path to CSV file
  * @returns {object} - Parsed invoice data
  */
 function parseCsvTemplate(csvPath) {
   const csvData = fs.readFileSync(csvPath, 'utf8');
-  const lines = csvData.split('\n');
-  
+  const lines = csvData.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+
   const result = {
     invoiceNo: '',
     invoiceDate: '',
@@ -26,106 +30,127 @@ function parseCsvTemplate(csvPath) {
     totalTax: 0,
     totalAmount: 0
   };
-  
-  // Row 0: Header metadata
-  if (lines[0]) {
-    const header = lines[0].split(',');
-    // Format: H,,invoiceNo,date,,,,,,,,
-    if (header[2]) result.invoiceNo = header[2].trim();
-    if (header[3]) result.invoiceDate = header[3].trim();
-    if (header[11]) result.supplier = header[11].trim(); // Platform ID/supplier hint
-  }
-  
-  // Parse medicine items (rows starting with 'T')
-  for (let i = 1; i < lines.length - 1; i++) {
-    const line = lines[i].trim();
-    if (!line || line.startsWith('F')) break; // Stop before summary row
-    
+
+  let isSwil = false;
+  let invoiceDateStr = '';
+
+  for (const line of lines) {
     const row = parseCsvLine(line);
-    if (row[0] === 'T' && row[1] === 'RS') {
-      const item = parseCsvMedicineItem(row);
-      if (item && item.medicineName) {
-        result.items.push(item);
+    if (!row.length) continue;
+    const type = (row[0] || '').trim().toUpperCase();
+
+    if (type === 'H') {
+      // SWIL:  H,1.1,R1166,01042026,,,,Direct,1,,02042026,,,,HOOGHLY,,0,SWIL2.2
+      // RS:    H,,443TB1334561,31072026,,,,,,,,2129127370,,,,,
+      isSwil = row[1] === '1.1' || /swil/i.test(line);
+      if (isSwil) {
+        invoiceDateStr = row[3] || '';
+      } else {
+        if (row[2]) result.invoiceNo = row[2].trim();
+        invoiceDateStr = row[3] || '';
+        if (row[12]) result.purchaseOrder = row[12].trim();
       }
+      continue;
+    }
+
+    if (type === 'T') {
+      if (row[1] === 'RS' || row[5]) {
+        const label = (row[5] || '').toString().toLowerCase();
+        if (label.includes('freight')) {
+          result.freight += parseFloat(row[21] || row[row.length - 1] || '0') || 0;
+          continue;
+        }
+        if (label.includes('platform')) {
+          result.platformFees += parseFloat(row[21] || row[row.length - 1] || '0') || 0;
+          continue;
+        }
+        if (label.includes('cod')) {
+          result.codCharges += parseFloat(row[21] || row[row.length - 1] || '0') || 0;
+          continue;
+        }
+        const item = parseCsvMedicineItem(row);
+        if (item && item.medicineName) {
+          result.items.push(item);
+        }
+      }
+      continue;
+    }
+
+    if (type === 'F') {
+      // Footer is only a cross-check; amounts/tax/discount are all embedded in
+      // the T-row amounts (supplier scheme math). Compute totals from items below.
+      result.grandTotal = parseFloat(row[21] || row[row.length - 1] || '0') || 0;
+      continue;
     }
   }
-  
-  // Row before last: Summary (starts with 'F')
-  const summaryLine = lines[lines.length - 2]?.trim();
-  if (summaryLine && summaryLine.startsWith('F')) {
-    const summary = parseCsvSummaryLine(summaryLine);
-    result.discount = summary.discount || 0;
-    result.totalAmount = summary.grandTotal || 0;
-  }
-  
-  // Calculate totals from items
-  result.subtotal = result.items.reduce((sum, item) => sum + (item.netRate || 0) * (item.qty || 0), 0);
-  result.totalTax = result.items.reduce((sum, item) => sum + (item.cgstAmt || 0) + (item.sgstAmt || 0), 0);
-  
-  // Parse additional rows (freight, platform, cod) - they have 'T' prefix but different structure
-  for (let i = 1; i < lines.length - 1; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    
-    const row = parseCsvLine(line);
-    if (row[0] === 'T') {
-      const label = row[5] || row[6] || '';
-      if (label.includes('Freight') || label.includes('Platform')) {
-        // Last numeric field is the amount
-        const amount = parseFloat(row[row.length - 1] || '0');
-        if (label.includes('Freight')) result.freight = amount;
-        if (label.includes('Platform')) result.platformFees = amount;
-        if (label.includes('COD')) result.codCharges = amount;
-      }
-    }
-  }
-  
+
+  result.invoiceDate = normalizeDate(invoiceDateStr);
+
+  result.subtotal = +result.items.reduce((sum, item) => sum + (item.amount || 0), 0).toFixed(2);
+  result.totalTax = +result.items.reduce((sum, item) => sum + (item.gstAmount || 0), 0).toFixed(2);
+  result.totalAmount = +(result.subtotal + result.totalTax + result.freight + result.platformFees + result.codCharges).toFixed(2);
+
   return result;
 }
 
 /**
  * Parse a CSV data line (medicine item format)
+ * Shared column layout for SWIL 2.2 and RS/Sastasundar exports (0-indexed):
+ *   0=T  1=dealer|RS  2=manufacturer  3=item code  5=medicine name  6=pack size
+ *   8=batch no  9=expiry (DDMMYYYY)  11=rate  12=MRP  15=qty  16=free qty
+ *   17=scheme%(RS)  21=net amount  22=CGST%  26=SGST%  27=GST amount
+ *   30=HSN  31=EAN
  * @param {array} row - CSV row array
  * @returns {object} - Parsed medicine item
  */
 function parseCsvMedicineItem(row) {
-  // Based on observed structure:
-  // T,RS,Supplier,Code,_,Name,Category,_,Batch,Expiry,_,MRP,Rate,Qty,Free,SchemeDisc,Amount,CGST%,SGST%,Net,CGST,SGST,...
+  const medicineName = (row[5] || '').trim();
+  if (!medicineName) return null;
+
+  const rate = parseFloat(row[11]) || 0;
+  const mrp = parseFloat(row[12]) || 0;
+  const qty = parseInt(row[15], 10) || 0;
+  const amount = parseFloat(row[21]) || 0;
+  const cgstPercent = parseFloat(row[22]) || 0;
+  const sgstPercent = parseFloat(row[26]) || cgstPercent;
+  const gstRate = cgstPercent + sgstPercent;
+  const netRate = qty > 0 && amount > 0 ? amount / qty : rate;
+  const schemeDisc = rate > netRate ? +(rate - netRate).toFixed(2) : 0;
+
   return {
-    medicineName: row[4] || row[5] || '',        // Index 4 or 5: Medicine name
-    hsn: row[6] || '',                           // Index 6: HSN code
-    batchNo: row[8] || '',                       // Index 8: Batch number
-    expiryDate: row[9] || '',                    // Index 9: Expiry date
-    mrp: parseFloat(row[11] || '0'),             // Index 11: MRP
-    rate: parseFloat(row[12] || '0'),            // Index 12: Rate (per unit)
-    qty: parseInt(row[13] || '0', 10),           // Index 13: Quantity
-    freeQty: parseInt(row[14] || '0', 10),       // Index 14: Free quantity
-    schemeDisc: parseFloat(row[15] || '0'),      // Index 15: Scheme discount
-    amount: parseFloat(row[16] || '0'),          // Index 16: Total amount
-    gstPercent: parseFloat(row[17] || '0'),      // Index 17: GST percentage
-    cgstPercent: parseFloat(row[18] || '0'),     // Index 18: CGST percentage
-    sgstPercent: parseFloat(row[19] || '0'),     // Index 19: SGST percentage
-    netRate: parseFloat(row[20] || '0'),         // Index 20: Net rate per unit
-    cgstAmount: parseFloat(row[21] || '0'),      // Index 21: CGST amount
-    sgstAmount: parseFloat(row[22] || '0')       // Index 22: SGST amount
+    medicineName,
+    hsn: (row[30] || '').trim(),
+    ean: (row[31] || '').trim(),
+    batchNo: (row[8] || '').trim(),
+    expiryDate: normalizeDate(row[9]),
+    mrp,
+    rate: +netRate.toFixed(2),
+    qty,
+    freeQty: parseInt(row[16], 10) || 0,
+    schemeDisc,
+    amount: +(amount || qty * netRate).toFixed(2),
+    gstPercent: gstRate,
+    cgstPercent,
+    sgstPercent,
+    gstAmount: parseFloat(row[27]) || +(((amount || qty * netRate) * gstRate) / 100).toFixed(2)
   };
 }
 
 /**
- * Parse CSV summary line (starts with 'F')
- * @param {string} line - Summary line
- * @returns {object} - Parsed summary
+ * Normalize a date value to YYYY-MM-DD.
+ * Accepts DDMMYYYY, DD/MM/YYYY, MM/DD/YYYY and ISO formats.
+ * @param {string} value - Raw date
+ * @returns {string} - ISO date or empty string
  */
-function parseCsvSummaryLine(line) {
-  const parts = line.split(',');
-  return {
-    // Format: F,565.91,25.3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.0,616.62
-    totalAmount: parseFloat(parts[1] || '0'),
-    discount: parseFloat(parts[2] || '0'),
-    cgst: parseFloat(parts[3] || '0'),
-    sgst: parseFloat(parts[4] || '0'),
-    grandTotal: parseFloat(parts[parts.length - 1] || '0')
-  };
+function normalizeDate(value) {
+  const s = (value || '').trim();
+  if (!s) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const slash = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (slash) return `${slash[3]}-${slash[2]}-${slash[1]}`;
+  const flat = s.match(/^(\d{2})(\d{2})(\d{4})$/);
+  if (flat) return `${flat[3]}-${flat[2]}-${flat[1]}`;
+  return s;
 }
 
 /**
@@ -134,7 +159,6 @@ function parseCsvSummaryLine(line) {
  * @returns {array} - Parsed row
  */
 function parseCsvLine(line) {
-  // Simple split - handles the format we're seeing
   return line.split(',');
 }
 

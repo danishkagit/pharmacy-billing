@@ -44,7 +44,7 @@ router.post('/', hasPermission('purchase'), upload.single('billFile'), async (re
 
     const batches = await Promise.all(items.map(async (item) => {
       const medicine = await Medicine.findById(item.medicine);
-      const gstRate = medicine?.gstRate || 12;
+      const gstRate = item.gstRate || medicine?.gstRate || 12;
       const amount = (item.qty || 0) * (item.rate || 0);
       const gstAmount = (amount * gstRate) / 100;
       return {
@@ -211,6 +211,72 @@ router.post('/parse-template', hasPermission('purchase'), upload.single('templat
     res.json({ success: true, data: purchaseInvoice, parsedData });
   } catch (error) {
     // Clean up temp file on error
+    try { fs.unlinkSync(req.file?.path); } catch {}
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post('/parse-csv', hasPermission('purchase'), upload.single('templateFile'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, error: 'No CSV file uploaded' });
+
+    const filePath = req.file.path;
+    const fileExt = path.extname(req.file.originalname).toLowerCase();
+    let parsedData;
+    try {
+      if (fileExt === '.csv') {
+        parsedData = parseCsvTemplate(filePath);
+      } else if (fileExt === '.pdf') {
+        parsedData = await parsePdfTemplate(filePath);
+      } else {
+        return res.status(400).json({ success: false, error: 'Unsupported file format. Use CSV or PDF.' });
+      }
+    } finally {
+      try { fs.unlinkSync(filePath); } catch {}
+    }
+
+    if (!parsedData || !parsedData.items || parsedData.items.length === 0) {
+      return res.status(400).json({ success: false, error: 'No invoice items found in file. Check that the CSV is a stockist bill export (SWIL/RS format).' });
+    }
+
+    const names = parsedData.items.map(i => i.medicineName).filter(Boolean);
+    const medicines = await Medicine.find({ companyRef: req.company._id, name: { $in: names } }).select('name mrp gstRate');
+    const medMap = new Map(medicines.map(m => [m.name.toLowerCase(), m]));
+
+    const items = parsedData.items.map(it => {
+      const med = medMap.get((it.medicineName || '').toLowerCase());
+      return {
+        medicine: med?._id || '',
+        medicineName: it.medicineName,
+        batchNo: it.batchNo || '',
+        expiryDate: it.expiryDate || '',
+        mrp: it.mrp || med?.mrp || 0,
+        rate: it.rate || 0,
+        qty: it.qty || 0,
+        freeQty: it.freeQty || 0,
+        schemeDisc: it.schemeDisc || 0,
+        gstRate: it.gstPercent || med?.gstRate || 12
+      };
+    });
+
+    res.json({
+      success: true,
+      data: {
+        invoiceNo: parsedData.invoiceNo,
+        invoiceDate: parsedData.invoiceDate,
+        freight: parsedData.freight,
+        platformFees: parsedData.platformFees,
+        codCharges: parsedData.codCharges,
+        discount: parsedData.discount,
+        subtotal: parsedData.subtotal,
+        totalTax: parsedData.totalTax,
+        totalAmount: parsedData.totalAmount,
+        items,
+        matched: items.filter(i => i.medicine).length,
+        total: items.length
+      }
+    });
+  } catch (error) {
     try { fs.unlinkSync(req.file?.path); } catch {}
     res.status(500).json({ success: false, error: error.message });
   }
