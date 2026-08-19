@@ -316,6 +316,11 @@ body {
 .app-table tbody tr:hover { background: linear-gradient(90deg, rgba(211,246,237,0.55), rgba(224,231,255,0.5)); }
 .app-table tbody tr:last-child td { border-bottom: none; }
 
+@media (max-width: 767px) {
+  .app-table th { padding: 0.5rem 0.6rem; }
+  .app-table td { padding: 0.6rem 0.6rem; }
+}
+
 /* ─── Page Layout ─── */
 .page-header {
   display: flex;
