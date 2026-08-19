@@ -83,6 +83,34 @@ export default function PurchaseInvoiceCreate() {
     setItems(updated);
   };
 
+  const toDisplayExpiry = (val) => {
+    if (!val) return '';
+    if (/^\d{2}\/\d{2}$/.test(val)) return val;
+    const iso = String(val).match(/^(\d{4})-(\d{2})/);
+    if (iso) return `${iso[2]}/${iso[1].slice(2)}`;
+    return val;
+  };
+
+  const handleExpiryChange = (idx, raw) => {
+    const digits = raw.replace(/\D/g, '').slice(0, 4);
+    const val = digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+    updateItem(idx, 'expiryDate', val);
+  };
+
+  const toIsoExpiry = (val) => {
+    if (!val) return '';
+    const m = String(val).match(/^(\d{2})\/(\d{2})$/);
+    if (m) {
+      const month = parseInt(m[1], 10);
+      const year = 2000 + parseInt(m[2], 10);
+      if (month >= 1 && month <= 12) {
+        const lastDay = new Date(year, month, 0).getDate();
+        return `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+      }
+    }
+    return String(val);
+  };
+
   const totals = items.reduce((s, i) => s + (i.qty || 0) * (i.rate || 0), 0);
 
   const updateDiscountPercent = (pct) => {
@@ -110,6 +138,11 @@ export default function PurchaseInvoiceCreate() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.supplier || items.length === 0) return setError('Supplier and at least one item required');
+    const invalidExp = items.find(i => {
+      const v = toIsoExpiry(i.expiryDate);
+      return v && !/^\d{4}-\d{2}-\d{2}$/.test(v);
+    });
+    if (invalidExp) return setError(`Expiry must be MM/YY (e.g. 08/27) — check "${invalidExp.medicineName || 'item'}"`);
     setLoading(true);
     setError('');
     try {
@@ -126,7 +159,7 @@ export default function PurchaseInvoiceCreate() {
         formData.append(`items[${idx}][medicineName]`, item.medicineName || '');
         formData.append(`items[${idx}][batchNo]`, item.batchNo || '');
         formData.append(`items[${idx}][mfgDate]`, item.mfgDate || '');
-        formData.append(`items[${idx}][expiryDate]`, item.expiryDate || '');
+        formData.append(`items[${idx}][expiryDate]`, toIsoExpiry(item.expiryDate));
         formData.append(`items[${idx}][mrp]`, String(item.mrp || 0));
         formData.append(`items[${idx}][rate]`, String(item.rate || 0));
         formData.append(`items[${idx}][qty]`, String(item.qty || 0));
@@ -220,7 +253,7 @@ export default function PurchaseInvoiceCreate() {
                           )}
                         </td>
                         <td className="p-2"><input value={item.batchNo} onChange={e => updateItem(idx, 'batchNo', e.target.value)} className="glass-input w-24" /></td>
-                        <td className="p-2"><input type="date" value={item.expiryDate} onChange={e => updateItem(idx, 'expiryDate', e.target.value)} className="glass-input w-32" /></td>
+                        <td className="p-2"><input value={toDisplayExpiry(item.expiryDate)} onChange={e => handleExpiryChange(idx, e.target.value)} placeholder="MM/YY" inputMode="numeric" maxLength={5} title="Expiry (MM/YY)" className="glass-input w-20" /></td>
                         <td className="p-2"><input type="number" value={item.mrp} onChange={e => updateItem(idx, 'mrp', parseFloat(e.target.value) || 0)} className="glass-input w-20" /></td>
                         <td className="p-2"><input type="number" value={item.rate} onChange={e => updateItem(idx, 'rate', parseFloat(e.target.value) || 0)} className="glass-input w-20" /></td>
                         <td className="p-2"><input type="number" value={item.qty} onChange={e => updateItem(idx, 'qty', parseInt(e.target.value) || 0)} min={0} className="glass-input w-16" /></td>
