@@ -74,11 +74,11 @@ export default function BatchList() {
       render: row => {
         const days = dayDiff(row.expiryDate);
         return (
-          <>
-            {new Date(row.expiryDate).toLocaleDateString('en-IN')}
-            {days <= 30 && days > 0 && <span className="text-orange-600 text-xs ml-1">({days}d)</span>}
-            {days <= 0 && <span className="text-red-600 text-xs ml-1">Expired</span>}
-          </>
+          <div className="text-center">
+            <div className="text-xs whitespace-nowrap">{new Date(row.expiryDate).toLocaleDateString('en-IN')}</div>
+            {days <= 30 && days > 0 && <div className="text-[10px] text-orange-600">in {days}d</div>}
+            {days <= 0 && <div className="text-[10px] text-red-600 font-semibold">Expired</div>}
+          </div>
         );
       },
     },
