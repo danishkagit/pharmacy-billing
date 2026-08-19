@@ -21,6 +21,7 @@ export default function SupplierList() {
     { key: 'gstin', label: 'GSTIN', render: s => s.gstin || '-' },
     { key: 'dlNo', label: 'DL No', render: s => s.dlNo || '-' },
     { key: 'creditDays', label: 'Credit Days', className: 'text-right', tdClass: 'text-right' },
+    { key: 'defaultDiscountPercent', label: 'Disc %', className: 'text-center', tdClass: 'text-center', render: s => s.defaultDiscountPercent ? `${s.defaultDiscountPercent}%` : '-' },
     {
       label: 'Actions', className: 'text-center', tdClass: 'text-center',
       render: s => (

@@ -15,6 +15,7 @@ const supplierSchema = new mongoose.Schema({
   zone: { type: String, trim: true },
   creditDays: { type: Number, default: 0 },
   creditLimit: { type: Number, default: 0 },
+  defaultDiscountPercent: { type: Number, default: 0 },
   openingBalance: { type: Number, default: 0 },
   schemes: [{
     name: String,

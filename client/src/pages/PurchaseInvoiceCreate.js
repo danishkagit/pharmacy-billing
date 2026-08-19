@@ -7,7 +7,7 @@ import { PageHeader, GlassCard } from '../components/ui';
 export default function PurchaseInvoiceCreate() {
   const navigate = useNavigate();
   const [suppliers, setSuppliers] = useState([]);
-  const [form, setForm] = useState({ supplier: '', invoiceNo: '', invoiceDate: new Date().toISOString().split('T')[0], discountAmount: 0, freight: 0, notes: '' });
+  const [form, setForm] = useState({ supplier: '', invoiceNo: '', invoiceDate: new Date().toISOString().split('T')[0], discountAmount: 0, discountPercent: 0, freight: 0, notes: '' });
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -49,6 +49,8 @@ export default function PurchaseInvoiceCreate() {
         if (d.invoiceDate) setForm(f => ({ ...f, invoiceDate: d.invoiceDate }));
         if (d.invoiceNo) setForm(f => ({ ...f, invoiceNo: d.invoiceNo }));
         if (d.freight || d.platformFees || d.codCharges) setForm(f => ({ ...f, freight: +(d.freight + d.platformFees + d.codCharges).toFixed(2) }));
+        const newTotals = d.items.reduce((s, i) => s + (i.qty || 0) * (i.rate || 0), 0);
+        setForm(f => ({ ...f, discountAmount: newTotals > 0 ? Math.round(newTotals * (f.discountPercent || 0) / 100 * 100) / 100 : 0 }));
         setTemplateMsg(`Parsed ${d.total} items from ${file.name} (${d.matched} matched to stock). Review, link any unmatched, then save.`);
       } else {
         setTemplateMsg(res.error || 'Parsing failed');
@@ -82,6 +84,24 @@ export default function PurchaseInvoiceCreate() {
   };
 
   const totals = items.reduce((s, i) => s + (i.qty || 0) * (i.rate || 0), 0);
+
+  const updateDiscountPercent = (pct) => {
+    const amt = totals > 0 ? (totals * pct) / 100 : 0;
+    setForm(f => ({ ...f, discountPercent: pct, discountAmount: Math.round(amt * 100) / 100 }));
+  };
+
+  const updateDiscountAmount = (amt) => {
+    const pct = totals > 0 ? (amt / totals) * 100 : 0;
+    setForm(f => ({ ...f, discountAmount: amt, discountPercent: Math.round(pct * 100) / 100 }));
+  };
+
+  const handleSupplierChange = (e) => {
+    const val = e.target.value;
+    const s = suppliers.find(x => x._id === val);
+    const pct = s?.defaultDiscountPercent || 0;
+    const amt = totals > 0 ? (totals * pct) / 100 : 0;
+    setForm(f => ({ ...f, supplier: val, discountPercent: pct, discountAmount: Math.round(amt * 100) / 100 }));
+  };
 
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]);
@@ -129,7 +149,7 @@ export default function PurchaseInvoiceCreate() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Supplier *</label>
-              <select value={form.supplier} onChange={e => setForm({ ...form, supplier: e.target.value })} required className="glass-select">
+              <select value={form.supplier} onChange={handleSupplierChange} required className="glass-select">
                 <option value="">Select Supplier</option>
                 {suppliers.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
               </select>
@@ -218,7 +238,8 @@ export default function PurchaseInvoiceCreate() {
           <div className="flex justify-end">
             <div className="w-72 space-y-2 surface-1 rounded-xl p-4">
               <div className="flex justify-between text-sm"><span className="text-slate-500">Subtotal:</span><span className="font-medium text-slate-700">₹{totals.toFixed(2)}</span></div>
-              <div className="flex justify-between items-center text-sm"><span className="text-slate-500">Discount:</span><input type="number" value={form.discountAmount} onChange={e => setForm({ ...form, discountAmount: parseFloat(e.target.value) || 0 })} min={0} className="glass-input w-24 text-right" /></div>
+              <div className="flex justify-between items-center text-sm"><span className="text-slate-500">Discount %:</span><input type="number" value={form.discountPercent} onChange={e => updateDiscountPercent(parseFloat(e.target.value) || 0)} min={0} max={100} className="glass-input w-24 text-right" /></div>
+              <div className="flex justify-between items-center text-sm"><span className="text-slate-500">Discount (₹):</span><input type="number" value={form.discountAmount} onChange={e => updateDiscountAmount(parseFloat(e.target.value) || 0)} min={0} className="glass-input w-24 text-right" /></div>
               <div className="flex justify-between items-center text-sm"><span className="text-slate-500">Freight:</span><input type="number" value={form.freight} onChange={e => setForm({ ...form, freight: parseFloat(e.target.value) || 0 })} min={0} className="glass-input w-24 text-right" /></div>
               <div className="flex justify-between text-base font-bold pt-2 border-t border-slate-200 text-slate-800"><span>Total:</span><span>₹{(totals - (form.discountAmount || 0) + (form.freight || 0)).toFixed(2)}</span></div>
             </div>

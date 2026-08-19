@@ -7,7 +7,7 @@ export default function SupplierForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
-  const [form, setForm] = useState({ name: '', company: '', gstin: '', pan: '', dlNo: '', address: '', city: '', state: '', pincode: '', phone: '', email: '', zone: '', creditDays: 0, creditLimit: 0 });
+  const [form, setForm] = useState({ name: '', company: '', gstin: '', pan: '', dlNo: '', address: '', city: '', state: '', pincode: '', phone: '', email: '', zone: '', creditDays: 0, creditLimit: 0, defaultDiscountPercent: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [gstinFetching, setGstinFetching] = useState(false);
@@ -21,7 +21,7 @@ export default function SupplierForm() {
       API.get(`/suppliers/${id}`).then(res => {
         if (res.success) {
           const s = res.data;
-          setForm({ name: s.name, company: s.company || '', gstin: s.gstin || '', pan: s.pan || '', dlNo: s.dlNo || '', address: s.address || '', city: s.city || '', state: s.state || '', pincode: s.pincode || '', phone: s.phone || '', email: s.email || '', zone: s.zone || '', creditDays: s.creditDays, creditLimit: s.creditLimit });
+          setForm({ name: s.name, company: s.company || '', gstin: s.gstin || '', pan: s.pan || '', dlNo: s.dlNo || '', address: s.address || '', city: s.city || '', state: s.state || '', pincode: s.pincode || '', phone: s.phone || '', email: s.email || '', zone: s.zone || '', creditDays: s.creditDays, creditLimit: s.creditLimit, defaultDiscountPercent: s.defaultDiscountPercent || 0 });
         }
       }).catch(err => setError(err?.error || 'Failed to load'));
     }
@@ -118,6 +118,7 @@ export default function SupplierForm() {
             )}
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Credit Days</label><input type="number" value={form.creditDays} onChange={e => setForm({ ...form, creditDays: parseInt(e.target.value) || 0 })} min={0} className="glass-input" /></div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Credit Limit</label><input type="number" value={form.creditLimit} onChange={e => setForm({ ...form, creditLimit: parseFloat(e.target.value) || 0 })} min={0} className="glass-input" /></div>
+            <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Default Discount %</label><input type="number" value={form.defaultDiscountPercent} onChange={e => setForm({ ...form, defaultDiscountPercent: parseFloat(e.target.value) || 0 })} min={0} max={100} className="glass-input" /></div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Zone</label><input value={form.zone} onChange={e => setForm({ ...form, zone: e.target.value })} className="glass-input" /></div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Email</label><input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="glass-input" /></div>
             <div className="sm:col-span-2"><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Address</label><textarea value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} rows={2} className="glass-input" /></div>
