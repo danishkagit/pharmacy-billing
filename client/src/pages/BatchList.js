@@ -40,8 +40,8 @@ export default function BatchList() {
     {
       label: 'Medicine',
       className: 'text-left',
-      tdClass: 'font-medium max-w-[130px] md:max-w-none truncate',
-      render: row => row.medicine?.name || 'Unknown',
+      tdClass: 'font-medium',
+      render: row => <div className="max-w-[130px] md:max-w-none truncate">{row.medicine?.name || 'Unknown'}</div>,
     },
     {
       label: 'Batch No',
