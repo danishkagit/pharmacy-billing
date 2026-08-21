@@ -6,12 +6,22 @@ export default class MyDocument extends Document {
       <Html lang="en">
         <Head>
           <meta name="theme-color" content="#04121B" />
-          <meta name="description" content="CalcuttaRx — GST-ready pharmacy billing & management suite by Calcutta Node. Retail POS, batch/expiry inventory, GSTR-1/3B, e-invoice." />
+          <meta name="description" content="CalcuttaRx — cloud pharmacy billing & GST inventory software for chemists in Kolkata, West Bengal. GST 2.0 invoices, batch/expiry tracking, GSTR-1/3B reports. Free trial." />
+          <meta name="keywords" content="pharmacy billing software Kolkata, chemist shop billing software West Bengal, GST billing software for medical store, cloud POS pharmacy India, pharmacy inventory software, CalcuttaRx" />
+          <link rel="canonical" href="https://pharmacybills.vercel.app/" />
+          <meta property="og:site_name" content="CalcuttaRx" />
+          <meta property="og:title" content="CalcuttaRx – Cloud Pharmacy Billing & GST Inventory Software | Kolkata" />
+          <meta property="og:description" content="GST 2.0-ready billing, batch-wise stock and compliance for Indian pharmacies. Built by Calcutta Node." />
+          <meta property="og:type" content="website" />
+          <meta property="og:url" content="https://pharmacybills.vercel.app/" />
+          <meta property="og:image" content="https://pharmacybills.vercel.app/logo.svg" />
+          <meta name="twitter:card" content="summary" />
+          <meta name="geo.region" content="IN-WB" />
+          <meta name="geo.placename" content="Kolkata" />
+          <meta name="ICBM" content="22.5726, 88.3639" />
           <link rel="icon" type="image/svg+xml" href="/logo.svg" />
           <link rel="apple-touch-icon" href="/logo.svg" />
-          <title>CalcuttaRx — Pharmacy Billing Suite</title>
-          <meta property="og:title" content="CalcuttaRx — Pharmacy Billing Suite" />
-          <meta property="og:description" content="GST 2.0-ready billing, batch-wise inventory and compliance for Indian pharmacies. Built by Calcutta Node." />
+          <title>CalcuttaRx – Cloud Pharmacy Billing &amp; GST Inventory Software | Kolkata</title>
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
           <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+
+Sitemap: https://pharmacybills.vercel.app/sitemap.xml
