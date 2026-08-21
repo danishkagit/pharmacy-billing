@@ -1,8 +1,10 @@
-# Pharmacy Billing
+# CalcuttaRx — Pharmacy Billing Suite
 
-A full-featured **Pharmacy Billing & Inventory Management System** built for wholesalers and retailers. Handles GST billing, sales & purchases, batch-wise inventory with expiry tracking, prescription management, returns, and regulatory compliance — all in one dashboard.
+A full-featured **Pharmacy Billing & Inventory Management System** built for wholesalers and retailers. Handles GST 2.0 billing (Nil/5%/18%/40%), sales & purchases, batch-wise inventory with expiry tracking, prescription management, returns, and regulatory compliance — all in one dashboard.
 
-**Live demo:** https://pharmacybills.vercel.app
+**Live app:** https://pharmacybills.vercel.app
+
+Built by [Calcutta Node.](https://calcuttanode.vercel.app/about) · Kolkata
 
 ## Features
 
@@ -80,7 +82,7 @@ JWT_SECRET=change-me
 
 ```bash
 npm run seed
-# admin@citypharmacy.com / password123
+# admin@calcuttarx.com / password123
 ```
 
 ### Run locally

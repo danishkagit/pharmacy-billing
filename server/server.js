@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const morgan = require('morgan');
 const path = require('path');
-const fs = require('fs');
 const cron = require('node-cron');
 require('dotenv').config({ path: __dirname + '/.env' });
 
@@ -11,7 +10,6 @@ const app = express();
 
 const defaultOrigins = [
   'http://localhost:3000',
-  'https://pharmacy-billing.vercel.app',
   'https://pharmacybills.vercel.app',
 ];
 const allowedOrigins = process.env.CLIENT_URL
@@ -103,23 +101,10 @@ async function checkExpiryAlerts() {
 
 cron.schedule('0 6 * * *', checkExpiryAlerts);
 
-if (process.env.NODE_ENV === 'production') {
-  const buildPath = path.join(__dirname, '../client/build');
-  if (fs.existsSync(buildPath)) {
-    app.use(express.static(buildPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.resolve(buildPath, 'index.html'));
-    });
-  } else {
-    app.use((req, res) => {
-      res.status(404).json({ success: false, error: `Route ${req.originalUrl} not found` });
-    });
-  }
-} else {
-  app.use((req, res) => {
-    res.status(404).json({ success: false, error: `Route ${req.originalUrl} not found` });
-  });
-}
+// API-only server: frontend is deployed separately on Vercel.
+app.use((req, res) => {
+  res.status(404).json({ success: false, error: `Route ${req.originalUrl} not found` });
+});
 
 app.use((err, req, res, next) => {
   console.error('Error:', err.message);
