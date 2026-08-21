@@ -288,7 +288,7 @@ export default function Layout() {
             onClick={() => go('/')}
             title="CalcuttaRx Home"
           >
-            <Logo size={34} />
+            <Logo size={34} theme={isDark} />
             {!collapsed && (
               <div className="min-w-0 leading-tight">
                 <h1 className="text-[15px] font-extrabold text-white tracking-tight flex items-center gap-1">
