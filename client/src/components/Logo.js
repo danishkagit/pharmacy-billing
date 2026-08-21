@@ -1,10 +1,12 @@
 import React from 'react';
 
-function Logo({ size = 36, className = '', theme }) {
-  const fill = theme === 'dark' ? 'currentColor' : 'white';
+function Logo({ size = 36, className = '', theme = 'light' }) {
+  const isDark = theme === 'dark';
+  const fill = isDark ? 'currentColor' : 'white';
+  const borderColor = isDark ? '20' : '10';
   return (
     <div
-      className={`inline-flex items-center justify-center rounded-xl border-2 border-slate-300/${theme === 'dark' ? '20' : '10'} shadow-sm flex-shrink-0 ${className}`}
+      className={`inline-flex items-center justify-center rounded-xl border-2 border-slate-300/${borderColor} shadow-sm flex-shrink-0 ${className}`}
       style={{ width: size, height: size }}
       title="CalcuttaRx"
     >
@@ -27,9 +29,10 @@ function Logo({ size = 36, className = '', theme }) {
   );
 }
 
-function LogoWordmark({ size = 34, compact = false, theme }) {
-  const textColor = theme === 'dark' ? 'text-slate-900' : 'text-white';
-  const textColorDark = theme === 'dark' ? 'text-slate-900' : 'text-white';
+function LogoWordmark({ size = 34, compact = false, theme = 'light' }) {
+  const isDark = theme === 'dark';
+  const textColor = isDark ? 'text-slate-900' : 'text-white';
+  const textColorDark = isDark ? 'text-slate-900' : 'text-white';
   return (
     <div className={`flex items-center gap-2.5 ${compact ? '' : 'min-w-0'}`}>
       <Logo size={size} theme={theme} />
