@@ -2,7 +2,7 @@ import React from 'react';
 
 function Logo({ size = 36, className = '', theme = 'light' }) {
   const isDark = theme === 'dark';
-  const fill = isDark ? 'currentColor' : 'white';
+  const fill = isDark ? 'currentColor' : '#1e293b';
   const borderColor = isDark ? '20' : '10';
   return (
     <div
@@ -31,17 +31,17 @@ function Logo({ size = 36, className = '', theme = 'light' }) {
 
 function LogoWordmark({ size = 34, compact = false, theme = 'light' }) {
   const isDark = theme === 'dark';
-  const textColor = isDark ? 'text-slate-900' : 'text-white';
-  const textColorDark = isDark ? 'text-slate-900' : 'text-white';
+  const textColor = isDark ? 'text-slate-900' : '#1e293b';
+  const textColorDark = isDark ? 'text-slate-900' : '#64748b';
   return (
     <div className={`flex items-center gap-2.5 ${compact ? '' : 'min-w-0'}`}>
       <Logo size={size} theme={theme} />
       {!compact && (
         <div className="leading-tight">
           <span className={textColor} style={{ fontSize: size * 0.44 }}>
-            Calcutta<span className="text-transparent bg-clip-text grad-brand">Rx</span>
+            Calcutta<span className="bg-clip-text transparent" style="background: linear-gradient(135deg, #0f766e, #805ad5)">Rx</span>
           </span>
-          <p className={textColorDark} className="text-[9px] text-slate-400 font-medium uppercase tracking-[0.16em] -mt-0.5">
+          <p className={textColorDark} className="text-[9px] font-medium uppercase tracking-[0.12em] -mt-0.5">
             Pharmacy Suite
           </p>
         </div>

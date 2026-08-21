@@ -734,7 +734,7 @@ textarea:focus {
    LEGACY ADAPTERS & COLOR BLOCKS
    ═══════════════════════════════════════════════════════════════════ */
 .grad-brand {
-  background: linear-gradient(135deg, #059669 0%, #10B981 100%);
+  background: linear-gradient(135deg, #0f766e 0%, #6b46c1 100%);
 }
 
 .grad-hero {
