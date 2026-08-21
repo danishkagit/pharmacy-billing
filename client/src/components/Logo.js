@@ -3,10 +3,14 @@ import React from 'react';
 function Logo({ size = 36, className = '', theme = 'light' }) {
   const isDark = theme === 'dark';
   const fill = isDark ? 'currentColor' : '#1e293b';
+  const gradient = isDark
+    ? 'linear-gradient(135deg, #0f766e 0%, #805ad5 100%)'
+    : 'linear-gradient(135deg #64748b 0%, #cbd5e1 100%)';
   const borderColor = isDark ? '20' : '10';
+  const shadow = isDark ? '0 4px 20px rgba(0,0,0,.4)' : '0 4px 14px rgba(0,0,0,.15)';
   return (
     <div
-      className={`inline-flex items-center justify-center rounded-xl border-2 border-slate-300/${borderColor} shadow-sm flex-shrink-0 ${className}`}
+      className={`inline-flex items-center justify-center rounded-xl border-2 border-slate-300/${borderColor} ${shadow} flex-shrink-0 ${className}`}
       style={{ width: size, height: size }}
       title="CalcuttaRx"
     >
