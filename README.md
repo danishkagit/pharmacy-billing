@@ -119,3 +119,6 @@ npm run dev
 │       └── components/     # Shared UI components
 └── render.yaml             # Render blueprint
 ```
+
+> Marketing site: / serves an SEO landing page; app routes are behind login.
+
