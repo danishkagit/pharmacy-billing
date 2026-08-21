@@ -62,60 +62,46 @@ export default function Dashboard() {
   const expiringCount = data?.expiringCount || 0;
   const totalMedicines = data?.totalMedicines || 0;
   const totalCustomers = data?.totalCustomers || 0;
-  const outstanding = data?.outstanding || 0;
+  const outstanding = data?.outstandingReceivable ?? data?.outstanding ?? 0;
 
   return (
-    <div className="space-y-6 max-w-[1400px]">
+    <div className="dashboard space-y-6 max-w-[1400px]">
 
       {/* Welcome banner */}
-      <div className="glass-accent overflow-hidden shimmer-sweep">
-        <div className="relative p-6 grad-hero animate-gradient-x text-white overflow-hidden">
-          <div className="absolute inset-0 opacity-25">
-            <div className="absolute top-0 right-0 w-72 h-72 bg-white rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 animate-drift"></div>
-            <div className="absolute bottom-0 left-10 w-52 h-52 bg-mint-300 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4 animate-float-slow"></div>
-            <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-focus-300 rounded-full blur-3xl animate-float-slower"></div>
-          </div>
-          <div className="relative flex items-start justify-between flex-wrap gap-4">
+      <div className="dashboard-header">
+          <div className="flex items-start justify-between flex-wrap gap-4">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-white/70 mb-1.5">
+                 <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5">
                 <i className="fas fa-store mr-1.5"></i>{company?.name || 'Pharmacy'}
               </p>
-              <h1 className="text-2xl font-extrabold tracking-tight">
+               <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
                 {Greeting()}, {user?.name?.split(' ')[0] || 'User'}
               </h1>
-              <p className="text-sm text-white/75 mt-1.5">
+               <p className="text-sm text-slate-500 mt-1.5">
                 {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/15 text-xs font-medium backdrop-blur-sm border border-white/20">
+                 <span className="status-chip status-chip-success">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-300"></span>
                 {company?.drugLicenseCategory === 'retail' ? 'Retail' : 'Pharmacy'} License Active
               </span>
               {company?.gstin && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/15 text-xs font-medium backdrop-blur-sm border border-white/20">
+                 <span className="status-chip">
                   <i className="fas fa-receipt"></i>
                   GSTIN: {company.gstin}
                 </span>
               )}
             </div>
           </div>
-        </div>
       </div>
 
       {/* KPI Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-4 gap-4 stagger">
-        <KpiCard icon="indian-rupee-sign" grad="grad-hero" label="Today's Sales" value={`₹${todaySales.toLocaleString('en-IN')}`} sub={`${todayBills} bills today`} link="/sales" />
-        <KpiCard icon="chart-line" grad="grad-cool" label="Monthly Sales" value={`₹${monthSales.toLocaleString('en-IN')}`} sub={`${monthBills} bills this month`} link="/reports/sales" />
-        <KpiCard icon="pills" grad="grad-warm" label="Medicines" value={totalMedicines} sub="In your catalog" link="/medicines" />
-        <KpiCard icon="users" grad="grad-gold" label="Customers" value={totalCustomers} sub="Registered" link="/customers" />
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 stagger">
-        <KpiCard icon="indian-rupee-sign" grad="grad-cool" label="Outstanding" value={`₹${outstanding.toLocaleString('en-IN')}`} sub="Receivable amount" link="/reports/outstanding" />
-        <KpiCard icon="exclamation-triangle" grad="grad-gold" label="Low Stock" value={lowStockCount} sub="Items below reorder" link="/stock-adjustments" />
-        <KpiCard icon="clock" grad="grad-warm" label="Expiring Soon" value={expiringCount} sub="Within 30 days" link="/expiry" />
-        <KpiCard icon="shield-alt" grad="grad-hero" label="Compliance" value={expiringCount === 0 ? 'OK' : expiringCount} sub={expiringCount === 0 ? 'All clear' : 'Items need review'} link="/compliance" />
+        <KpiCard icon="indian-rupee-sign" label="Today's sales" value={`₹${todaySales.toLocaleString('en-IN')}`} sub={`${todayBills} bills today`} link="/sales" />
+        <KpiCard icon="receipt" label="Bills this month" value={monthBills} sub={`₹${monthSales.toLocaleString('en-IN')} revenue`} link="/reports/sales" />
+        <KpiCard icon="hand-holding-dollar" label="Outstanding dues" value={`₹${outstanding.toLocaleString('en-IN')}`} sub="Receivable amount" link="/reports/outstanding" />
+        <KpiCard icon="boxes-stacked" label="Stock exceptions" value={lowStockCount + expiringCount} sub={`${lowStockCount} low stock · ${expiringCount} expiring`} link="/expiry" />
       </div>
 
       {/* Main content */}
@@ -191,7 +177,7 @@ export default function Dashboard() {
                       <p className="text-sm text-slate-700 font-medium truncate">{item.name || item.medicine?.name || 'Unknown'}</p>
                       <p className="text-[11px] text-slate-400">{item.rackLocation || 'No rack info'}</p>
                     </div>
-                    <span className="badge badge-red ml-2 flex-shrink-0">{item.qty || item.stock || 0} left</span>
+                    <span className="badge badge-danger ml-2 flex-shrink-0">{item.totalQty ?? item.qty ?? item.stock ?? 0} left</span>
                   </div>
                 ))}
               </div>

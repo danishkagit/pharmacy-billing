@@ -1,100 +1,95 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import AiAssistant from './AiAssistant';
 import Logo from './Logo';
 
 /* ────────────────────────────────────────────────────────────────
-   6 Streamlined Operational Hubs for Modern Pharmacy Management
+   5 Operational Hubs — Fresh Ledger IA (40→22 links)
+   Groups: HOME | BILLING [billing] | STOCK [inventory] | PURCHASES [purchase] | MONEY [accounting||reports]
+   MORE group (collapsed by default) holds staff/compliance/systems tools.
    ──────────────────────────────────────────────────────────────── */
 const navHubs = [
   {
-    id: 'pos',
-    label: 'Counter & Billing',
+    id: 'home',
+    label: 'Home',
+    icon: 'gauge-high',
+    items: [
+      { label: 'Command Centre Dashboard', path: '/dashboard', icon: 'gauge-high', hot: true },
+    ],
+  },
+  {
+    id: 'billing',
+    label: 'Billing',
     icon: 'cash-register',
     badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    rbac: ['billing'],
     items: [
       { label: 'New Sale Bill', path: '/sales/new', icon: 'cart-plus', hot: true, shortcut: 'F2' },
       { label: 'Sales Invoices', path: '/sales', icon: 'receipt' },
-      { label: 'Sale Returns', path: '/sale-returns', icon: 'rotate-left' },
+      { label: 'Customer Returns', path: '/sale-returns', icon: 'rotate-left', rbac: ['returns'] },
       { label: 'Customer Directory', path: '/customers', icon: 'users' },
-      { label: 'Loyalty Club', path: '/loyalty', icon: 'gift' },
       { label: 'Delivery Orders', path: '/delivery', icon: 'truck-fast' },
     ],
   },
   {
-    id: 'procurement',
-    label: 'Purchases & Inward',
+    id: 'stock',
+    label: 'Stock',
+    icon: 'boxes-stacked',
+    badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    rbac: ['inventory'],
+    items: [
+      { label: 'Add Stock', path: '/stock-adjustments/new', icon: 'plus-circle', hot: true, shortcut: 'F7' },
+      { label: 'Batch Stock', path: '/batches', icon: 'boxes' },
+      { label: 'Medicines Master', path: '/medicines', icon: 'pills' },
+      { label: 'Expiry Tracker', path: '/expiry', icon: 'clock-rotate-left', alert: true },
+      { label: 'Branch Transfers', path: '/transfers', icon: 'arrow-right-arrow-left', rbac: ['allBranches'] },
+    ],
+  },
+  {
+    id: 'purchases',
+    label: 'Purchases',
     icon: 'truck-ramp-box',
-    badgeColor: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+    badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    rbac: ['purchase'],
     items: [
       { label: 'New Purchase Inward', path: '/purchases/new', icon: 'file-import', hot: true, shortcut: 'F6' },
       { label: 'Purchase Invoices', path: '/purchases', icon: 'file-invoice' },
-      { label: 'Purchase Orders (PO)', path: '/purchase-orders', icon: 'clipboard-list' },
-      { label: 'Purchase Returns', path: '/purchase-returns', icon: 'undo' },
+      { label: 'Supplier Returns', path: '/purchase-returns', icon: 'undo', rbac: ['purchase+returns'] },
       { label: 'Suppliers Directory', path: '/suppliers', icon: 'truck' },
     ],
   },
   {
-    id: 'inventory',
-    label: 'Inventory & Stock',
-    icon: 'boxes-stacked',
-    badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+    id: 'money',
+    label: 'Money',
+    icon: 'rupee-sign',
+    badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    rbac: ['accounting'],
     items: [
-      { label: 'Medicine Master', path: '/medicines', icon: 'pills' },
-      { label: 'Batches & Rack Stock', path: '/batches', icon: 'boxes' },
-      { label: 'Expiry Tracker', path: '/expiry', icon: 'clock-rotate-left', alert: true },
-      { label: 'Quick Stock-In', path: '/stock-adjustments/new', icon: 'plus-circle', hot: true, shortcut: 'F7' },
-      { label: 'Stock Adjustments', path: '/stock-adjustments', icon: 'sliders' },
-      { label: 'Inter-Branch Transfer', path: '/transfers', icon: 'arrow-right-arrow-left' },
-      { label: 'Bulk Medicine Import', path: '/medicines/import', icon: 'file-excel' },
+      { label: 'Outstanding Dues', path: '/payments', icon: 'hand-holding-dollar', rbac: ['accounting'] },
+      { label: 'Payments & Ledgers', path: '/ledgers', icon: 'rupee-sign', rbac: ['accounting'] },
+      { label: 'Expenses', path: '/expenses', icon: 'wallet', rbac: ['accounting'] },
+      { label: 'GSTR Filings', path: '/gst/gstr1', icon: 'file-invoice-dollar', rbac: ['accounting'] },
+      { label: 'Reports', path: '/reports/sales', icon: 'chart-pie', rbac: ['reports'] },
     ],
   },
   {
-    id: 'accounts',
-    label: 'GST & Financials',
-    icon: 'file-invoice-dollar',
-    badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+    id: 'more',
+    label: 'More',
+    icon: 'ellipsis-h',
+    badgeColor: 'bg-slate-500/20 text-slate-300 border-slate-500/30',
+    collapsedByDefault: true,
+    rbac: ['staff','settings','compliance'],
     items: [
-      { label: 'GSTR-1 (Outward Sales)', path: '/gst/gstr1', icon: 'file-invoice-dollar' },
-      { label: 'GSTR-3B (Summary Return)', path: '/gst/gstr3b', icon: 'file-contract' },
-      { label: 'E-Invoice (IRN Portal)', path: '/e-invoice', icon: 'cloud-arrow-up' },
-      { label: 'Payments & Ledgers', path: '/payments', icon: 'rupee-sign' },
-      { label: 'Daily Expenses', path: '/expenses', icon: 'wallet' },
-      { label: 'Credit Notes', path: '/credit-notes', icon: 'file-signature' },
-      { label: 'Profit & Loss Report', path: '/reports/profit-loss', icon: 'chart-column' },
-      { label: 'Outstanding Balance', path: '/reports/outstanding', icon: 'hand-holding-dollar' },
-      { label: 'Sales Reports & Analytics', path: '/reports/sales', icon: 'chart-pie' },
-    ],
-  },
-  {
-    id: 'compliance',
-    label: 'Rx & Compliance',
-    icon: 'shield-halved',
-    badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
-    items: [
-      { label: 'Schedule H / H1 / X Log', path: '/compliance', icon: 'shield-halved' },
+      { label: 'H/H1/X Register', path: '/compliance', icon: 'shield-halved', rbac: ['compliance'] },
       { label: 'Narcotics Register', path: '/narcotics', icon: 'triangle-exclamation' },
       { label: 'Digital Prescriptions', path: '/prescriptions', icon: 'prescription' },
-      { label: 'Doctors Network', path: '/doctors', icon: 'user-doctor' },
-      { label: 'Patients Directory', path: '/patients', icon: 'bed-pulse' },
-      { label: 'Drug License Status', path: '/drug-license', icon: 'certificate' },
-    ],
-  },
-  {
-    id: 'admin',
-    label: 'Settings & System',
-    icon: 'gear',
-    badgeColor: 'bg-slate-500/20 text-slate-300 border-slate-500/30',
-    items: [
-      { label: 'Company Setup', path: '/company', icon: 'building' },
-      { label: 'Branch Setup', path: '/branches', icon: 'code-branch' },
-      { label: 'Staff Management', path: '/staff', icon: 'user-gear' },
-      { label: 'Salesmen Team', path: '/salesmen', icon: 'user-tag' },
-      { label: 'Barcode Studio', path: '/barcode', icon: 'barcode' },
-      { label: 'SMS Notification Logs', path: '/sms-logs', icon: 'comment-sms' },
-      { label: 'Audit Trail', path: '/audit', icon: 'history' },
-      { label: 'System Preferences', path: '/settings', icon: 'sliders' },
+      { label: 'Doctors', path: '/doctors', icon: 'user-doctor' },
+      { label: 'Patients', path: '/patients', icon: 'bed-pulse' },
+      { label: 'Drug License', path: '/drug-license', icon: 'certificate', rbac: ['compliance'] },
+      { label: 'Staff Management', path: '/staff', icon: 'user-gear', rbac: ['staff'] },
+      { label: 'Settings', path: '/settings', icon: 'sliders', rbac: ['settings'] },
     ],
   },
 ];
@@ -115,6 +110,7 @@ const importantLinks = [
 
 export default function Layout() {
   const { user, company, branch, logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => {
     try {
@@ -146,6 +142,16 @@ export default function Layout() {
 
   const userRole = user?.role || 'Pharmacist';
 
+// RBAC gate — owner/admin bypass; others need explicit permission
+  const hasPerm = (flag) => {
+    if (user?.role === 'owner' || user?.role === 'admin') return true;
+    if (Array.isArray(flag)) return flag.some(item => !!user?.permissions?.[item]);
+    return !!user?.permissions?.[flag];
+  };
+
+// Filter items by RBAC, skipping un-gated items silently
+  const filterItems = (items) => (items || []).filter(it => it.rbac ? hasPerm(it.rbac) : true);
+
   // Toggle sidebar collapsed and remember
   const toggleCollapsed = () => {
     setCollapsed(prev => {
@@ -159,7 +165,8 @@ export default function Layout() {
   useEffect(() => {
     const currentPath = location.pathname;
     navHubs.forEach(hub => {
-      if (hub.items.some(item => item.path === currentPath || (currentPath !== '/' && item.path.startsWith(currentPath)))) {
+      const visibleItems = filterItems(hub.items);
+      if (visibleItems.some(item => item.path === currentPath || (currentPath !== '/' && item.path.startsWith(currentPath)))) {
         setOpenHubs(prev => ({ ...prev, [hub.id]: true }));
       }
     });
@@ -172,9 +179,9 @@ export default function Layout() {
 
   // Flatten everything for the command palette
   const allEntries = useMemo(() => {
-    const dashboardEntry = [{ type: 'nav', label: 'Command Centre Dashboard', path: '/', icon: 'gauge-high', section: 'Overview', category: 'all' }];
+    const dashboardEntry = [{ type: 'nav', label: 'Command Centre Dashboard', path: '/dashboard', icon: 'gauge-high', section: 'Overview', category: 'home' }];
     const nav = navHubs.flatMap(hub =>
-      hub.items.map(item => ({
+      filterItems(hub.items).map(item => ({
         type: 'nav',
         ...item,
         section: hub.label,
@@ -190,7 +197,7 @@ export default function Layout() {
       category: 'portals',
     }));
     return [...dashboardEntry, ...nav, ...ext];
-  }, []);
+  }, [user]);
 
   const filteredResults = useMemo(() => {
     let list = allEntries;
@@ -259,7 +266,7 @@ export default function Layout() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f4f8f8]">
+    <div className="flex h-screen overflow-hidden">
       {/* Mobile Backdrop */}
       <div
         className={`fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 transition-opacity duration-200 lg:hidden ${
@@ -335,7 +342,7 @@ export default function Layout() {
         <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-1 crx-scroll">
           {/* Dashboard Direct Link */}
           <NavLink
-            to="/"
+            to="/dashboard"
             end
             className={({ isActive }) =>
               `nav-link ${isActive ? 'active' : ''}`
@@ -364,8 +371,10 @@ export default function Layout() {
 
           {/* 6 Categorized Hub Accordions */}
           {navHubs.map(hub => {
+            const visibleItems = filterItems(hub.items);
+            if (visibleItems.length === 0) return null;
             const isOpen = openHubs[hub.id] || false;
-            const hasActiveChild = hub.items.some(
+            const hasActiveChild = visibleItems.some(
               item => location.pathname === item.path || (location.pathname !== '/' && location.pathname.startsWith(item.path))
             );
 
@@ -385,7 +394,7 @@ export default function Layout() {
                     </button>
                     {isOpen && (
                       <div className="space-y-0.5 pl-1 animate-fade-in">
-                        {hub.items.map(item => (
+                        {visibleItems.map(item => (
                           <NavLink
                             key={item.path}
                             to={item.path}
@@ -410,7 +419,7 @@ export default function Layout() {
                 ) : (
                   <div className="space-y-1 my-1">
                     <div className="mx-auto my-1.5 h-px w-5 bg-white/10"></div>
-                    {hub.items.map(item => (
+                    {visibleItems.map(item => (
                       <NavLink
                         key={item.path}
                         to={item.path}
@@ -465,6 +474,13 @@ export default function Layout() {
                 </p>
               </div>
               <button
+                onClick={toggleTheme}
+                className="p-1.5 text-slate-400 hover:text-amber-300 hover:bg-white/10 rounded-lg transition-colors"
+                title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              >
+                <i className={`fas fa-${isDark ? 'sun text-amber-400' : 'moon'} text-xs`}></i>
+              </button>
+              <button
                 onClick={logout}
                 className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                 title="Sign out"
@@ -473,23 +489,32 @@ export default function Layout() {
               </button>
             </div>
           ) : (
-            <button
-              onClick={logout}
-              className="w-full flex items-center justify-center p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-              title="Sign out"
-            >
-              <i className="fas fa-power-off text-sm"></i>
-            </button>
+            <div className="space-y-1">
+              <button
+                onClick={toggleTheme}
+                className="w-full flex items-center justify-center p-2 text-slate-400 hover:text-amber-300 hover:bg-white/10 rounded-lg transition-colors"
+                title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              >
+                <i className={`fas fa-${isDark ? 'sun text-amber-400' : 'moon'} text-xs`}></i>
+              </button>
+              <button
+                onClick={logout}
+                className="w-full flex items-center justify-center p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                title="Sign out"
+              >
+                <i className="fas fa-power-off text-sm"></i>
+              </button>
+            </div>
           )}
         </div>
       </aside>
 
       {/* ═══════════ MAIN CONTENT AREA ═══════════ */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#f4f8f8]">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
         <header className="topbar h-14 px-4 lg:px-6 flex items-center gap-3 flex-shrink-0 no-print z-30">
           <button
-            className="lg:hidden text-slate-600 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-100"
+            className="lg:hidden text-slate-600 dark:text-slate-300 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10"
             onClick={() => setSidebarOpen(true)}
             title="Open Menu"
           >
@@ -497,22 +522,22 @@ export default function Layout() {
           </button>
 
           {/* Breadcrumbs */}
-          <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 min-w-0">
-            <button onClick={() => navigate('/')} className="hover:text-emerald-600 transition-colors">
-              <i className="fas fa-house text-xs text-slate-400"></i>
+          <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 min-w-0">
+            <button onClick={() => navigate('/dashboard')} className="hover:text-emerald-600 transition-colors">
+              <i className="fas fa-house text-xs text-slate-400 dark:text-slate-500"></i>
             </button>
             {location.pathname.split('/').filter(Boolean).map((part, i, arr) => (
               <span key={i} className="flex items-center gap-1.5 whitespace-nowrap">
-                <i className="fas fa-chevron-right text-[8px] text-slate-300"></i>
-                <span className={i === arr.length - 1 ? 'text-slate-900 font-bold capitalize' : 'text-slate-500 capitalize'}>
+                <i className="fas fa-chevron-right text-[8px] text-slate-300 dark:text-slate-600"></i>
+                <span className={i === arr.length - 1 ? 'text-slate-900 dark:text-slate-100 font-bold capitalize' : 'text-slate-500 dark:text-slate-400 capitalize'}>
                   {part.replace(/-/g, ' ')}
                 </span>
               </span>
             ))}
             {location.pathname === '/' && (
               <>
-                <i className="fas fa-chevron-right text-[8px] text-slate-300"></i>
-                <span className="text-slate-900 font-bold">Command Centre</span>
+                <i className="fas fa-chevron-right text-[8px] text-slate-300 dark:text-slate-600"></i>
+                <span className="text-slate-900 dark:text-slate-100 font-bold">Command Centre</span>
               </>
             )}
           </div>
@@ -522,20 +547,29 @@ export default function Layout() {
           {/* Global Quick Search Button */}
           <button
             onClick={openPalette}
-            className="hidden md:flex items-center gap-2 text-xs text-slate-600 bg-white/90 px-3.5 py-1.5 rounded-lg border border-slate-200/90 shadow-sm hover:border-emerald-400 hover:text-slate-900 transition-all"
+            className="hidden md:flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 bg-white/90 dark:bg-slate-800/90 px-3.5 py-1.5 rounded-lg border border-slate-200/90 dark:border-slate-700/80 shadow-sm hover:border-emerald-400 hover:text-slate-900 dark:hover:text-white transition-all"
             title="Press Ctrl+K to search"
           >
-            <i className="fas fa-magnifying-glass text-[11px] text-emerald-600"></i>
+            <i className="fas fa-magnifying-glass text-[11px] text-emerald-600 dark:text-emerald-400"></i>
             <span>Quick jump & search…</span>
             <span className="kbd kbd-dark ml-2">Ctrl K</span>
           </button>
 
+          {/* Theme Toggle Button in Header */}
+          <button
+            onClick={toggleTheme}
+            className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-amber-400 hover:text-amber-500 transition-all shadow-sm"
+            title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            <i className={`fas fa-${isDark ? 'sun text-amber-400' : 'moon text-slate-600'} text-xs`}></i>
+          </button>
+
           {/* GST Status Capsule */}
           {company?.gstin && (
-            <div className="hidden lg:flex items-center gap-1.5 text-xs text-slate-700 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-              <i className="fas fa-file-invoice text-emerald-600 text-[11px]"></i>
+            <div className="hidden lg:flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
+              <i className="fas fa-file-invoice text-emerald-600 dark:text-emerald-400 text-[11px]"></i>
               <span className="font-mono font-bold">{company.gstin.slice(0, 2)}</span>
-              <span className="text-slate-300">|</span>
+              <span className="text-slate-300 dark:text-slate-600">|</span>
               <span className="font-semibold uppercase text-[11px]">{company?.drugLicenseCategory || 'Retail'}</span>
               <span className={`w-1.5 h-1.5 rounded-full ${company?.gstType === 'composition' ? 'bg-amber-400' : 'bg-emerald-500'}`}></span>
             </div>
@@ -561,8 +595,8 @@ export default function Layout() {
         <div className="cmdk-backdrop no-print" onMouseDown={() => setPaletteOpen(false)}>
           <div className="cmdk-panel glass-card surface-glass-strong" onMouseDown={e => e.stopPropagation()}>
             {/* Input Bar */}
-            <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-200/90 bg-white">
-              <i className="fas fa-magnifying-glass text-emerald-600 text-sm"></i>
+            <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-900">
+              <i className="fas fa-magnifying-glass text-emerald-600 dark:text-emerald-400 text-sm"></i>
               <input
                 ref={paletteInputRef}
                 value={query}
@@ -582,13 +616,13 @@ export default function Layout() {
                   }
                 }}
                 placeholder="Search page, counter action, GST return, or shortcut…"
-                className="flex-1 bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-400 font-medium"
+                className="flex-1 bg-transparent outline-none text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 font-medium"
               />
               <span className="kbd kbd-dark">ESC</span>
             </div>
 
             {/* Category Filter Pills */}
-            <div className="flex items-center gap-1 px-3 py-2 border-b border-slate-100 bg-slate-50/70 overflow-x-auto text-[11px]">
+            <div className="flex items-center gap-1 px-3 py-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/90 overflow-x-auto text-[11px]">
               {[
                 { id: 'all', label: 'All' },
                 { id: 'pos', label: 'Billing POS' },
@@ -604,7 +638,7 @@ export default function Layout() {
                   className={`px-2.5 py-1 rounded-md font-semibold transition-all whitespace-nowrap ${
                     activeCategory === cat.id
                       ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'text-slate-600 hover:bg-slate-200/70'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-800'
                   }`}
                 >
                   {cat.label}
@@ -613,12 +647,12 @@ export default function Layout() {
             </div>
 
             {/* Results List */}
-            <div className="max-h-[52vh] overflow-y-auto p-2 crx-scroll bg-white">
+            <div className="max-h-[52vh] overflow-y-auto p-2 crx-scroll bg-white dark:bg-slate-900">
               {filteredResults.length === 0 && (
                 <div className="text-center py-10">
-                  <i className="fas fa-search text-slate-300 text-2xl mb-2"></i>
-                  <p className="text-sm text-slate-500 font-medium">No results found for “{query}”</p>
-                  <p className="text-xs text-slate-400 mt-1">Try searching for 'sale', 'batch', 'gstr1', or 'expiry'</p>
+                  <i className="fas fa-search text-slate-300 dark:text-slate-600 text-2xl mb-2"></i>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">No results found for “{query}”</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Try searching for 'sale', 'batch', 'gstr1', or 'expiry'</p>
                 </div>
               )}
               {filteredResults.map((r, i) => (
@@ -630,16 +664,16 @@ export default function Layout() {
                 >
                   <span className={`cmdk-icon ${
                     r.type === 'ext'
-                      ? 'bg-violet-100 text-violet-700'
+                      ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300'
                       : r.hot
                       ? 'grad-brand text-white'
-                      : 'bg-slate-100 text-slate-700'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                   }`}>
                     <i className={`fas fa-${r.icon} text-xs`}></i>
                   </span>
                   <span className="flex-1 min-w-0 text-left">
-                    <span className="block text-sm font-semibold text-slate-800 truncate">{r.label}</span>
-                    <span className="block text-[10px] text-slate-500 truncate font-medium">
+                    <span className="block text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">{r.label}</span>
+                    <span className="block text-[10px] text-slate-500 dark:text-slate-400 truncate font-medium">
                       {r.section} {r.type === 'ext' ? '· External Link' : ''}
                     </span>
                   </span>
@@ -647,20 +681,20 @@ export default function Layout() {
                     <span className="kbd kbd-dark font-mono text-[10px]">{r.shortcut}</span>
                   )}
                   {i === selected && (
-                    <i className="fas fa-arrow-turn-down-left text-xs text-emerald-600"></i>
+                    <i className="fas fa-arrow-turn-down-left text-xs text-emerald-600 dark:text-emerald-400"></i>
                   )}
                 </button>
               ))}
             </div>
 
             {/* Footer Navigation Hints */}
-            <div className="px-4 py-2.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+            <div className="px-4 py-2.5 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/90 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
               <div className="flex items-center gap-3">
                 <span><span className="kbd kbd-dark mr-1">↑↓</span> Navigate</span>
                 <span><span className="kbd kbd-dark mr-1">↵</span> Select</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-emerald-700 font-bold"><i className="fas fa-bolt text-emerald-600 mr-1"></i>F2 Sale · F6 Purchase · F7 Stock</span>
+                <span className="text-emerald-700 dark:text-emerald-400 font-bold"><i className="fas fa-bolt text-emerald-600 mr-1"></i>F2 Sale · F6 Purchase · F7 Stock</span>
               </div>
             </div>
           </div>

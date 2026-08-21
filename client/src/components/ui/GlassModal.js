@@ -24,16 +24,16 @@ export default function GlassModal({ open, onClose, title, children, size = 'md'
         onClick={onClose}
       />
       <div
-        className={`relative w-full ${sizes[size] || sizes.md} glass-card surface-glass-strong max-h-[90vh] flex flex-col animate-scale-in p-0 overflow-hidden shadow-2xl border border-slate-200 bg-white`}
+        className={`relative w-full ${sizes[size] || sizes.md} glass-card surface-glass-strong max-h-[90vh] flex flex-col animate-scale-in p-0 overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900`}
       >
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 bg-slate-50/80">
-          <h2 className="text-sm font-extrabold text-slate-800 tracking-tight flex items-center gap-2">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/90">
+          <h2 className="text-sm font-extrabold text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2">
             <span className="w-1.5 h-4 rounded-full grad-brand inline-block"></span>
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
           >
             <i className="fas fa-times text-sm"></i>
           </button>
