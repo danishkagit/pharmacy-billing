@@ -1,9 +1,10 @@
 import React from 'react';
 
-function Logo({ size = 36, className = '' }) {
+function Logo({ size = 36, className = '', theme }) {
+  const fill = theme === 'dark' ? 'currentColor' : 'white';
   return (
     <div
-      className={`inline-flex items-center justify-center rounded-xl grad-brand text-white shadow-sm flex-shrink-0 ${className}`}
+      className={`inline-flex items-center justify-center rounded-xl border-2 border-slate-300/${theme === 'dark' ? '20' : '10'} shadow-sm flex-shrink-0 ${className}`}
       style={{ width: size, height: size }}
       title="CalcuttaRx"
     >
@@ -15,27 +16,29 @@ function Logo({ size = 36, className = '' }) {
       >
         <path
           d="M12 4v16m-8-8h16"
-          stroke="currentColor"
+          stroke={fill}
           strokeWidth="3.2"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-        <circle cx="12" cy="12" r="2.2" fill="white" />
+        <circle cx="12" cy="12" r="2.2" fill={fill} />
       </svg>
     </div>
   );
 }
 
-function LogoWordmark({ size = 34, compact = false }) {
+function LogoWordmark({ size = 34, compact = false, theme }) {
+  const textColor = theme === 'dark' ? 'text-slate-900' : 'text-white';
+  const textColorDark = theme === 'dark' ? 'text-slate-900' : 'text-white';
   return (
     <div className={`flex items-center gap-2.5 ${compact ? '' : 'min-w-0'}`}>
-      <Logo size={size} />
+      <Logo size={size} theme={theme} />
       {!compact && (
         <div className="leading-tight">
-          <span className="text-white font-extrabold tracking-tight" style={{ fontSize: size * 0.44 }}>
+          <span className={textColor} style={{ fontSize: size * 0.44 }}>
             Calcutta<span className="text-transparent bg-clip-text grad-brand">Rx</span>
           </span>
-          <p className="text-[9px] text-slate-400 font-medium uppercase tracking-[0.16em] -mt-0.5">
+          <p className={textColorDark} className="text-[9px] text-slate-400 font-medium uppercase tracking-[0.16em] -mt-0.5">
             Pharmacy Suite
           </p>
         </div>

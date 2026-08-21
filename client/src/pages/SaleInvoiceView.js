@@ -192,7 +192,7 @@ export default function SaleInvoiceView() {
       <div className="border-t border-dashed border-black my-2"></div>
       {declarations.map((d, i) => <p key={i} className="text-[9px] leading-tight">* {d}</p>)}
       <p className="text-center mt-2 font-bold">{co.invoiceNote || 'Thank You! Visit Again'}</p>
-      <p className="text-center text-[9px]">Powered by CalcuttaRx</p>
+      <p className="text-center text-[9px]">Powered by <span className="font-semibold">CalcuttaRx</span></p>
     </div>
   );
 
