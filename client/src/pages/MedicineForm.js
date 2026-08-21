@@ -10,7 +10,7 @@ export default function MedicineForm() {
   const lookupTimer = useRef(null);
   const [form, setForm] = useState({
     name: '', composition: '', manufacturer: '', category: 'tablet', packSize: '', unit: 'nos',
-    hsn: '', gstRate: 12, schedule: 'OTC', mrp: 0, reorderLevel: 0, rackLocation: ''
+    hsn: '', gstRate: 5, schedule: 'OTC', mrp: 0, reorderLevel: 0, rackLocation: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -151,13 +151,12 @@ export default function MedicineForm() {
               <input name="hsn" value={form.hsn} onChange={handleChange} className="app-input" placeholder="e.g., 300490" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">GST Rate (%)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">GST Rate (%) <span className="text-[10px] text-emerald-600 font-semibold">GST 2.0</span></label>
               <select name="gstRate" value={form.gstRate} onChange={handleChange} className="app-input app-select">
-                <option value={0}>0% (Essential)</option>
-                <option value={5}>5%</option>
-                <option value={12}>12%</option>
+                <option value={0}>0% (Exempt / Life-saving)</option>
+                <option value={5}>5% (All medicines)</option>
                 <option value={18}>18%</option>
-                <option value={28}>28%</option>
+                <option value={40}>40% (Demerit: beverages, pan masala)</option>
               </select>
             </div>
             <div>

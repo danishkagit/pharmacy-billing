@@ -13,9 +13,23 @@ router.get('/', async (req, res) => {
   }
 });
 
+const EDITABLE_KEYS = [
+  'name', 'legalName', 'address', 'city', 'state', 'pincode', 'phone', 'email',
+  'gstin', 'pan', 'dlNo', 'dlNoWholesale', 'fssaiNo', 'dlExpiryDate', 'fssaiExpiryDate',
+  'drugLicenseCategory', 'logo', 'invoicePrefix', 'invoiceNote',
+  'gstType', 'bankName', 'bankAccountNo', 'bankIfsc', 'upiId',
+  'invoiceTemplate', 'showHsnOnPrint', 'showExpiryOnPrint', 'showMrpOnPrint',
+  'billCopies', 'printAfterSave', 'declarationNote', 'scheduleWarningNote',
+  'taxMode', 'autoRoundOff', 'enableEInvoice', 'ewayThreshold', 'discountSlabs'
+];
+
 router.put('/', rbac('owner', 'admin'), async (req, res) => {
   try {
-    const company = await Company.findByIdAndUpdate(req.company._id, req.body, { new: true, runValidators: true });
+    const patch = {};
+    for (const key of EDITABLE_KEYS) {
+      if (req.body[key] !== undefined) patch[key] = req.body[key];
+    }
+    const company = await Company.findByIdAndUpdate(req.company._id, patch, { new: true, runValidators: true });
     if (!company) return res.status(404).json({ success: false, error: 'Company not found' });
     res.json({ success: true, data: company });
   } catch (error) {

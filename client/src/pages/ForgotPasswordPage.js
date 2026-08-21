@@ -79,7 +79,7 @@ export default function ForgotPasswordPage() {
             <div className="w-12 h-12 rounded-xl grad-accent flex items-center justify-center mx-auto mb-3 shadow-glow">
               <i className="fas fa-key text-white text-lg"></i>
             </div>
-            <h1 className="text-xl font-bold text-slate-900">PharmacyBilling</h1>
+            <h1 className="text-xl font-bold text-slate-900">Calcutta<span className="text-transparent bg-clip-text grad-brand">Rx</span></h1>
           </div>
 
           <div className="mb-8">

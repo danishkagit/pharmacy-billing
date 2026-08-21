@@ -34,6 +34,7 @@ export default function PurchaseReturnCreate() {
           qty: 0,
           amount: 0,
           gstAmount: 0,
+          gstRate: b.gstRate || 5,
           maxQty: b.qty
         })));
       }
@@ -45,7 +46,7 @@ export default function PurchaseReturnCreate() {
     updated[idx] = { ...updated[idx], [field]: value };
     if (field === 'qty') {
       updated[idx].amount = (value || 0) * (updated[idx].rate || 0);
-      updated[idx].gstAmount = ((value || 0) * (updated[idx].rate || 0) * 12) / 100;
+      updated[idx].gstAmount = ((value || 0) * (updated[idx].rate || 0) * (updated[idx].gstRate || 5)) / 100;
     }
     setItems(updated);
   };

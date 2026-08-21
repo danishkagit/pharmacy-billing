@@ -11,6 +11,23 @@ function calculateGST(amount, gstRate, isInterState = false) {
   };
 }
 
+function calculateInclusiveGST(netAmount, gstRate, isInterState = false) {
+  const rate = Number(gstRate) || 0;
+  const taxableAmount = +(netAmount / (1 + rate / 100)).toFixed(2);
+  const gstAmount = +(netAmount - taxableAmount).toFixed(2);
+  if (isInterState) {
+    return { taxableAmount, igst: gstAmount, cgst: 0, sgst: 0, totalTax: gstAmount };
+  }
+  const halfGst = +(gstAmount / 2).toFixed(2);
+  return {
+    taxableAmount,
+    igst: 0,
+    cgst: halfGst,
+    sgst: +(gstAmount - halfGst).toFixed(2),
+    totalTax: gstAmount
+  };
+}
+
 function roundOff(num) {
   return Math.round(num * 100) / 100;
 }
@@ -57,11 +74,11 @@ function getDateRange(filter, customStart, customEnd) {
   return { start, end };
 }
 
-module.exports = { calculateGST, roundOff, generateInvoiceNumber, formatCurrency, getDateRange, endOfDay };
-
 function endOfDay(date) {
   const d = new Date(date);
   if (isNaN(d.getTime())) return d;
   d.setHours(23, 59, 59, 999);
   return d;
 }
+
+module.exports = { calculateGST, calculateInclusiveGST, roundOff, generateInvoiceNumber, formatCurrency, getDateRange, endOfDay };

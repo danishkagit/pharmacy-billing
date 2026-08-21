@@ -1,9 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { PageHeader, GlassCard, GlassModal } from '../components/ui';
 import MedicinePicker from '../components/MedicinePicker';
+import { GST_SLABS, DEFAULT_MEDICINE_GST, amountInWords, inclusiveBreakup, rateWiseSummary, STATE_CODES, isInterStateSupply } from '../utils/gst';
+
+const HOLD_KEY = 'ph_held_bills';
 
 export default function SaleInvoiceCreate() {
   const navigate = useNavigate();
@@ -18,12 +21,14 @@ export default function SaleInvoiceCreate() {
     type: isRetail && !isWholesale ? 'retail' : isWholesale && !isRetail ? 'wholesale' : 'retail',
     customer: '', customerName: '', customerPhone: '', customerGstin: '',
     prescription: '', prescriptionNo: '', doctorName: '', patientName: '',
-    paymentMode: 'cash', isInterState: false, notes: '', notify: true,
-    creditDays: 0, billingAddress: '', deliveryAddress: '',
+    invoiceDate: new Date().toISOString().split('T')[0], dueDate: '',
+    paymentMode: 'cash', notes: '',
+    creditDays: 0, billingAddress: '', deliveryAddress: ''
   });
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [infoMsg, setInfoMsg] = useState('');
   const [showQuickCustomer, setShowQuickCustomer] = useState(false);
   const [quickCustomer, setQuickCustomer] = useState({ name: '', phone: '', type: 'retail' });
   const [selectedFile, setSelectedFile] = useState(null);
@@ -32,11 +37,20 @@ export default function SaleInvoiceCreate() {
   const [showCamera, setShowCamera] = useState(false);
   const [aiScanning, setAiScanning] = useState(false);
   const [aiMessage, setAiMessage] = useState('');
+  // Payment panel state
+  const [splitPayments, setSplitPayments] = useState([{ mode: 'cash', amount: '' }, { mode: 'upi', amount: '' }, { mode: 'card', amount: '' }]);
+  const [cashTendered, setCashTendered] = useState('');
+  // Hold/recall
+  const [heldBills, setHeldBills] = useState([]);
+  const [showHeld, setShowHeld] = useState(false);
+
   const cameraInputRef = useRef(null);
   const fileInputRef = useRef(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const cameraStreamRef = useRef(null);
+  const searchInputRef = useRef(null);
+  const formRef = useRef(null);
   const isMobile = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 
   const stopCamera = () => {
@@ -92,15 +106,42 @@ export default function SaleInvoiceCreate() {
   useEffect(() => {
     API.get('/customers', { params: { limit: 200 } }).then(r => { if (r.success) setCustomers(r.data); });
     API.get('/prescriptions', { params: { limit: 200 } }).then(r => { if (r.success) setPrescriptions(r.data); });
+    try { setHeldBills(JSON.parse(localStorage.getItem(HOLD_KEY) || '[]')); } catch (e) { setHeldBills([]); }
   }, []);
 
-  const addItem = () => setItems([...items, { medicine: '', batch: '', batchNo: '', qty: 1, rate: 0, mrp: 0, discountPercent: 0, gstRate: 12 }]);
+  // ---------- Totals (MRP-inclusive GST by default) ----------
+  const interState = isInterStateSupply(company?.gstin, form.customerGstin);
+  const subtotal = items.reduce((s, i) => s + (i.amount || 0), 0);
+  const totalTax = items.reduce((s, i) => s + (inclusiveBreakup(i.amount || 0, i.gstRate || DEFAULT_MEDICINE_GST).totalTax), 0);
+  const totalTaxable = Math.max(0, +(subtotal - totalTax).toFixed(2));
+  const cgst = interState ? 0 : +(totalTax / 2).toFixed(2);
+  const sgst = interState ? 0 : +(totalTax - totalTax / 2).toFixed(2);
+  const igst = interState ? +totalTax.toFixed(2) : 0;
+  const rateRows = rateWiseSummary(items, interState);
+
+  const totalMRP = items.reduce((s, i) => s + (i.qty || 0) * (i.mrp || i.rate || 0), 0);
+  const slabs = (company?.discountSlabs && company.discountSlabs.length) ? company.discountSlabs : [{ minMRP: 0, discountPercent: 10 }, { minMRP: 100, discountPercent: 15 }];
+  const slab = [...slabs].filter(s => totalMRP >= (s.minMRP || 0)).sort((a, b) => (b.minMRP || 0) - (a.minMRP || 0))[0];
+  const customerDiscountPercent = form.type === 'wholesale' ? 0 : (slab?.discountPercent || 0);
+  const customerDiscount = subtotal > 0 ? (subtotal * customerDiscountPercent) / 100 : 0;
+  const invoiceBase = Math.max(0, subtotal - customerDiscount);
+  const totalAmount = Math.round(invoiceBase);
+  const roundOffVal = +(totalAmount - invoiceBase).toFixed(2);
+  const changeDue = form.paymentMode === 'cash'
+    ? Math.max(0, (parseFloat(cashTendered) || 0) - totalAmount)
+    : 0;
+
+  const splitTotal = splitPayments.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
+  const splitValid = form.paymentMode !== 'mixed' || Math.abs(splitTotal - totalAmount) < 0.01;
+
+  // ---------- Items ----------
+  const addItem = useCallback(() => setItems(prev => [...prev, { medicine: '', batch: '', batchNo: '', qty: 1, rate: 0, mrp: 0, discountPercent: 0, gstRate: DEFAULT_MEDICINE_GST }]), []);
   const removeItem = (idx) => setItems(items.filter((_, i) => i !== idx));
 
   const handleMedicineSelect = async (idx, med) => {
     if (!med || !med._id) return;
     const updated = [...items];
-    updated[idx] = { ...updated[idx], medicine: med._id, medicineName: med.name, mrp: med.mrp, gstRate: med.gstRate || 12, schedule: med.schedule };
+    updated[idx] = { ...updated[idx], medicine: med._id, medicineName: med.name, mrp: med.mrp, gstRate: med.gstRate ?? DEFAULT_MEDICINE_GST, schedule: med.schedule };
     if ((med.schedule === 'H' || med.schedule === 'H1' || med.schedule === 'X') && !form.prescription) {
       setError(`${med.name} requires a prescription. Please add prescription first.`);
     }
@@ -112,7 +153,7 @@ export default function SaleInvoiceCreate() {
         if (batchData.length > 0) {
           batchData.sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
           const best = batchData[0];
-          updated[idx] = { ...updated[idx], batch: best._id, batchNo: best.batchNo, rate: best.saleRate || best.purchaseRate, qty: 1, mrp: best.mrp };
+          updated[idx] = { ...updated[idx], batch: best._id, batchNo: best.batchNo, rate: best.saleRate || best.purchaseRate || best.mrp, qty: 1, mrp: best.mrp };
           const amt = (updated[idx].qty || 0) * (updated[idx].rate || 0);
           const disc = (amt * (updated[idx].discountPercent || 0)) / 100;
           updated[idx].amount = amt - disc;
@@ -128,7 +169,7 @@ export default function SaleInvoiceCreate() {
     if (field === 'batch') {
       const batchData = batches[updated[idx].medicine] || [];
       const b = batchData.find(bb => bb._id === value);
-      if (b) { updated[idx].batchNo = b.batchNo; updated[idx].rate = b.saleRate || b.purchaseRate; updated[idx].mrp = b.mrp; }
+      if (b) { updated[idx].batchNo = b.batchNo; updated[idx].rate = b.saleRate || b.purchaseRate || b.mrp; updated[idx].mrp = b.mrp; }
     }
     const amt = (updated[idx].qty || 0) * (updated[idx].rate || 0);
     const disc = (amt * (updated[idx].discountPercent || 0)) / 100;
@@ -139,14 +180,22 @@ export default function SaleInvoiceCreate() {
   const handleCustomerSelect = (customerId) => {
     const c = customers.find(c => c._id === customerId);
     if (c) {
-      setForm({ ...form, customer: customerId, customerName: c.name, customerPhone: c.phone || '', customerGstin: c.gstin || '' });
+      setForm(f => ({ ...f, customer: customerId, customerName: c.name, customerPhone: c.phone || '', customerGstin: c.gstin || '' }));
     }
+  };
+
+  const handleGstinChange = (value) => {
+    const gstin = value.toUpperCase();
+    setForm(f => ({ ...f, customerGstin: gstin }));
+    const code = gstin.slice(0, 2);
+    if (STATE_CODES[code]) setInfoMsg(`Buyer state: ${STATE_CODES[code]}${company?.gstin && code === company.gstin.slice(0, 2) ? ' • Intra-state (CGST+SGST)' : ' • Inter-state (IGST)'}`);
+    else setInfoMsg('');
   };
 
   const handlePrescriptionSelect = (rxId) => {
     const rx = prescriptions.find(p => p._id === rxId);
     if (rx) {
-      setForm({ ...form, prescription: rxId, prescriptionNo: rx.prescriptionNo, doctorName: rx.doctorName, patientName: rx.patientName });
+      setForm(f => ({ ...f, prescription: rxId, prescriptionNo: rx.prescriptionNo, doctorName: rx.doctorName, patientName: rx.patientName }));
       setError('');
     }
   };
@@ -163,15 +212,6 @@ export default function SaleInvoiceCreate() {
       }
     } catch (err) { setError(err?.error || 'Failed to add customer'); }
   };
-
-  const subtotal = items.reduce((s, i) => s + (i.amount || 0), 0);
-  const totalTax = items.reduce((s, i) => { const amt = (i.amount || 0); return s + (amt * (i.gstRate || 12)) / 100; }, 0);
-  const totalMRP = items.reduce((s, i) => s + (i.qty || 0) * (i.mrp || i.rate || 0), 0);
-  const slabs = (company?.discountSlabs && company.discountSlabs.length) ? company.discountSlabs : [{ minMRP: 0, discountPercent: 10 }, { minMRP: 100, discountPercent: 15 }];
-  const slab = [...slabs].filter(s => totalMRP >= (s.minMRP || 0)).sort((a, b) => (b.minMRP || 0) - (a.minMRP || 0))[0];
-  const customerDiscountPercent = form.type === 'wholesale' ? 0 : (slab?.discountPercent || 0);
-  const customerDiscount = subtotal > 0 ? (subtotal * customerDiscountPercent) / 100 : 0;
-  const totalAmount = Math.round(subtotal + totalTax - customerDiscount);
 
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]);
@@ -192,7 +232,7 @@ export default function SaleInvoiceCreate() {
   };
 
   const addAiMedicine = async (med, qty) => {
-    const newItem = { medicine: med._id, medicineName: med.name, batch: '', batchNo: '', qty: qty || 1, rate: 0, mrp: med.mrp || 0, discountPercent: 0, gstRate: med.gstRate || 12, schedule: med.schedule };
+    const newItem = { medicine: med._id, medicineName: med.name, batch: '', batchNo: '', qty: qty || 1, rate: 0, mrp: med.mrp || 0, discountPercent: 0, gstRate: med.gstRate ?? DEFAULT_MEDICINE_GST, schedule: med.schedule };
     try {
       const res = await API.get(`/batches/stock/${med._id}`);
       if (res.success && res.data.length) {
@@ -200,7 +240,7 @@ export default function SaleInvoiceCreate() {
         const best = batchData[0];
         newItem.batch = best._id;
         newItem.batchNo = best.batchNo;
-        newItem.rate = best.saleRate || best.purchaseRate;
+        newItem.rate = best.saleRate || best.purchaseRate || best.mrp;
         newItem.mrp = best.mrp;
         newItem.amount = (newItem.qty || 0) * (newItem.rate || 0);
       }
@@ -218,20 +258,35 @@ export default function SaleInvoiceCreate() {
       const fd = new FormData();
       fd.append('image', prescriptionFile);
       const res = await API.post('/ai/ocr-prescription', fd, { headers: { 'Content-Type': false } });
-      if (!res.success) return setError(res.error || 'AI scan failed');
-      const items = res.data.items || [];
-      if (items.length === 0) return setAiMessage('AI could not read any medicines from this prescription.');
-      const found = items.filter(it => it.matched);
-      const missing = items.filter(it => !it.matched && it.name);
-      const added = [];
-      for (const it of found) {
-        const item = await addAiMedicine(it.matched, 1);
-        if (item.batch) added.push(item);
+      if (!res.success || !res.data) throw new Error(res.error || 'No medicines detected');
+      const detected = res.data.medicines || [];
+      if (!detected.length) {
+        setAiMessage('AI scanned the prescription but could not match medicines with confidence. Please add manually.');
+        return;
       }
-      if (added.length) setItems(prev => [...prev, ...added]);
+      const names = detected.map(d => d.name).filter(Boolean);
+      const medRes = await API.post('/medicines/match', { names });
+      const matchedMap = new Map((medRes.data || []).map(m => [m.matchedQuery?.toLowerCase(), m]));
+      const newItems = [];
+      const missing = [];
+      for (const d of detected) {
+        const found = matchedMap.get((d.name || '').toLowerCase());
+        if (found) {
+          const item = await addAiMedicine(found, d.qty || 1);
+          newItems.push(item);
+        } else {
+          missing.push(d);
+        }
+      }
+      setItems(prev => {
+        const existing = prev.filter(p => p.medicine);
+        return [...existing, ...newItems];
+      });
+      const found = detected.filter(d => matchedMap.has((d.name || '').toLowerCase())).map(d => ({ ...d, matched: matchedMap.get((d.name || '').toLowerCase()) }));
+      const added = newItems.filter(i => i.batch);
       const noStock = found.filter(it => added.length && !added.some(a => a.medicine === it.matched._id));
       const missingNames = [...new Set([...missing.map(m => m.name), ...noStock.map(n => n.matched.name)])];
-      setAiMessage(`AI found ${items.length} item(s): added ${added.length} to cart${missingNames.length ? `. Not available in stock: ${missingNames.join(', ')}` : ''}. Please verify before billing.`);
+      setAiMessage(`AI found ${detected.length} item(s): added ${added.length} to cart${missingNames.length ? `. Not available in stock: ${missingNames.join(', ')}` : ''}. Please verify before billing.`);
       if (found.some(it => ['H', 'H1', 'X'].includes(it.matched.schedule)) && !form.prescription) {
         setAiMessage(prev => `${prev} ⚠ One or more drugs are Schedule H/H1/X — select a prescription.`);
       }
@@ -239,11 +294,56 @@ export default function SaleInvoiceCreate() {
     finally { setAiScanning(false); }
   };
 
+  // ---------- Hold / Recall ----------
+  const holdBill = () => {
+    if (items.length === 0) return setError('Nothing to hold');
+    const hold = { id: Date.now(), savedAt: new Date().toISOString(), form: { ...form }, items };
+    const next = [...heldBills.slice(-9), hold];
+    localStorage.setItem(HOLD_KEY, JSON.stringify(next));
+    setHeldBills(next);
+    setInfoMsg(`Bill parked (${next.length} held). Press F10 to recall.`);
+    setItems([]);
+    setForm(f => ({ ...f, customer: '', customerName: '', customerPhone: '', customerGstin: '', prescription: '', prescriptionNo: '', doctorName: '', patientName: '', paymentMode: 'cash' }));
+    setCashTendered('');
+  };
+
+  const recallBill = (holdId) => {
+    const hold = heldBills.find(h => h.id === holdId);
+    if (!hold) return;
+    setForm(f => ({ ...f, ...hold.form }));
+    setItems(hold.items || []);
+    const next = heldBills.filter(h => h.id !== holdId);
+    localStorage.setItem(HOLD_KEY, JSON.stringify(next));
+    setHeldBills(next);
+    setShowHeld(false);
+    setInfoMsg('Held bill recalled.');
+  };
+
+  const discardHold = (holdId) => {
+    const next = heldBills.filter(h => h.id !== holdId);
+    localStorage.setItem(HOLD_KEY, JSON.stringify(next));
+    setHeldBills(next);
+  };
+
+  // ---------- Keyboard shortcuts ----------
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === 'F2') { e.preventDefault(); addItem(); setTimeout(() => searchInputRef.current?.focus?.(), 50); }
+      else if (e.key === 'F9') { e.preventDefault(); holdBill(); }
+      else if (e.key === 'F10') { e.preventDefault(); setShowHeld(true); }
+      else if (e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); formRef.current?.requestSubmit?.(); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  });
+
+  // ---------- Submit ----------
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (items.length === 0) return setError('At least one item required');
     const invalidItems = items.filter(i => !i.medicine || !i.batch);
     if (invalidItems.length > 0) return setError('All items must have a medicine and batch selected');
+    if (!splitValid) return setError(`Split payments total ₹${splitTotal.toFixed(2)} but bill is ₹${totalAmount.toFixed(2)}`);
     setLoading(true);
     setError('');
     try {
@@ -253,6 +353,7 @@ export default function SaleInvoiceCreate() {
       formData.append('customerName', form.customerName);
       formData.append('customerPhone', form.customerPhone);
       formData.append('customerGstin', form.customerGstin);
+      formData.append('placeOfSupply', form.customerGstin ? String(form.customerGstin).slice(0, 2) : '');
       formData.append('prescription', form.prescription);
       formData.append('prescriptionNo', form.prescriptionNo);
       formData.append('doctorName', form.doctorName);
@@ -260,11 +361,18 @@ export default function SaleInvoiceCreate() {
       formData.append('invoiceDate', form.invoiceDate || new Date());
       formData.append('dueDate', form.dueDate);
       formData.append('paymentMode', form.paymentMode);
-      formData.append('isInterState', String(form.isInterState));
+      formData.append('isInterState', String(interState));
       formData.append('notes', form.notes);
       formData.append('creditDays', String(form.creditDays));
       formData.append('billingAddress', form.billingAddress);
       formData.append('deliveryAddress', form.deliveryAddress);
+      if (form.paymentMode === 'cash') {
+        formData.append('paidAmount', String(Math.min(totalAmount + changeDue, parseFloat(cashTendered) || totalAmount)));
+        formData.append('changeAmount', String(changeDue));
+      }
+      if (form.paymentMode === 'mixed') {
+        formData.append('payments', JSON.stringify(splitPayments.filter(p => parseFloat(p.amount) > 0)));
+      }
       if (selectedFile) formData.append('billFile', selectedFile);
       if (prescriptionFile) formData.append('prescriptionFile', prescriptionFile);
       items.forEach((item, idx) => {
@@ -282,10 +390,19 @@ export default function SaleInvoiceCreate() {
     finally { setLoading(false); }
   };
 
+  const scheduleBadge = (schedule) => {
+    switch (schedule) {
+      case 'H1': return <span className="text-[9px] font-bold bg-amber-100 text-amber-700 px-1 rounded">H1</span>;
+      case 'X': return <span className="text-[9px] font-bold bg-red-100 text-red-700 px-1 rounded">X</span>;
+      case 'H': return <span className="text-[9px] font-bold bg-sky-100 text-sky-700 px-1 rounded">H</span>;
+      default: return null;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader icon="cash-register" title={form.type === 'retail' ? 'New Retail Sale' : 'New Wholesale Invoice'}
-        subtitle="Create a new sale invoice with medicine items">
+        subtitle={<span>Create a new sale invoice with medicine items <span className="ml-2 text-[10px] text-slate-400 hidden md:inline">Shortcuts: F2 add item · F9 hold · F10 recall · Ctrl+Enter save</span></span>}>
         <div className="flex gap-2">
           {isRetail && isWholesale && (
             <div className="glass-tabs inline-flex bg-white/60 border border-gray-200/60 rounded-morph-xs p-0.5">
@@ -299,6 +416,12 @@ export default function SaleInvoiceCreate() {
               </button>
             </div>
           )}
+          <button type="button" onClick={holdBill} className="btn-secondary text-xs py-2" title="Hold current bill (F9)">
+            <i className="fas fa-pause mr-1"></i>Hold{heldBills.length > 0 && <span className="ml-1 badge badge-yellow">{heldBills.length}</span>}
+          </button>
+          <button type="button" onClick={() => setShowHeld(true)} disabled={heldBills.length === 0} className="btn-secondary text-xs py-2" title="Recall held bills (F10)">
+            <i className="fas fa-play mr-1"></i>Recall
+          </button>
         </div>
       </PageHeader>
 
@@ -309,6 +432,12 @@ export default function SaleInvoiceCreate() {
             <button onClick={() => setError('')} className="ml-auto text-red-400 hover:text-red-600"><i className="fas fa-times"></i></button>
           </div>
         )}
+        {infoMsg && (
+          <div className="bg-sky-50/80 backdrop-blur-sm border border-sky-200 text-sky-700 px-4 py-3 rounded-morph-xs text-sm mb-4 flex items-center gap-2">
+            <i className="fas fa-circle-info"></i>{infoMsg}
+            <button onClick={() => setInfoMsg('')} className="ml-auto text-sky-400 hover:text-sky-600"><i className="fas fa-times"></i></button>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
@@ -316,10 +445,16 @@ export default function SaleInvoiceCreate() {
             <input type="file" onChange={handleFileChange} className="glass-input w-full" />
             {selectedFile && <p className="text-xs text-slate-500 mt-1">Selected: {selectedFile.name}</p>}
           </div>
+          {interState && (
+            <div className="md:col-span-2 flex items-end">
+              <div className="w-full bg-violet-50/70 border border-violet-200 text-violet-700 rounded-morph-xs px-3 py-2 text-xs">
+                <i className="fas fa-truck-fast mr-1"></i>Inter-state supply detected — IGST will apply on this bill.
+              </div>
+            </div>
+          )}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-5">
           {/* Customer & Invoice Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
@@ -337,24 +472,22 @@ export default function SaleInvoiceCreate() {
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Phone / GSTIN</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Phone</label>
               <input value={form.customerPhone} onChange={e => setForm({ ...form, customerPhone: e.target.value })} placeholder="Phone" className="glass-input text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Customer GSTIN (B2B)</label>
+              <input value={form.customerGstin} onChange={e => handleGstinChange(e.target.value)} placeholder="22AAAAA0000A1Z5" maxLength={15}
+                className="glass-input text-sm uppercase font-mono" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Payment Mode</label>
               <select value={form.paymentMode} onChange={e => setForm({ ...form, paymentMode: e.target.value })} className="glass-select">
                 <option value="cash">Cash</option><option value="upi">UPI</option>
                 <option value="card">Card</option><option value="credit">Credit</option>
-                <option value="mixed">Mixed</option>
+                <option value="mixed">Mixed / Split</option>
               </select>
             </div>
-            {form.type === 'wholesale' && (
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Credit Days</label>
-                <input type="number" value={form.creditDays} onChange={e => setForm({ ...form, creditDays: parseInt(e.target.value) || 0 })}
-                  min={0} className="glass-input text-sm" placeholder="0" />
-              </div>
-            )}
           </div>
 
           {/* Prescription Info (retail) */}
@@ -380,7 +513,12 @@ export default function SaleInvoiceCreate() {
 
           {/* Wholesale extra fields */}
           {form.type === 'wholesale' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Credit Days</label>
+                <input type="number" value={form.creditDays} onChange={e => setForm({ ...form, creditDays: parseInt(e.target.value) || 0 })}
+                  min={0} className="glass-input text-sm" placeholder="0" />
+              </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Billing Address</label>
                 <input value={form.billingAddress} onChange={e => setForm({ ...form, billingAddress: e.target.value })} className="glass-input text-sm" />
@@ -464,10 +602,9 @@ export default function SaleInvoiceCreate() {
                 Sale Items
               </span>
               <button type="button" onClick={addItem} className="btn-primary text-xs py-1.5 px-3">
-                <i className="fas fa-plus"></i> Add Item
+                <i className="fas fa-plus"></i> Add Item <span className="opacity-60">(F2)</span>
               </button>
             </div>
-
             <GlassCard className="overflow-hidden p-0">
               {items.length === 0 ? (
                 <div className="py-12 text-center text-gray-400">
@@ -483,11 +620,12 @@ export default function SaleInvoiceCreate() {
                     <thead>
                       <tr>
                         <th>Medicine</th>
-                        <th>Batch</th>
+                        <th>Batch (FEFO)</th>
                         <th>MRP</th>
                         <th>Rate</th>
                         <th>Qty</th>
                         <th>Disc%</th>
+                        <th>GST%</th>
                         <th className="text-right">Amount</th>
                         <th className="w-10"></th>
                       </tr>
@@ -499,7 +637,8 @@ export default function SaleInvoiceCreate() {
                             {item.medicine ? (
                               <div className="flex items-center gap-2">
                                 <span className="text-xs font-medium text-slate-700 truncate max-w-[160px]">{item.medicineName}</span>
-                                <button type="button" onClick={() => { const u = [...items]; u[idx].medicine = ''; u[idx].medicineName = ''; u[idx].batch = ''; setItems(u); }} className="text-slate-400 hover:text-red-500 text-xs" title="Change medicine"><i className="fas fa-sync-alt"></i></button>
+                                {scheduleBadge(item.schedule)}
+                                <button type="button" onClick={() => { const u = [...items]; u[idx].medicine = ''; u[idx].medicineName = ''; u[idx].batch = ''; u[idx].batchNo = ''; u[idx].amount = 0; setItems(u); }} className="text-slate-400 hover:text-red-500 text-xs" title="Change medicine"><i className="fas fa-sync-alt"></i></button>
                               </div>
                             ) : (
                               <MedicinePicker
@@ -512,9 +651,9 @@ export default function SaleInvoiceCreate() {
                           </td>
                           <td>
                             {item.medicine && batches[item.medicine] ? (
-                              <select value={item.batch} onChange={e => updateItem(idx, 'batch', e.target.value)} className="glass-select text-xs py-1.5 w-36">
-                                {batches[item.medicine].filter(b => b.qty > 0).map(b => (
-                                  <option key={b._id} value={b._id}>{b.batchNo} (Qty:{b.qty})</option>
+                              <select value={item.batch} onChange={e => updateItem(idx, 'batch', e.target.value)} className="glass-select text-xs py-1.5 w-40">
+                                {[...batches[item.medicine]].sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate)).filter(b => b.qty > 0).map(b => (
+                                  <option key={b._id} value={b._id}>{b.batchNo} · Exp {new Date(b.expiryDate).toLocaleDateString('en-IN', { month: '2-digit', year: '2-digit' })} · Qty:{b.qty}</option>
                                 ))}
                               </select>
                             ) : (
@@ -525,6 +664,11 @@ export default function SaleInvoiceCreate() {
                           <td><input type="number" value={item.rate} onChange={e => updateItem(idx, 'rate', parseFloat(e.target.value) || 0)} className="glass-input text-xs py-1.5 w-16 text-center" /></td>
                           <td><input type="number" value={item.qty} onChange={e => updateItem(idx, 'qty', parseInt(e.target.value) || 0)} min={1} className="glass-input text-xs py-1.5 w-14 text-center" /></td>
                           <td><input type="number" value={item.discountPercent} onChange={e => updateItem(idx, 'discountPercent', parseFloat(e.target.value) || 0)} min={0} max={100} className="glass-input text-xs py-1.5 w-14 text-center" /></td>
+                          <td>
+                            <select value={item.gstRate} onChange={e => updateItem(idx, 'gstRate', parseFloat(e.target.value))} className="glass-select text-xs py-1.5 w-16">
+                              {GST_SLABS.map(s => <option key={s} value={s}>{s}%</option>)}
+                            </select>
+                          </td>
                           <td className="text-right font-medium text-sm">₹{(item.amount || 0).toFixed(2)}</td>
                           <td><button type="button" onClick={() => removeItem(idx)} className="text-red-400 hover:text-red-600 p-1"><i className="fas fa-times"></i></button></td>
                         </tr>
@@ -536,23 +680,84 @@ export default function SaleInvoiceCreate() {
             </GlassCard>
           </div>
 
-          {/* Totals */}
-          <div className="flex justify-end">
-            <div className="w-72 space-y-1.5 grad-brand-soft rounded-morph-md p-4 border border-pharma-200/60">
-              <div className="flex justify-between text-sm text-gray-600">
-                <span>Subtotal:</span><span className="font-medium">₹{subtotal.toFixed(2)}</span>
-              </div>
-              {customerDiscount > 0 && (
-                <div className="flex justify-between text-sm text-emerald-700">
-                  <span className="flex items-center gap-1">Customer Discount ({customerDiscountPercent}%) <i className="fas fa-badge-percent text-[10px]"></i></span>
-                  <span className="font-medium">-₹{customerDiscount.toFixed(2)}</span>
-                </div>
+          {/* Totals + Payment panel */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+            <div className="lg:col-span-3 space-y-3">
+              {/* Split payment panel */}
+              {form.paymentMode === 'mixed' && (
+                <GlassCard className="p-4">
+                  <h4 className="text-xs font-bold uppercase text-gray-500 tracking-wide mb-3"><i className="fas fa-layer-group mr-1 text-pharma-500"></i>Split Payment</h4>
+                  <div className="grid grid-cols-3 gap-3">
+                    {splitPayments.map((p, i) => (
+                      <div key={i}>
+                        <label className="block text-[10px] font-medium text-slate-400 uppercase mb-1">{p.mode}</label>
+                        <input type="number" min={0} value={p.amount}
+                          onChange={e => { const next = [...splitPayments]; next[i] = { ...next[i], amount: e.target.value }; setSplitPayments(next); }}
+                          placeholder="₹0" className="glass-input text-sm" />
+                      </div>
+                    ))}
+                  </div>
+                  <div className={`mt-2 text-xs ${splitValid ? 'text-emerald-600' : 'text-red-500'} font-medium`}>
+                    Allocated ₹{splitTotal.toFixed(2)} of ₹{totalAmount.toFixed(2)} {!splitValid && <i className="fas fa-triangle-exclamation ml-1"></i>}
+                  </div>
+                </GlassCard>
               )}
-              <div className="flex justify-between text-sm text-gray-600">
-                <span>GST:</span><span className="font-medium">₹{totalTax.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-base font-bold text-gray-800 pt-2 border-t border-pharma-200">
-                <span>Total:</span><span className="grad-brand bg-clip-text text-transparent text-lg">₹{totalAmount.toFixed(2)}</span>
+              {form.paymentMode === 'cash' && (
+                <GlassCard className="p-4">
+                  <h4 className="text-xs font-bold uppercase text-gray-500 tracking-wide mb-3"><i className="fas fa-money-bill-wave mr-1 text-pharma-500"></i>Cash Tendered</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-medium text-slate-400 uppercase mb-1">Cash Received</label>
+                      <input type="number" min={0} value={cashTendered} onChange={e => setCashTendered(e.target.value)} placeholder={`₹${totalAmount}`} className="glass-input text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-medium text-slate-400 uppercase mb-1">Change Due</label>
+                      <div className={`glass-input text-base font-bold ${changeDue > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>₹{changeDue.toFixed(2)}</div>
+                    </div>
+                  </div>
+                </GlassCard>
+              )}
+            </div>
+
+            <div className="lg:col-span-2">
+              <div className="w-full space-y-1.5 grad-brand-soft rounded-morph-md p-4 border border-pharma-200/60">
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Subtotal (MRP):</span><span className="font-medium">₹{subtotal.toFixed(2)}</span>
+                </div>
+                {customerDiscount > 0 && (
+                  <div className="flex justify-between text-sm text-emerald-700">
+                    <span className="flex items-center gap-1">Customer Discount ({customerDiscountPercent}%)</span>
+                    <span className="font-medium">-₹{customerDiscount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-base font-bold text-gray-800 pt-2 border-t border-pharma-200">
+                  <span>Net Payable:</span><span className="grad-brand bg-clip-text text-transparent text-lg">₹{totalAmount.toFixed(2)}</span>
+                </div>
+                {roundOffVal !== 0 && (
+                  <div className="flex justify-between text-[11px] text-gray-400"><span>(incl. round-off {roundOffVal > 0 ? '+' : ''}{roundOffVal.toFixed(2)})</span><span></span></div>
+                )}
+                <div className="pt-2 border-t border-dashed border-pharma-300/60 text-xs text-gray-500 space-y-0.5">
+                  <div className="flex justify-between font-medium text-slate-600">
+                    <span>Taxable Value:</span>
+                    <span>₹{(invoiceBase - (interState ? igst : cgst + sgst)).toFixed(2)}</span>
+                  </div>
+                  {interState ? (
+                    <div className="flex justify-between text-[11px] text-gray-400"><span>IGST (incl. in MRP):</span><span>₹{igst.toFixed(2)}</span></div>
+                  ) : (
+                    <>
+                      <div className="flex justify-between text-[11px] text-gray-400"><span>CGST (incl.):</span><span>₹{cgst.toFixed(2)}</span></div>
+                      <div className="flex justify-between text-[11px] text-gray-400"><span>SGST (incl.):</span><span>₹{sgst.toFixed(2)}</span></div>
+                    </>
+                  )}
+                  {rateRows.map(r => (
+                    <div key={r.gstRate} className="flex justify-between text-[11px] text-gray-400">
+                      <span>@{r.gstRate}% on ₹{r.taxableValue.toFixed(2)}</span><span>₹{r.totalTax.toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="pt-2 border-t border-dashed border-pharma-300/60 text-[11px] italic text-slate-500 leading-snug">
+                  {amountInWords(totalAmount)}
+                </div>
               </div>
             </div>
           </div>
@@ -573,6 +778,27 @@ export default function SaleInvoiceCreate() {
           </div>
         </form>
       </GlassCard>
+
+      {/* Held bills modal */}
+      <GlassModal open={showHeld} onClose={() => setShowHeld(false)} title={`Held Bills (${heldBills.length})`} size="md">
+        <div className="space-y-2">
+          {heldBills.length === 0 && <p className="text-sm text-slate-400 text-center py-6">No held bills. Press F9 or "Hold" to park a running bill.</p>}
+          {heldBills.map(h => (
+            <div key={h.id} className="flex items-center justify-between bg-white/60 border border-gray-200 rounded-xl px-3 py-2">
+              <div>
+                <p className="text-sm font-medium text-slate-700">{h.form?.customerName || 'Walk-in Customer'}</p>
+                <p className="text-xs text-slate-400">
+                  {h.items?.length} item(s) · ₹{(h.items || []).reduce((s, i) => s + (i.amount || 0), 0).toFixed(2)} · {new Date(h.savedAt).toLocaleTimeString('en-IN')}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => recallBill(h.id)} className="btn-primary btn-sm"><i className="fas fa-play mr-1"></i>Recall</button>
+                <button onClick={() => discardHold(h.id)} className="btn-ghost btn-sm text-red-400 hover:text-red-600"><i className="fas fa-trash"></i></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </GlassModal>
 
       {/* Quick Customer Modal */}
       <GlassModal open={showQuickCustomer} onClose={() => setShowQuickCustomer(false)} title="Quick Add Customer" size="sm">

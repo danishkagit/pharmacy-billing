@@ -10,7 +10,7 @@ const { hasPermission } = require('../middleware/rbac');
 const { upload, uploadCsv } = require('../middleware/upload');
 const { isGeminiConfigured, geminiVision } = require('../utils/gemini');
 const { parseCsvTemplate, parsePdfTemplate } = require('../parser');
-const { fetchSupplierEmails, parseEmailCsv } = require('../email');
+const { fetchSupplierEmails, parseEmailCsv, processPurchaseEmails } = require('../email');
 
 router.get('/', async (req, res) => {
   try {
@@ -45,7 +45,7 @@ router.post('/', hasPermission('purchase'), upload.single('billFile'), async (re
 
     const batches = await Promise.all(items.map(async (item) => {
       const medicine = await Medicine.findById(item.medicine);
-      const gstRate = item.gstRate || medicine?.gstRate || 12;
+      const gstRate = item.gstRate || medicine?.gstRate || 5;
       const amount = (item.qty || 0) * (item.rate || 0);
       const gstAmount = (amount * gstRate) / 100;
       return {
@@ -145,74 +145,68 @@ router.put('/:id', hasPermission('purchase'), async (req, res) => {
 router.post('/parse-template', hasPermission('purchase'), uploadCsv.single('templateFile'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ success: false, error: 'No template file uploaded' });
-    
+
     const filePath = req.file.path;
     const fileExt = path.extname(req.file.originalname).toLowerCase();
     let parsedData;
-    
-    if (fileExt === '.csv') {
-      parsedData = parseCsvTemplate(filePath);
-    } else if (fileExt === '.pdf') {
-      parsedData = await parsePdfTemplate(filePath);
-    } else {
-      return res.status(400).json({ success: false, error: 'Unsupported file format. Use CSV or PDF.' });
+    try {
+      if (fileExt === '.csv') {
+        parsedData = parseCsvTemplate(filePath);
+      } else if (fileExt === '.pdf') {
+        parsedData = await parsePdfTemplate(filePath);
+      } else {
+        return res.status(400).json({ success: false, error: 'Unsupported file format. Use CSV or PDF.' });
+      }
+    } finally {
+      try { fs.unlinkSync(filePath); } catch {}
     }
-    
+
     if (!parsedData || !parsedData.items || parsedData.items.length === 0) {
       return res.status(400).json({ success: false, error: 'No invoice items found in template' });
     }
-    
-    // Generate invoice number
-    const count = await PurchaseInvoice.countDocuments({ companyRef: req.company._id });
-    const invNo = `PI${String(count + 1).padStart(5, '0')}`;
-    
-    // Calculate totals
-    const subtotal = parsedData.items.reduce((s, item) => s + (item.amount || 0), 0);
-    const totalTax = parsedData.items.reduce((s, item) => s + (item.gstAmount || 0), 0);
-    const totalAmount = subtotal + totalTax - (parsedData.discount || 0) + (parsedData.freight || 0) + (parsedData.platformFees || 0) + (parsedData.codCharges || 0);
-    
-    // Create purchase invoice
-    const purchaseInvoice = await PurchaseInvoice.create({
-      invoiceNo: parsedData.invoiceNo || invNo,
-      supplier: req.body.supplierId || (parsedData.supplier ? { name: parsedData.supplier } : undefined),
-      purchaseOrder: req.body.purchaseOrder,
-      invoiceDate: parsedData.invoiceDate || new Date(),
-      receivedDate: new Date(),
-      billFile: `/uploads/${req.file.filename}`,
-      batches: parsedData.items.map(item => ({
-        medicine: item.medicineId || '', // Would need medicine lookup
-        medicineName: item.medicineName,
-        batchNo: item.batchNo || '',
-        mfgDate: '', // Not in template
-        expiryDate: item.expiryDate || '',
-        mrp: item.mrp || 0,
-        rate: item.rate || 0,
-        qty: item.qty || 1,
-        freeQty: item.freeQty || 0,
-        schemeDisc: item.schemeDisc || 0,
-        amount: item.amount || 0,
-        gstAmount: item.gstAmount || 0
-      })),
-      subtotal,
-      discountAmount: parsedData.discount || 0,
-      cgst: totalTax / 2,
-      sgst: totalTax / 2,
-      taxAmount: totalTax,
-      freight: parsedData.freight || 0,
-      totalAmount,
-      notes: `Parsed from ${fileExt.toUpperCase()} template`,
-      branch: req.activeBranch || req.branch?._id,
-      companyRef: req.company._id,
-      createdBy: req.user._id
+
+    // Preview only: match medicines so the client can review before creating
+    // a proper purchase invoice via POST /purchase-invoices.
+    const names = parsedData.items.map(i => i.medicineName).filter(Boolean);
+    const medicines = await Medicine.find({ company: req.company._id, name: { $in: names } }).select('name mrp gstRate');
+    const medMap = new Map(medicines.map(m => [m.name.toLowerCase(), m]));
+
+    const items = parsedData.items.map(it => {
+      const med = medMap.get((it.medicineName || '').toLowerCase());
+      return {
+        medicine: med?._id || '',
+        medicineName: it.medicineName,
+        batchNo: it.batchNo || '',
+        expiryDate: it.expiryDate || '',
+        mrp: it.mrp || med?.mrp || 0,
+        rate: it.rate || 0,
+        qty: it.qty || 1,
+        freeQty: it.freeQty || 0,
+        schemeDisc: it.schemeDisc || 0,
+        gstRate: it.gstPercent || med?.gstRate || 5
+      };
     });
-    
-    // Clean up temp file
-    try { fs.unlinkSync(filePath); } catch {}
-    
-    res.json({ success: true, data: purchaseInvoice, parsedData });
+
+    res.json({
+      success: true,
+      data: {
+        invoiceNo: parsedData.invoiceNo,
+        invoiceDate: parsedData.invoiceDate,
+        discount: parsedData.discount || 0,
+        freight: parsedData.freight || 0,
+        platformFees: parsedData.platformFees || 0,
+        codCharges: parsedData.codCharges || 0,
+        subtotal: parsedData.subtotal,
+        totalTax: parsedData.totalTax,
+        totalAmount: parsedData.totalAmount,
+        supplierName: parsedData.supplier || '',
+        items,
+        matched: items.filter(i => i.medicine).length,
+        total: items.length
+      },
+      message: 'Parsed for preview — review and save as purchase invoice'
+    });
   } catch (error) {
-    // Clean up temp file on error
-    try { fs.unlinkSync(req.file?.path); } catch {}
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -241,7 +235,7 @@ router.post('/parse-csv', hasPermission('purchase'), uploadCsv.single('templateF
     }
 
     const names = parsedData.items.map(i => i.medicineName).filter(Boolean);
-    const medicines = await Medicine.find({ companyRef: req.company._id, name: { $in: names } }).select('name mrp gstRate');
+    const medicines = await Medicine.find({ company: req.company._id, name: { $in: names } }).select('name mrp gstRate');
     const medMap = new Map(medicines.map(m => [m.name.toLowerCase(), m]));
 
     const items = parsedData.items.map(it => {
@@ -256,7 +250,7 @@ router.post('/parse-csv', hasPermission('purchase'), uploadCsv.single('templateF
         qty: it.qty || 0,
         freeQty: it.freeQty || 0,
         schemeDisc: it.schemeDisc || 0,
-        gstRate: it.gstPercent || med?.gstRate || 12
+        gstRate: it.gstPercent || med?.gstRate || 5
       };
     });
 
@@ -309,7 +303,7 @@ Only include medicine lines, skip headers/footers/totals. If you cannot read any
     if (!parsed.items || !Array.isArray(parsed.items)) parsed.items = [];
 
     const names = parsed.items.map(i => String(i?.name || '').trim()).filter(Boolean);
-    const medicines = await Medicine.find({ companyRef: req.company._id, name: { $in: names } }).select('name mrp gstRate');
+    const medicines = await Medicine.find({ company: req.company._id, name: { $in: names } }).select('name mrp gstRate');
     const medMap = new Map(medicines.map(m => [m.name.toLowerCase(), m]));
 
     const items = parsed.items.map(it => {
@@ -325,7 +319,7 @@ Only include medicine lines, skip headers/footers/totals. If you cannot read any
         rate,
         qty: parseInt(it?.qty) || 0,
         freeQty: parseFloat(it?.free) || 0,
-        gstRate: parseFloat(it?.gst) || med?.gstRate || 12
+        gstRate: parseFloat(it?.gst) || med?.gstRate || 5
       };
     });
 

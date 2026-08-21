@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Logo } from '../components/Logo';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -35,12 +36,15 @@ export default function LoginPage() {
           <div className="absolute top-1/2 left-1/3 w-48 h-48 bg-mint-200 rounded-full blur-3xl"></div>
         </div>
         <div className="relative z-10 flex flex-col justify-center px-16 text-white">
-          <div className="w-14 h-14 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center mb-8 shadow-glow">
-            <i className="fas fa-prescription-bottle-medical text-white text-2xl"></i>
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-16 h-16 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center shadow-glow backdrop-blur-sm p-1.5">
+              <Logo size={52} />
+            </div>
+            <span className="text-3xl font-extrabold tracking-tight">Calcutta<span className="text-emerald-200">Rx</span></span>
           </div>
           <h1 className="text-4xl font-extrabold leading-tight mb-4 tracking-tight">Pharmacy Billing &amp; GST Compliance</h1>
           <p className="text-lg text-white/80 leading-relaxed mb-10 max-w-md">
-            Complete retail pharmacy management with GST filing, drug schedule tracking, and regulatory compliance for Indian pharmacies.
+            GST 2.0-ready retail pharmacy suite — billing, batch-wise stock and compliance for Indian pharmacies. Built in Kolkata by Calcutta Node.
           </p>
           <div className="space-y-4">
             {[
@@ -68,11 +72,9 @@ export default function LoginPage() {
         </div>
         <div className="w-full max-w-sm relative">
           {/* Mobile logo */}
-          <div className="lg:hidden text-center mb-8">
-            <div className="w-12 h-12 rounded-xl grad-hero flex items-center justify-center mx-auto mb-3 shadow-glow animate-gradient-x">
-              <i className="fas fa-prescription-bottle-medical text-white text-lg"></i>
-            </div>
-            <h1 className="text-xl font-bold text-slate-900">PharmacyBilling</h1>
+          <div className="lg:hidden flex items-center justify-center gap-2.5 mb-8">
+            <Logo size={44} />
+            <span className="text-xl font-extrabold text-slate-900">Calcutta<span className="text-transparent bg-clip-text grad-brand">Rx</span></span>
           </div>
 
           <div className="glass-accent p-8 grad-edge">
@@ -164,7 +166,10 @@ export default function LoginPage() {
           </div>
 
           <p className="text-center text-xs text-slate-400 mt-6">
-            For support, contact your administrator
+            For support, contact your administrator · <a href="https://wa.me/918584885450" target="_blank" rel="noopener noreferrer" className="text-pharma-600 hover:underline font-semibold">WhatsApp Help</a>
+          </p>
+          <p className="text-center text-[10px] text-slate-400/80 mt-2">
+            CalcuttaRx by <a href="https://calcuttanode.vercel.app/about" target="_blank" rel="noopener noreferrer" className="font-semibold hover:text-emerald-600 transition-colors">Calcutta Node.</a> — Kolkata
           </p>
         </div>
       </div>

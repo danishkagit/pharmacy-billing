@@ -8,7 +8,7 @@ const medicineSchema = new mongoose.Schema({
   packSize: { type: String, trim: true },
   unit: { type: String, default: 'nos' },
   hsn: { type: String, trim: true },
-  gstRate: { type: Number, default: 12, min: 0, max: 28 },
+  gstRate: { type: Number, default: 5, min: 0, max: 40 },
   schedule: { type: String, enum: ['OTC', 'H', 'H1', 'X'], default: 'OTC', index: true },
   mrp: { type: Number, default: 0, min: 0 },
   reorderLevel: { type: Number, default: 0, min: 0 },

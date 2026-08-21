@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="crxBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#04121B"/>
+      <stop offset="55%" stop-color="#062A33"/>
+      <stop offset="100%" stop-color="#073A38"/>
+    </linearGradient>
+    <linearGradient id="crxAccent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#34F5C5"/>
+      <stop offset="50%" stop-color="#14C9A8"/>
+      <stop offset="100%" stop-color="#0EA5E9"/>
+    </linearGradient>
+    <linearGradient id="crxPill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7CF7DC"/>
+      <stop offset="100%" stop-color="#22D3EE"/>
+    </linearGradient>
+    <filter id="crxGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="1.6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Badge -->
+  <rect x="2" y="2" width="60" height="60" rx="17" fill="url(#crxBg)"/>
+  <rect x="2" y="2" width="60" height="60" rx="17" fill="none" stroke="url(#crxAccent)" stroke-opacity="0.55" stroke-width="1.6"/>
+
+  <!-- Howrah-bridge arc: Rx crossbar -->
+  <path d="M15 27 C24 19, 40 19, 49 27" fill="none" stroke="url(#crxAccent)" stroke-width="3.4" stroke-linecap="round"/>
+
+  <!-- Rx stem + leg (leg doubles as bridge pylon sweep) -->
+  <path d="M23.5 25 L23.5 48" stroke="#E9FFF8" stroke-width="4.6" stroke-linecap="round"/>
+  <path d="M23.5 37 L36 48" stroke="#E9FFF8" stroke-width="4.6" stroke-linecap="round"/>
+
+  <!-- Mortar bowl nested in the R counter -->
+  <path d="M31.5 30 h16 a8 8 0 0 1 -16 0 z" fill="url(#crxAccent)" filter="url(#crxGlow)"/>
+  <!-- Pestle rising from mortar into the arc -->
+  <path d="M39.5 29 L45 20.5" stroke="url(#crxPill)" stroke-width="3.4" stroke-linecap="round"/>
+
+  <!-- Capsule dot (tittle) -->
+  <rect x="42" y="41.5" width="10" height="5.4" rx="2.7" transform="rotate(-32 47 44)" fill="url(#crxPill)"/>
+
+  <!-- Wordmark tick: pulse line base -->
+  <path d="M12 54 h6 l2.4-3.6 3 6 2.6-4.4 H50" fill="none" stroke="url(#crxAccent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.9"/>
+</svg>

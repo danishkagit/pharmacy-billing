@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Logo } from '../components/Logo';
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -75,11 +76,9 @@ export default function RegisterPage() {
         </div>
         <div className="w-full max-w-lg py-4 relative">
           {/* Mobile logo */}
-          <div className="lg:hidden text-center mb-6">
-            <div className="w-12 h-12 rounded-xl grad-accent flex items-center justify-center mx-auto mb-3 shadow-glow">
-              <i className="fas fa-store text-white text-lg"></i>
-            </div>
-            <h1 className="text-xl font-bold text-slate-900">PharmacyBilling</h1>
+          <div className="lg:hidden flex items-center justify-center gap-2.5 mb-6">
+            <Logo size={44} />
+            <span className="text-xl font-extrabold text-slate-900">Calcutta<span className="text-transparent bg-clip-text grad-brand">Rx</span></span>
           </div>
 
           <div className="mb-6">

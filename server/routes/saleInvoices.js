@@ -9,7 +9,9 @@ const Customer = require('../models/Customer');
 const DrugScheduleLog = require('../models/DrugScheduleLog');
 const NarcoticsRegister = require('../models/NarcoticsRegister');
 const { hasPermission } = require('../middleware/rbac');
-const { calculateGST, roundOff } = require('../utils/helpers');
+const { calculateGST, calculateInclusiveGST, roundOff } = require('../utils/helpers');
+const { amountInWords } = require('../utils/gstSlabs');
+const { generateInvoice } = require('../utils/pdf');
 const { sendSMS, sendWhatsApp } = require('../utils/sms');
 const { upload } = require('../middleware/upload');
 
@@ -51,10 +53,26 @@ router.get('/:id', async (req, res) => {
     const invoice = await SaleInvoice.findOne({ _id: req.params.id, companyRef: req.company._id })
       .populate('customer', 'name phone gstin address')
       .populate('prescription', 'prescriptionNo doctorName')
-      .populate('companyRef', 'name gstin dlNo upiId invoiceNote')
+      .populate('companyRef')
       .populate('createdBy', 'name');
     if (!invoice) return res.status(404).json({ success: false, error: 'Invoice not found' });
-    res.json({ success: true, data: invoice });
+    const data = invoice.toObject();
+    data.amountInWords = amountInWords(invoice.totalAmount);
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/:id/pdf', hasPermission('billing'), async (req, res) => {
+  try {
+    const invoice = await SaleInvoice.findOne({ _id: req.params.id, companyRef: req.company._id })
+      .populate('customer', 'name phone gstin address')
+      .populate('companyRef');
+    if (!invoice) return res.status(404).json({ success: false, error: 'Invoice not found' });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${invoice.invoiceNo}.pdf"`);
+    generateInvoice(invoice.toObject(), { company: req.company }, (doc) => doc.pipe(res));
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -77,6 +95,14 @@ router.post('/', hasPermission('billing'), upload.fields([{ name: 'billFile', ma
     let hasScheduleH1 = false, hasScheduleX = false;
 
     const branchId = req.activeBranch || req.branch?._id;
+
+    // Determine inter-state supply: explicit flag wins; otherwise compare the
+    // buyer's GSTIN state code against the seller's GSTIN state code.
+    let isInterState = req.body.isInterState;
+    if (typeof isInterState !== 'boolean' && req.body.customerGstin && req.company?.gstin) {
+      isInterState = String(req.body.customerGstin).slice(0, 2).toUpperCase() !== String(req.company.gstin).slice(0, 2).toUpperCase();
+    }
+    const taxMode = (req.company.taxMode === 'exclusive') ? 'exclusive' : 'mrp_inclusive';
 
     for (const item of req.body.items) {
       const medicine = await Medicine.findById(item.medicine).session(session);
@@ -143,18 +169,25 @@ router.post('/', hasPermission('billing'), upload.fields([{ name: 'billFile', ma
         batch.qty -= bQty;
         await batch.save({ session });
 
-        const amount = bQty * (item.rate || batch.saleRate || batch.purchaseRate);
-        const discAmount = (amount * (item.discountPercent || 0)) / 100;
-        const netAmount = amount - discAmount;
-        const gst = calculateGST(netAmount, medicine.gstRate || 12, req.body.isInterState);
-        const itemTax = (netAmount * (medicine.gstRate || 12)) / 100;
+        const amount = bQty * (item.rate || batch.saleRate || item.mrp || batch.mrp || batch.purchaseRate);
+        const discAmount = +((amount * (item.discountPercent || 0)) / 100).toFixed(2);
+        const netAmount = +(amount - discAmount).toFixed(2);
+        const gstRate = medicine.gstRate || 5;
+        let taxableAmount, lineGst;
+        if (taxMode === 'exclusive') {
+          taxableAmount = netAmount;
+          lineGst = calculateGST(netAmount, gstRate, isInterState);
+        } else {
+          lineGst = calculateInclusiveGST(netAmount, gstRate, isInterState);
+          taxableAmount = lineGst.taxableAmount;
+        }
 
         subtotal += netAmount;
         totalDiscount += discAmount;
-        totalCgst += gst.cgst;
-        totalSgst += gst.sgst;
-        totalIgst += gst.igst;
-        totalTax += itemTax;
+        totalCgst += lineGst.cgst;
+        totalSgst += lineGst.sgst;
+        totalIgst += lineGst.igst;
+        totalTax += lineGst.totalTax;
 
         items.push({
           medicine: item.medicine,
@@ -162,11 +195,13 @@ router.post('/', hasPermission('billing'), upload.fields([{ name: 'billFile', ma
           batch: batch._id,
           batchNo: batch.batchNo,
           expiryDate: batch.expiryDate,
-          mrp: item.mrp || batch.mrp,
+          hsn: medicine.hsn || '3004',
+          mrp: item.mrp || batch.mrp || item.rate || batch.saleRate,
           rate: item.rate || batch.saleRate || batch.purchaseRate,
           qty: bQty,
-          gstRate: medicine.gstRate || 12,
-          gstAmount: itemTax,
+          gstRate,
+          taxableValue: taxableAmount,
+          gstAmount: lineGst.totalTax,
           amount: netAmount,
           discount: discAmount,
           discountPercent: item.discountPercent || 0,
@@ -191,8 +226,31 @@ router.post('/', hasPermission('billing'), upload.fields([{ name: 'billFile', ma
       }
     }
 
-    const invoiceBase = subtotal + totalTax - customerDiscount - (req.body.discountAmount || 0);
-    const roundOffVal = roundOff(invoiceBase) - invoiceBase;
+    const invoiceBase = subtotal - customerDiscount - (req.body.discountAmount || 0);
+    const doRoundOff = req.company.autoRoundOff !== false;
+    const roundedTotal = doRoundOff ? Math.round(invoiceBase) : roundOff(invoiceBase);
+    const roundOffVal = +(roundedTotal - invoiceBase).toFixed(2);
+
+    // Split payments (mixed mode): accept [{mode, amount}] (object array or
+    // JSON string from multipart form data) and normalise.
+    let rawPayments = req.body.payments;
+    if (typeof rawPayments === 'string') {
+      try { rawPayments = JSON.parse(rawPayments); } catch (e) { rawPayments = []; }
+    }
+    let payments = Array.isArray(rawPayments)
+      ? rawPayments
+        .map(p => ({ mode: p.mode || 'cash', amount: +(+p.amount || 0).toFixed(2) }))
+        .filter(p => p.amount > 0)
+      : [];
+    if (!payments.length && req.body.paymentMode !== 'mixed' && req.body.paymentMode !== 'credit') {
+      // Single-tender bills: record the full payment against the chosen mode.
+      const paidNow = +(req.body.paidAmount || roundedTotal).toFixed(2);
+      if (paidNow > 0) payments = [{ mode: ['upi', 'card'].includes(req.body.paymentMode) ? req.body.paymentMode : 'cash', amount: paidNow }];
+    }
+    let paidAmount = req.body.paidAmount || 0;
+    if (!paidAmount && payments.length) {
+      paidAmount = payments.reduce((s, p) => s + (p.mode === 'credit' ? 0 : p.amount), 0);
+    }
 
     const billFile = req.files?.billFile?.[0] ? `/uploads/${req.files.billFile[0].filename}` : undefined;
     const prescriptionFile = req.files?.prescriptionFile?.[0] ? `/uploads/${req.files.prescriptionFile[0].filename}` : undefined;
@@ -222,10 +280,13 @@ router.post('/', hasPermission('billing'), upload.fields([{ name: 'billFile', ma
       igst: totalIgst,
       taxAmount: totalTax,
       roundOff: roundOffVal,
-      totalAmount: Math.round(subtotal + totalTax - customerDiscount - (req.body.discountAmount || 0)),
+      totalAmount: roundedTotal,
+      placeOfSupply: req.body.placeOfSupply || (req.body.customerGstin ? String(req.body.customerGstin).slice(0, 2) : undefined),
+      payments,
+      taxMode,
       paymentMode: req.body.paymentMode || 'cash',
-      paymentStatus: req.body.paymentStatus || (req.body.paymentMode === 'credit' ? 'pending' : 'paid'),
-      paidAmount: req.body.paidAmount || 0,
+      paymentStatus: req.body.paymentStatus || (paidAmount >= roundedTotal ? 'paid' : (paidAmount > 0 ? 'partial' : (req.body.paymentMode === 'credit' ? 'pending' : 'paid'))),
+      paidAmount,
       changeAmount: req.body.changeAmount || 0,
       isScheduleH1: hasScheduleH1,
       isScheduleX: hasScheduleX,
@@ -238,26 +299,29 @@ router.post('/', hasPermission('billing'), upload.fields([{ name: 'billFile', ma
     }], { session });
 
     if (hasScheduleX && invoice[0]) {
-      for (const item of items) {
-        if (item.schedule === 'X') {
-          await NarcoticsRegister.create([{
-            date: new Date(),
-            medicine: item.medicine,
-            medicineName: item.medicineName,
-            batch: item.batch,
-            batchNo: item.batchNo,
-            openingQty: 0,
-            soldQty: item.qty,
-            closingQty: 0,
-            patientName: req.body.patientName || 'Unknown',
-            doctorName: req.body.doctorName || 'Unknown',
-            prescriptionNo: req.body.prescriptionNo || 'N/A',
-            saleInvoice: invoice[0]._id,
-            dispensedBy: req.user._id,
-            branch: req.activeBranch || req.branch?._id,
-            companyRef: req.company._id
-          }], { session });
-        }
+      for (const item of items.filter(i => i.schedule === 'X')) {
+        const lastEntry = await NarcoticsRegister.findOne({
+          medicine: item.medicine,
+          branch: req.activeBranch || req.branch?._id
+        }).sort({ createdAt: -1 }).session(session);
+        const openingQty = lastEntry ? (lastEntry.closingQty || 0) : 0;
+        await NarcoticsRegister.create([{
+          date: new Date(),
+          medicine: item.medicine,
+          medicineName: item.medicineName,
+          batch: item.batch,
+          batchNo: item.batchNo,
+          openingQty,
+          soldQty: item.qty,
+          closingQty: openingQty - item.qty,
+          patientName: req.body.patientName || 'Unknown',
+          doctorName: req.body.doctorName || 'Unknown',
+          prescriptionNo: req.body.prescriptionNo || 'N/A',
+          saleInvoice: invoice[0]._id,
+          dispensedBy: req.user._id,
+          branch: req.activeBranch || req.branch?._id,
+          companyRef: req.company._id
+        }], { session });
       }
     }
 

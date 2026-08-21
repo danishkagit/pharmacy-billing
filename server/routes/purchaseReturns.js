@@ -33,7 +33,7 @@ router.post('/', hasPermission('returns'), async (req, res) => {
   try {
     const count = await PurchaseReturn.countDocuments({ companyRef: req.company._id });
     const returnNo = `PR${String(count + 1).padStart(5, '0')}`;
-    const items = req.body.items.map(i => ({ ...i, amount: (i.qty || 0) * (i.rate || 0), gstAmount: ((i.qty || 0) * (i.rate || 0) * (i.gstRate || 12)) / 100 }));
+    const items = req.body.items.map(i => ({ ...i, amount: (i.qty || 0) * (i.rate || 0), gstAmount: ((i.qty || 0) * (i.rate || 0) * (i.gstRate || 5)) / 100 }));
     const subtotal = items.reduce((s, i) => s + i.amount, 0);
     const taxAmount = items.reduce((s, i) => s + i.gstAmount, 0);
     const ret = await PurchaseReturn.create({

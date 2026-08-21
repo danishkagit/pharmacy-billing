@@ -17,7 +17,7 @@ export default function EInvoicePage() {
       API.get('/gst/gstr1', { params: { month, year } }),
       API.get('/gst/filing-history')
     ]).then(([invRes, filingRes]) => {
-      if (invRes.success) setInvoices(invRes.data?.b2b || []);
+      if (invRes.success) setInvoices(invRes.data?.table4_b2b || invRes.data?.b2b || []);
       if (filingRes.success) setFilingHistory(filingRes.data || []);
     }).catch(console.error).finally(() => setLoading(false));
   }, [month, year]);
@@ -64,7 +64,7 @@ export default function EInvoicePage() {
     { label: 'Customer Name', key: 'name' },
     { label: 'Date', render: inv => new Date(inv.date).toLocaleDateString('en-IN'), tdClass: 'text-slate-500' },
     { label: 'Taxable', className: 'text-right', tdClass: 'text-right', render: inv => `₹${inv.taxable?.toFixed(2)}` },
-    { label: 'Total', className: 'text-right', tdClass: 'text-right font-medium', render: inv => `₹${inv.total?.toFixed(2)}` },
+    { label: 'Total', className: 'text-right', tdClass: 'text-right font-medium', render: inv => `₹${(inv.total ?? inv.value)?.toFixed(2)}` },
     {
       label: 'E-Invoice', className: 'text-center', tdClass: 'text-center',
       render: inv => {

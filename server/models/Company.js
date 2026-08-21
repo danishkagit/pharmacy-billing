@@ -20,7 +20,25 @@ const companySchema = new mongoose.Schema({
   invoicePrefix: { type: String, default: 'PH' },
   invoiceNote: { type: String, default: 'Thank you for your business!' },
   gstType: { type: String, enum: ['regular', 'composition'], default: 'regular' },
+  dlNoWholesale: { type: String, trim: true, uppercase: true },
+  bankName: { type: String, trim: true },
+  bankAccountNo: { type: String, trim: true },
+  bankIfsc: { type: String, trim: true, uppercase: true },
   upiId: { type: String, trim: true },
+  // Invoice template settings
+  invoiceTemplate: { type: String, enum: ['a4', 'a5', 'thermal80', 'thermal58'], default: 'a4' },
+  showHsnOnPrint: { type: Boolean, default: true },
+  showExpiryOnPrint: { type: Boolean, default: true },
+  showMrpOnPrint: { type: Boolean, default: true },
+  billCopies: { type: Number, default: 1, min: 1, max: 3 },
+  printAfterSave: { type: Boolean, default: false },
+  declarationNote: { type: String, default: 'Goods once sold will not be taken back or exchanged.' },
+  scheduleWarningNote: { type: String, default: 'Schedule H/H1 drugs to be sold only against the prescription of a Registered Medical Practitioner.' },
+  // GST engine settings
+  taxMode: { type: String, enum: ['mrp_inclusive', 'exclusive'], default: 'mrp_inclusive' },
+  autoRoundOff: { type: Boolean, default: true },
+  enableEInvoice: { type: Boolean, default: false },
+  ewayThreshold: { type: Number, default: 50000 },
   discountSlabs: {
     type: [{
       minMRP: { type: Number, default: 0 },

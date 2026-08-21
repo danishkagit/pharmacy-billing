@@ -16,7 +16,7 @@ function autoFillComposition(med) {
     med.manufacturer = med.manufacturer || lookup.manufacturer || '';
     med.category = med.category === 'other' ? (lookup.category || med.category) : med.category;
     med.hsn = med.hsn || lookup.hsn || '';
-    med.gstRate = med.gstRate || lookup.gstRate || 12;
+    med.gstRate = med.gstRate || lookup.gstRate || 5;
     med.schedule = med.schedule === 'OTC' ? (lookup.schedule || med.schedule) : med.schedule;
   }
   return med;
@@ -152,7 +152,7 @@ router.post('/import-csv', csvUpload.single('file'), async (req, res) => {
           packSize: row.packSize || '',
           unit: row.unit || 'nos',
           hsn: row.hsn || '',
-          gstRate: parseFloat(row.gstRate) || 12,
+          gstRate: parseFloat(row.gstRate) || 5,
           schedule: row.schedule || 'OTC',
           mrp: parseFloat(row.mrp) || 0,
           reorderLevel: parseInt(row.reorderLevel) || 0,
@@ -244,7 +244,7 @@ router.post('/bulk-scrape', async (req, res) => {
         await Medicine.create({
           name: filled.name, composition: filled.composition, manufacturer: filled.manufacturer,
           category: filled.category, packSize: filled.packSize, unit: 'nos', hsn: filled.hsn,
-          gstRate: filled.gstRate || 12, schedule: filled.schedule, mrp: filled.mrp, reorderLevel: 0,
+          gstRate: filled.gstRate || 5, schedule: filled.schedule, mrp: filled.mrp, reorderLevel: 0,
           company: companyId
         });
         imported++;
