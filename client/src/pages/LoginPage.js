@@ -75,7 +75,7 @@ export default function LoginPage() {
         <div className="w-full max-w-sm relative">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center justify-center gap-2.5 mb-8">
-            <Logo size={44} />
+            <Logo size={44} theme={isDark} />
             <span className="text-xl font-extrabold text-slate-900">Calcutta<span className="text-transparent bg-clip-text grad-brand">Rx</span></span>
           </div>
 
