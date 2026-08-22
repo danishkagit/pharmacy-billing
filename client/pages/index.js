@@ -133,7 +133,7 @@ export default function Landing() {
         {/* Nav */}
         <header className="max-w-6xl mx-auto flex items-center justify-between px-5 py-5">
           <div className="flex items-center gap-2.5">
-            <img src="/logo.png" alt="CalcuttaRx logo" width={38} height={38} className="rounded-[27%] shadow-glow-sm object-cover" />
+            <img src="/logo.png" alt="CalcuttaRx logo" className="h-11 w-auto rounded-lg bg-white shadow-glow-sm" />
             <BrandWordmark className="text-lg" />
           </div>
           <nav className="flex items-center gap-2">
@@ -252,7 +252,7 @@ export default function Landing() {
           <div className="max-w-5xl mx-auto px-5 py-10 grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <img src="/logo.png" alt="CalcuttaRx logo" width={28} height={28} className="rounded-[27%] object-cover" />
+                <img src="/logo.png" alt="CalcuttaRx logo" className="h-9 w-auto rounded-md bg-white" />
                 <BrandWordmark className="text-base" />
               </div>
               <p className="text-xs text-slate-500 leading-relaxed">Pharmacy billing software Kolkata chemists trust — cloud GST invoicing, batch-wise inventory and compliance for medical stores across West Bengal.</p>

@@ -24,14 +24,15 @@ function Logo({ size = 32, className = '', title = 'CalcuttaRx' }) {
   );
 }
 
-/* Full lockup (icon + "CalcuttaRx" + tagline) for auth panels & spacious areas. */
+/* Full lockup (icon + "CalcuttaRx" + tagline) for auth panels & spacious areas.
+   The asset is whitespace-trimmed so it fills its container edge-to-edge. */
 function LogoImage({ height = 48, className = '' }) {
   return (
     <img
       src={LOGO_SRC}
       alt="CalcuttaRx — Cloud Based Pharmacy Billing Software"
       draggable="false"
-      className={`select-none w-auto rounded-xl bg-white/95 p-2 shadow-glow-sm ${className}`}
+      className={`select-none block w-auto rounded-lg bg-white shadow-glow-sm ${className}`}
       style={{ height }}
     />
   );
