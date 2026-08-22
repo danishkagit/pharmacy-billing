@@ -344,7 +344,7 @@ export default function Layout() {
           <button
             className="flex items-center gap-2.5 min-w-0 group text-left"
             onClick={() => go('/dashboard')}
-            title="CalcuttaRx Home"
+            title="Calcutta Node Home"
           >
             <Logo size={32} />
             <span className="hidden sm:flex flex-col leading-tight min-w-0">

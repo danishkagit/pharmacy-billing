@@ -1,7 +1,7 @@
 import React from 'react';
 
 /*
-  Single source of truth for CalcuttaRx branding.
+  Single source of truth for Calcutta Node branding.
   /logo.png       — full horizontal lockup (icon + name + tagline), white canvas
   /logo-mark.png  — icon-only crop derived from logo.png (cloud + prescription + capsule)
 */
@@ -11,7 +11,7 @@ const LOGO_MARK_SRC = '/logo-mark.png';
 const MARK_ASPECT = 620 / 430; // width / height of the mark asset
 
 /* Compact brand mark for nav bars and tight spaces. `size` = height in px. */
-function Logo({ size = 32, className = '', title = 'CalcuttaRx' }) {
+function Logo({ size = 32, className = '', title = 'Calcutta Node' }) {
   return (
     <img
       src={LOGO_MARK_SRC}
@@ -24,18 +24,17 @@ function Logo({ size = 32, className = '', title = 'CalcuttaRx' }) {
   );
 }
 
-/* Full lockup (icon + "CalcuttaRx" + tagline) for auth panels & spacious areas.
+/* Full lockup (icon + "Calcutta Node" + tagline) for auth panels & spacious areas.
    The asset is whitespace-trimmed so it fills its container edge-to-edge. */
 function LogoImage({ height = 48, className = '' }) {
   return (
     <img
       src={LOGO_SRC}
-      alt="CalcuttaRx — Cloud Based Pharmacy Billing Software"
+      alt="Calcutta Node — Cloud Based Pharmacy Billing Software"
       draggable="false"
       className={`select-none block w-auto rounded-lg bg-white shadow-glow-sm ${className}`}
       style={{ height }}
-    />
-  );
+    );
 }
 
 /* Text wordmark matching the logo's blue/green identity. */
@@ -44,7 +43,7 @@ function BrandWordmark({ className = '', light = false }) {
     <span
       className={`font-extrabold tracking-tight whitespace-nowrap ${light ? 'text-white' : 'text-slate-900 dark:text-white'} ${className}`}
     >
-      Calcutta<span className={light ? 'text-emerald-300' : 'brand-green'}>Rx</span>
+      Calcutta<span className={light ? 'text-emerald-300' : 'brand-green'} font-medium> Node</span>
     </span>
   );
 }
