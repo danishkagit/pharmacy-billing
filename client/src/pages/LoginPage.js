@@ -37,7 +37,7 @@ export default function LoginPage() {
         </div>
         <div className="relative z-10 flex flex-col justify-center px-16 text-white">
           <div className="mb-8">
-            <LogoImage height={72} />
+            <LogoImage height={72} light />
           </div>
           <h1 className="text-4xl font-extrabold leading-tight mb-4 tracking-tight">Pharmacy Billing &amp; GST Compliance</h1>
           <p className="text-lg text-white/80 leading-relaxed mb-10 max-w-md">

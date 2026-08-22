@@ -1,17 +1,20 @@
 import React from 'react';
 
 /*
-  Single source of truth for Calcutta Node branding.
-  /logo.png       — full horizontal lockup (icon + name + tagline), white canvas
-  /logo-mark.png  — icon-only crop derived from logo.png (cloud + prescription + capsule)
+  Single source of truth for CalcuttaRx product branding.
+  (Calcutta Node is the developer/parent company — credited in page footers.)
+  /logo.png       — square emblem artwork (transparent background), canonical asset
+  /logo-mark.png  — tight-crop of the same emblem, trimmed to its bounding box,
+                    sized for nav bars / favicons / app icons
 */
 
 const LOGO_SRC = '/logo.png';
 const LOGO_MARK_SRC = '/logo-mark.png';
-const MARK_ASPECT = 1; // mark asset is square (cloud + cross + capsule emblem)
+const MARK_ASPECT = 1; // mark asset is a trimmed square canvas
 
-/* Compact brand mark for nav bars and tight spaces. `size` = height in px. */
-function Logo({ size = 32, className = '', title = 'Calcutta Node' }) {
+/* Compact brand mark for nav bars and tight spaces. `size` = height in px.
+   The artwork fills the tile edge-to-edge so it stays bold at small sizes. */
+function Logo({ size = 32, className = '', title = 'CalcuttaRx' }) {
   return (
     <img
       src={LOGO_MARK_SRC}
@@ -24,17 +27,19 @@ function Logo({ size = 32, className = '', title = 'Calcutta Node' }) {
   );
 }
 
-/* Full lockup (icon + "Calcutta Node" + tagline) for auth panels & spacious areas.
-   The asset is whitespace-trimmed so it fills its container edge-to-edge. */
-function LogoImage({ height = 48, className = '' }) {
+/* Emblem + wordmark lockup for auth panels & spacious areas. */
+function LogoImage({ height = 48, className = '', light = false }) {
   return (
-    <img
-      src={LOGO_SRC}
-      alt="Calcutta Node — Cloud Based Pharmacy Billing Software"
-      draggable="false"
-      className={`select-none block w-auto rounded-lg bg-white shadow-glow-sm ${className}`}
-      style={{ height }}
-    />
+    <span className={`inline-flex items-center gap-2 ${className}`}>
+      <img
+        src={LOGO_MARK_SRC}
+        alt="CalcuttaRx — Cloud Based Pharmacy Billing Software"
+        draggable="false"
+        className="select-none object-contain rounded-lg bg-slate-50 dark:bg-slate-800 ring-1 ring-slate-900/10 dark:ring-white/10 shadow-glow-sm"
+        style={{ height }}
+      />
+      <BrandWordmark light={light} />
+    </span>
   );
 }
 
@@ -44,7 +49,7 @@ function BrandWordmark({ className = '', light = false }) {
     <span
       className={`font-extrabold tracking-tight whitespace-nowrap ${light ? 'text-white' : 'text-slate-900 dark:text-white'} ${className}`}
     >
-      Calcutta<span className={`font-medium ${light ? 'text-emerald-300' : 'brand-green'}`}> Node</span>
+      Calcutta<span className={`font-extrabold ${light ? 'text-emerald-300' : 'brand-green'}`}>Rx</span>
     </span>
   );
 }
