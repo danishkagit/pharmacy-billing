@@ -159,7 +159,7 @@ export default function Landing() {
             <span className="text-transparent bg-clip-text grad-hero animate-gradient-x">West Bengal</span>
           </h1>
           <p className="mt-5 text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            CalcuttaRx replaces your cash memo book and desktop billing tool with one fast cloud counter —
+            <BrandWordmark className="text-lg sm:text-xl" /> replaces your cash memo book and desktop billing tool with one fast cloud counter —
             GST 2.0 invoices, batch-wise stock with expiry tracking, prescriptions, and filing-ready GSTR
             reports, from a single login you can open anywhere.
           </p>
@@ -289,7 +289,7 @@ export default function Landing() {
             </div>
           </div>
           <div className="border-t border-white/70 py-4 text-center text-[11px] text-slate-400">
-            © {new Date().getFullYear()} CalcuttaRx · Powered by CalcuttaRx Cloud Billing · A Calcutta Node SaaS Product · Kolkata, West Bengal
+            © {new Date().getFullYear()} <BrandWordmark className="text-slate-700 dark:text-slate-300" /> · Powered by <BrandWordmark className="text-slate-700 dark:text-slate-300" /> Cloud Billing · A Calcutta Node SaaS Product · Kolkata, West Bengal
           </div>
         </footer>
       </div>

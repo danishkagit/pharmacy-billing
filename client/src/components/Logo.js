@@ -38,18 +38,21 @@ function LogoImage({ height = 48, className = '', light = false }) {
         className="select-none object-contain rounded-lg bg-slate-50 dark:bg-slate-800 ring-1 ring-slate-900/10 dark:ring-white/10 shadow-glow-sm"
         style={{ height }}
       />
-      <BrandWordmark light={light} />
+      <BrandWordmark onDark={light} />
     </span>
   );
 }
 
-/* Text wordmark matching the logo's blue/green identity. */
-function BrandWordmark({ className = '', light = false }) {
+/* Text wordmark — "Calcutta" inherits surrounding colour, "Rx" is the
+   signature italic accent-gradient ligature (see .wordmark-rx in CSS).
+   Pass `onDark` when the mark sits on a dark/gradient surface so the
+   Rx ramp brightens. */
+function BrandWordmark({ className = '', onDark = false }) {
   return (
     <span
-      className={`font-extrabold tracking-tight whitespace-nowrap ${light ? 'text-white' : 'text-slate-900 dark:text-white'} ${className}`}
+      className={`font-extrabold tracking-tight whitespace-nowrap ${onDark ? 'wordmark-on-dark' : ''} ${className}`}
     >
-      Calcutta<span className={`font-extrabold ${light ? 'text-emerald-300' : 'brand-green'}`}>Rx</span>
+      Calcutta<span className="wordmark-rx">Rx</span>
     </span>
   );
 }

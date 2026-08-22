@@ -166,7 +166,7 @@ export default function LoginPage() {
             For support, contact your administrator · <a href="https://wa.me/918584885450" target="_blank" rel="noopener noreferrer" className="text-pharma-600 hover:underline font-semibold">WhatsApp Help</a>
           </p>
           <p className="text-center text-[10px] text-slate-400/80 mt-2">
-            CalcuttaRx by <a href="https://calcuttanode.vercel.app/about" target="_blank" rel="noopener noreferrer" className="font-semibold hover:text-emerald-600 transition-colors">Calcutta Node.</a> — Kolkata
+            <BrandWordmark className="align-middle" /> by <a href="https://calcuttanode.vercel.app/about" target="_blank" rel="noopener noreferrer" className="font-semibold hover:text-emerald-600 transition-colors">Calcutta Node.</a> — Kolkata
           </p>
         </div>
       </div>
