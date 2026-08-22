@@ -4,7 +4,7 @@ A full-featured **Pharmacy Billing & Inventory Management System** built for who
 
 **Live app:** https://pharmacybills.vercel.app
 
-> **v2.0** — GST 2.0 slabs (Nil/5%/18%/40%), Rule 46 tax invoice templates, thermal POS receipts, split payments, hold/recall POS, GSTR-1/3B rebuilds, CalcuttaRx rebrand.
+> **v2.5** — GST 2.0 slabs (Nil/5%/18%/40%), Rule 46 tax invoice templates, thermal POS receipts, split payments, hold/recall POS, GSTR-1/3B rebuilds, CalcuttaRx rebrand, horizontal top navigation.
 
 Built by [Calcutta Node.](https://calcuttanode.vercel.app/about) · Kolkata
 

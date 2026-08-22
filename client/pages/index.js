@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import { BrandWordmark } from '../src/components/Logo';
 
 // Server-rendered marketing landing — crawlable HTML for SEO.
 // Authenticated users are bounced to /dashboard by the inline script below.
@@ -132,8 +133,8 @@ export default function Landing() {
         {/* Nav */}
         <header className="max-w-6xl mx-auto flex items-center justify-between px-5 py-5">
           <div className="flex items-center gap-2.5">
-            <img src="/logo.svg" alt="CalcuttaRx logo" width={38} height={38} className="rounded-[27%] shadow-glow-sm" />
-            <span className="text-lg font-extrabold tracking-tight text-slate-900">Calcutta<span className="text-transparent bg-clip-text grad-brand">Rx</span></span>
+            <img src="/logo.png" alt="CalcuttaRx logo" width={38} height={38} className="rounded-[27%] shadow-glow-sm object-cover" />
+            <BrandWordmark className="text-lg" />
           </div>
           <nav className="flex items-center gap-2">
             <a href="/login" className="btn btn-secondary btn-sm">Sign In</a>
@@ -251,8 +252,8 @@ export default function Landing() {
           <div className="max-w-5xl mx-auto px-5 py-10 grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <img src="/logo.svg" alt="" width={28} height={28} className="rounded-[27%]" />
-                <span className="font-extrabold text-slate-800">Calcutta<span className="text-transparent bg-clip-text grad-brand">Rx</span></span>
+                <img src="/logo.png" alt="CalcuttaRx logo" width={28} height={28} className="rounded-[27%] object-cover" />
+                <BrandWordmark className="text-base" />
               </div>
               <p className="text-xs text-slate-500 leading-relaxed">Pharmacy billing software Kolkata chemists trust — cloud GST invoicing, batch-wise inventory and compliance for medical stores across West Bengal.</p>
             </div>

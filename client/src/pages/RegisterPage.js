@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
-import { Logo } from '../components/Logo';
+import { Logo, BrandWordmark } from '../components/Logo';
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -15,7 +14,6 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
-  const { isDark } = useTheme();
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -78,8 +76,8 @@ export default function RegisterPage() {
         </div>
         <div className="w-full max-w-lg py-4 relative">
           <div className="lg:hidden flex items-center justify-center gap-2.5 mb-6">
-              <Logo size={44} theme={isDark} />
-              <span className="text-xl font-extrabold text-slate-900">Calcutta<span className="text-transparent bg-clip-text grad-brand">Rx</span></span>
+              <Logo size={40} />
+              <BrandWordmark className="text-xl" />
             </div>
 
           <div className="mb-6">
