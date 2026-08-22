@@ -14,9 +14,9 @@ export default class MyDocument extends Document {
           <meta property="og:description" content="GST 2.0-ready billing, batch-wise stock and compliance for Indian pharmacies. Built by Calcutta Node." />
           <meta property="og:type" content="website" />
           <meta property="og:url" content="https://pharmacybills.vercel.app/" />
-          <meta property="og:image" content="https://pharmacybills.vercel.app/logo.png" />
-          <meta name="twitter:card" content="summary" />
-          <meta name="twitter:image" content="https://pharmacybills.vercel.app/logo.png" />
+          <meta property="og:image" content="https://pharmacybills.vercel.app/logo-og.png" />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:image" content="https://pharmacybills.vercel.app/logo-og.png" />
           <meta name="geo.region" content="IN-WB" />
           <meta name="geo.placename" content="Kolkata" />
           <meta name="ICBM" content="22.5726, 88.3639" />
@@ -28,7 +28,7 @@ export default class MyDocument extends Document {
           <link rel="icon" type="image/png" sizes="32x32" href="/logo.png" />
           <link rel="icon" type="image/png" sizes="192x192" href="/logo-mark.png" />
           <link rel="apple-touch-icon" sizes="180x180" href="/logo.png" />
-          <meta property="og:image:width" content="1536" />
+          <meta property="og:image:width" content="1024" />
           <meta property="og:image:height" content="1024" />
           <meta property="og:image:alt" content="CalcuttaRx — Cloud Based Pharmacy Billing Software by Calcutta Node" />
           <meta name="twitter:image:alt" content="CalcuttaRx — Cloud Based Pharmacy Billing Software by Calcutta Node" />
