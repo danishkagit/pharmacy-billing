@@ -28,23 +28,22 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex bg-[#F8FAFC] dark:bg-[#0B1120]">
-      {/* Left branding panel — desktop */}
-      <div className="hidden lg:flex lg:w-[52%] grad-hero animate-gradient-x relative overflow-hidden">
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-16 left-16 w-[28rem] h-[28rem] bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-16 right-16 w-80 h-80 bg-focus-300 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/2 left-1/3 w-56 h-56 bg-mint-200 rounded-full blur-3xl"></div>
+      {/* Left branding panel — desktop — light background so Rx gradient stays vibrant */}
+      <div className="hidden lg:flex lg:w-[52%] bg-white dark:bg-slate-900 relative overflow-hidden border-r border-slate-200 dark:border-slate-800">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-12 left-12 w-[28rem] h-[28rem] bg-emerald-50 dark:bg-emerald-900/15 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-12 right-12 w-80 h-80 bg-indigo-50 dark:bg-indigo-900/15 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/3 w-56 h-56 bg-teal-50 dark:bg-teal-900/10 rounded-full blur-3xl"></div>
         </div>
-        {/* subtle grid */}
-        <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
-        <div className="relative z-10 flex flex-col justify-center px-14 xl:px-16 text-white w-full">
+        <div className="absolute inset-0 opacity-[0.04] dark:opacity-[0.06]" style={{ backgroundImage: 'linear-gradient(var(--border-strong) 1px, transparent 1px), linear-gradient(90deg, var(--border-strong) 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
+        <div className="relative z-10 flex flex-col justify-center px-14 xl:px-16 w-full">
           <div className="mb-10 flex flex-col items-start gap-3">
-            <img src="/logo-mark.png" alt="CalcuttaRx" width="512" height="512" className="h-[88px] xl:h-[104px] w-auto drop-shadow-xl" />
-            <BrandWordmark className="text-[30px] xl:text-[36px] leading-none" onDark />
-            <p className="text-xs font-bold tracking-[0.2em] uppercase text-white/70">Pharmacy Billing · GST · POS</p>
+            <img src="/logo-mark.png" alt="CalcuttaRx" width="512" height="512" className="h-[88px] xl:h-[104px] w-auto drop-shadow-lg" />
+            <BrandWordmark className="text-[30px] xl:text-[36px] leading-none" />
+            <p className="text-xs font-bold tracking-[0.2em] uppercase text-slate-500 dark:text-slate-400">Pharmacy Billing · GST · POS</p>
           </div>
-          <h1 className="text-[34px] xl:text-[42px] font-extrabold leading-[1.05] tracking-tight">Pharmacy Billing &amp; <span className="text-white/90">GST Compliance</span></h1>
-          <p className="text-[15px] xl:text-lg text-white/80 leading-relaxed mt-4 max-w-[28rem]">
+          <h1 className="text-[34px] xl:text-[42px] font-extrabold leading-[1.05] tracking-tight text-slate-900 dark:text-white">Pharmacy Billing &amp; <span className="text-pharma-600 dark:text-emerald-400">GST Compliance</span></h1>
+          <p className="text-[15px] xl:text-lg text-slate-600 dark:text-slate-300 leading-relaxed mt-4 max-w-[28rem]">
             GST 2.0-ready retail pharmacy suite — billing, batch-wise stock and compliance for Indian pharmacies. Built in Kolkata by Calcutta Node.
           </p>
           <div className="mt-10 grid grid-cols-2 gap-3 max-w-[30rem]">
@@ -54,21 +53,21 @@ export default function LoginPage() {
               { icon: 'boxes-stacked', title: 'Batch & Expiry', desc: 'Expiry alerts by batch' },
               { icon: 'chart-line', title: 'Owner Reports', desc: 'Sales · P&L · Outstanding' },
             ].map((item) => (
-              <div key={item.title} className="rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md p-4">
-                <div className="w-9 h-9 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center mb-2.5">
-                  <i className={`fas fa-${item.icon} text-white text-sm`}></i>
+              <div key={item.title} className="rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4">
+                <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 flex items-center justify-center mb-2.5 shadow-sm">
+                  <i className={`fas fa-${item.icon} text-pharma-600 dark:text-emerald-400 text-sm`}></i>
                 </div>
-                <p className="text-sm font-bold text-white leading-tight">{item.title}</p>
-                <p className="text-xs text-white/70 mt-1">{item.desc}</p>
+                <p className="text-sm font-bold text-slate-800 dark:text-white leading-tight">{item.title}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{item.desc}</p>
               </div>
             ))}
           </div>
           <div className="mt-8 flex items-center gap-3">
             <div className="flex -space-x-2">
-              <div className="w-8 h-8 rounded-full bg-white/20 border-2 border-white/20 flex items-center justify-center text-[10px] font-bold">300+</div>
-              <div className="w-8 h-8 rounded-full bg-emerald-400 border-2 border-white/20 flex items-center justify-center"><i className="fas fa-check text-white text-xs"></i></div>
+              <div className="w-8 h-8 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-2 border-white dark:border-slate-700 flex items-center justify-center text-[10px] font-bold">300+</div>
+              <div className="w-8 h-8 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-700 flex items-center justify-center"><i className="fas fa-check text-white text-xs"></i></div>
             </div>
-            <p className="text-xs text-white/70 leading-tight">Trusted by 300+ Bengal chemists<br /><span className="text-white font-semibold">Kolkata · Howrah · Siliguri → all WB</span></p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-tight">Trusted by 300+ Bengal chemists<br /><span className="text-slate-800 dark:text-white font-semibold">Kolkata · Howrah · Siliguri → all WB</span></p>
           </div>
         </div>
       </div>
