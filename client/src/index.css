@@ -797,26 +797,52 @@ textarea:focus {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   LEGACY ADAPTERS & COLOR BLOCKS
+   GRADIENT SYSTEM (mirrors tailwind.config backgroundImage tokens)
+   background-image only — safe to combine with bg-clip-text for
+   gradient text; shorthand `background:` would reset the clip.
    ═══════════════════════════════════════════════════════════════════ */
+.grad-mesh {
+  background-image:
+    radial-gradient(1200px 700px at 8% -8%, rgba(20, 163, 148, 0.16), transparent 55%),
+    radial-gradient(1000px 620px at 105% 0%, rgba(99, 102, 241, 0.14), transparent 50%),
+    radial-gradient(900px 700px at 50% 118%, rgba(61, 208, 162, 0.14), transparent 55%);
+}
+
+.grad-accent {
+  background-image: linear-gradient(135deg, #14a394 0%, #0ea296 45%, #4a6ff0 100%);
+}
+
+.grad-accent-soft {
+  background-image: linear-gradient(135deg, rgba(20, 163, 148, 0.14), rgba(99, 102, 241, 0.12));
+}
+
 .grad-brand {
-  background: linear-gradient(135deg, #0f766e 0%, #6b46c1 100%);
+  background-image: linear-gradient(135deg, #0f766e 0%, #6b46c1 35%, #805ad5 100%);
+}
+
+.grad-brand-soft {
+  background-image: linear-gradient(135deg, rgba(15, 118, 110, 0.14), rgba(107, 70, 193, 0.12));
+}
+
+.grad-edge {
+  background-image: linear-gradient(135deg, rgba(15, 118, 110, 0.06), rgba(107, 70, 193, 0.05));
 }
 
 .grad-hero {
-  background: linear-gradient(135deg, #059669 0%, #0284C7 100%);
+  background-image: linear-gradient(135deg, #0f766e 0%, #14a394 28%, #6366f1 72%, #8b5cf6 100%);
+  background-size: 200% 200%;
 }
 
 .grad-cool {
-  background: linear-gradient(135deg, #0284C7 0%, #6366F1 100%);
+  background-image: linear-gradient(135deg, #38bdf8 0%, #6366f1 60%, #8b5cf6 100%);
 }
 
 .grad-warm {
-  background: linear-gradient(135deg, #EA580C 0%, #F43F5E 100%);
+  background-image: linear-gradient(135deg, #f97316 0%, #f43f5e 100%);
 }
 
 .grad-gold {
-  background: linear-gradient(135deg, #D97706 0%, #EA580C 100%);
+  background-image: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
 }
 
 .color-block {
