@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogoImage, BrandWordmark } from '../components/Logo';
+import { Logo, LogoImage, BrandWordmark } from '../components/Logo';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
