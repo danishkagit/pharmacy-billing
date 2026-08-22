@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://pharmacybills.vercel.app/</loc>
+    <lastmod>2026-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <image:image><image:loc>https://pharmacybills.vercel.app/og-cover-1200x630.jpg</image:loc><image:title>CalcuttaRx — Pharmacy Billing Software Kolkata</image:title><image:caption>Cloud pharmacy billing for West Bengal chemists — GST 2.0, batch &amp; expiry, GSTR-1/3B</image:caption></image:image>
+    <image:image><image:loc>https://pharmacybills.vercel.app/logo-mark.png</image:loc><image:title>CalcuttaRx logo — pharmacy billing software</image:title></image:image>
   </url>
 </urlset>
