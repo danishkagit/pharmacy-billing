@@ -344,19 +344,19 @@ export default function Layout() {
 
           {/* Brand lockup */}
           <button
-            className="flex items-center gap-2.5 min-w-0 group text-left"
+            className="flex items-center gap-2 min-w-0 group text-left"
             onClick={() => go('/dashboard')}
             title="Calcutta Node Home"
           >
-            <Logo size={32} />
+            <Logo size={28} className="flex-shrink-0" />
             <span className="hidden sm:flex flex-col leading-tight min-w-0">
-              <span className="flex items-center gap-1.5">
-                <BrandWordmark className="text-[15px]" />
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 font-bold border border-emerald-500/30">{APP_VERSION}</span>
+              <span className="flex items-center gap-1.5 min-w-0">
+                <BrandWordmark className="text-[14px]" />
+                <span className="hidden xl:inline-block text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 font-bold border border-emerald-500/30 flex-shrink-0">{APP_VERSION}</span>
               </span>
-              <span className="text-[9.5px] text-slate-500 dark:text-slate-400 truncate flex items-center gap-1.5 font-medium mt-0.5 max-w-[180px]">
+              <span className="text-[9px] text-slate-500 dark:text-slate-400 truncate flex items-center gap-1 font-medium mt-0.5 min-w-0 max-w-[130px] md:max-w-[200px] lg:max-w-[170px] xl:max-w-[210px]">
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
-                {companyName}
+                <span className="truncate">{companyName}</span>
               </span>
             </span>
           </button>

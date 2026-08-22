@@ -131,10 +131,10 @@ export default function Landing() {
 
       <div className="min-h-screen grad-mesh">
         {/* Nav */}
-        <header className="max-w-6xl mx-auto flex items-center justify-between px-5 py-5">
-          <div className="flex items-center gap-2.5">
-            <img src="/logo.png" alt="CalcuttaRx logo" className="h-12 w-auto rounded-lg bg-white shadow-glow-sm" />
-            <BrandWordmark className="text-lg" />
+        <header className="max-w-6xl mx-auto flex items-center justify-between px-5 py-4">
+          <div className="flex items-center gap-2 min-w-0">
+            <img src="/logo.png" alt="CalcuttaRx logo" className="h-10 w-auto rounded-lg bg-white shadow-glow-sm flex-shrink-0" />
+            <BrandWordmark className="text-base sm:text-lg" />
           </div>
           <nav className="flex items-center gap-2">
             <a href="/login" className="btn btn-secondary btn-sm">Sign In</a>
@@ -252,8 +252,8 @@ export default function Landing() {
           <div className="max-w-5xl mx-auto px-5 py-10 grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <img src="/logo.png" alt="CalcuttaRx logo" className="h-10 w-auto rounded-md bg-white" />
-                <BrandWordmark className="text-base" />
+                <img src="/logo.png" alt="CalcuttaRx logo" className="h-9 w-auto rounded-md bg-white flex-shrink-0" />
+                <BrandWordmark className="text-sm" />
               </div>
               <p className="text-xs text-slate-500 leading-relaxed">Pharmacy billing software Kolkata chemists trust — cloud GST invoicing, batch-wise inventory and compliance for medical stores across West Bengal.</p>
             </div>
