@@ -344,25 +344,25 @@ export default function Layout() {
 
           {/* Brand lockup */}
           <button
-            className="flex items-center gap-2 min-w-0 group text-left"
+            className="flex items-center gap-2 min-w-0 group text-left overflow-hidden"
             onClick={() => go('/dashboard')}
             title="Calcutta Node Home"
           >
             <Logo size={28} className="flex-shrink-0" />
-            <span className="hidden sm:flex flex-col leading-tight min-w-0">
+            <span className="flex flex-col leading-tight min-w-0 justify-center">
               <span className="flex items-center gap-1.5 min-w-0">
-                <BrandWordmark className="text-[14px]" />
-                <span className="hidden xl:inline-block text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 font-bold border border-emerald-500/30 flex-shrink-0">{APP_VERSION}</span>
+                <BrandWordmark className="text-[13px] sm:text-[14px]" />
+                <span className="hidden xl:inline-flex items-center text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 font-bold border border-emerald-500/30 flex-shrink-0">{APP_VERSION}</span>
               </span>
-              <span className="text-[9px] text-slate-500 dark:text-slate-400 truncate flex items-center gap-1 font-medium mt-0.5 min-w-0 max-w-[130px] md:max-w-[200px] lg:max-w-[170px] xl:max-w-[210px]">
+              <span className="text-[9px] sm:text-[9.5px] text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium mt-0.5 min-w-0">
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
-                <span className="truncate">{companyName}</span>
+                <span className="truncate max-w-[96px] sm:max-w-[150px] md:max-w-[220px] lg:max-w-[150px] xl:max-w-[190px]">{companyName}</span>
               </span>
             </span>
           </button>
 
           {/* Horizontal hub tabs + dropdowns (desktop) */}
-          <nav className="hidden lg:flex items-stretch self-stretch ml-2" onMouseLeave={scheduleDropdownClose}>
+          <nav className="hidden lg:flex items-stretch self-stretch ml-3 flex-shrink-0" onMouseLeave={scheduleDropdownClose}>
             <NavLink
               to="/dashboard"
               end
@@ -434,12 +434,12 @@ export default function Layout() {
           {/* Global Quick Search */}
           <button
             onClick={openPalette}
-            className="hidden md:flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 bg-white/90 dark:bg-slate-800/90 px-3 py-1.5 rounded-lg border border-slate-200/90 dark:border-slate-700/80 shadow-sm hover:border-emerald-400 hover:text-slate-900 dark:hover:text-white transition-all"
+            className="hidden md:flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 bg-white/90 dark:bg-slate-800/90 px-2.5 xl:px-3 py-1.5 rounded-lg border border-slate-200/90 dark:border-slate-700/80 shadow-sm hover:border-emerald-400 hover:text-slate-900 dark:hover:text-white transition-all"
             title="Press Ctrl+K to search"
           >
             <i className="fas fa-magnifying-glass text-[11px] text-emerald-600 dark:text-emerald-400"></i>
-            <span>Quick jump…</span>
-            <span className="kbd kbd-dark">Ctrl K</span>
+            <span className="hidden xl:inline">Quick jump…</span>
+            <span className="kbd kbd-dark hidden xl:inline">Ctrl K</span>
           </button>
           <button
             onClick={openPalette}
@@ -482,7 +482,7 @@ export default function Layout() {
                     }`}
                   >
                     <i className={`fas fa-${MODE_META[m].icon} text-[10px]`}></i>
-                    <span className="hidden lg:inline">{MODE_META[m].shortLabel}</span>
+                    <span className="hidden xl:inline">{MODE_META[m].shortLabel}</span>
                     {active && <span className={`w-1.5 h-1.5 rounded-full ${MODE_META[m].dotClass}`}></span>}
                   </button>
                 );
@@ -501,7 +501,7 @@ export default function Layout() {
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className="hidden sm:flex items-center justify-center w-9 h-9 rounded-lg bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-amber-400 hover:text-amber-500 transition-all shadow-sm"
+            className="hidden xl:flex items-center justify-center w-9 h-9 rounded-lg bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-amber-400 hover:text-amber-500 transition-all shadow-sm"
             title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
             <i className={`fas fa-${isDark ? 'sun text-amber-400' : 'moon text-slate-600'} text-xs`}></i>
@@ -512,7 +512,7 @@ export default function Layout() {
             <i className="fas fa-plus text-[10px]"></i>
             <span className="hidden sm:inline">New Sale</span>
             <span className="sm:hidden">Sale</span>
-            <span className="kbd kbd-dark hidden md:inline ml-1 font-mono">F2</span>
+            <span className="kbd kbd-dark hidden xl:inline ml-1 font-mono">F2</span>
           </NavLink>
 
           {/* User Menu */}
@@ -608,6 +608,17 @@ export default function Layout() {
           }`}
         >
           <div className="overflow-y-auto max-h-[calc(100vh-3.5rem)] p-3 space-y-1 crx-scroll">
+            <div className="flex items-center gap-2.5 px-1 pb-2 mb-1 border-b border-slate-200 dark:border-slate-700/60">
+              <Logo size={34} className="flex-shrink-0" />
+              <div className="flex flex-col leading-tight min-w-0">
+                <BrandWordmark className="text-[15px]" />
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate font-medium mt-0.5 flex items-center gap-1">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
+                  {companyName}
+                </span>
+              </div>
+            </div>
+
             <NavLink
               to="/dashboard"
               end
