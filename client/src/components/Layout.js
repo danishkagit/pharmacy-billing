@@ -10,29 +10,43 @@ const APP_VERSION = 'v2.5';
 
 /* ────────────────────────────────────────────────────────────────
    Operational Hubs — rendered as horizontal top navigation with
-   dropdown menus (desktop) and an accordion drawer (mobile).
+   grouped dropdown menus (desktop) and an accordion drawer (mobile).
+   Hubs may define `items` (flat) or `groups` (labelled sections).
    ──────────────────────────────────────────────────────────────── */
 const navHubs = [
   {
-    id: 'billing',
-    label: 'Billing',
-    icon: 'cash-register',
+    id: 'trade',
+    label: 'Sales & Purchase',
+    icon: 'right-left',
     emphasized: true,
-    rbac: ['billing'],
-    items: [
-      { label: 'New Sale Bill', path: '/sales/new', icon: 'cart-plus', hot: true, shortcut: 'F2' },
-      { label: 'Sales Invoices', path: '/sales', icon: 'receipt' },
-      { label: 'Customer Returns', path: '/sale-returns', icon: 'rotate-left', rbac: ['returns'] },
-      { label: 'Customer Directory', path: '/customers', icon: 'users' },
-      { label: 'Delivery Orders', path: '/delivery', icon: 'truck-fast' },
-      { label: 'Credit Notes', path: '/credit-notes', icon: 'file-circle-minus' },
+    groups: [
+      {
+        label: 'Sales',
+        items: [
+          { label: 'New Sale Bill', path: '/sales/new', icon: 'cart-plus', hot: true, shortcut: 'F2' },
+          { label: 'Sales Invoices', path: '/sales', icon: 'receipt' },
+          { label: 'Customer Returns', path: '/sale-returns', icon: 'rotate-left', rbac: ['returns'] },
+          { label: 'Delivery Orders', path: '/delivery', icon: 'truck-fast' },
+          { label: 'Credit Notes', path: '/credit-notes', icon: 'file-circle-minus' },
+          { label: 'Customer Directory', path: '/customers', icon: 'users' },
+        ],
+      },
+      {
+        label: 'Purchase',
+        items: [
+          { label: 'New Purchase Inward', path: '/purchases/new', icon: 'file-import', hot: true, shortcut: 'F6' },
+          { label: 'Purchase Invoices', path: '/purchases', icon: 'file-invoice' },
+          { label: 'Purchase Orders', path: '/purchase-orders', icon: 'clipboard-list' },
+          { label: 'Supplier Returns', path: '/purchase-returns', icon: 'undo', rbac: ['purchase+returns'] },
+          { label: 'Suppliers Directory', path: '/suppliers', icon: 'truck' },
+        ],
+      },
     ],
   },
   {
-    id: 'stock',
-    label: 'Stock',
+    id: 'inventory',
+    label: 'Inventory',
     icon: 'boxes-stacked',
-    rbac: ['inventory'],
     items: [
       { label: 'Add Stock', path: '/stock-adjustments/new', icon: 'plus-circle', hot: true, shortcut: 'F7' },
       { label: 'Batch Stock', path: '/batches', icon: 'boxes' },
@@ -42,23 +56,9 @@ const navHubs = [
     ],
   },
   {
-    id: 'purchases',
-    label: 'Purchases',
-    icon: 'truck-ramp-box',
-    rbac: ['purchase'],
-    items: [
-      { label: 'New Purchase Inward', path: '/purchases/new', icon: 'file-import', hot: true, shortcut: 'F6' },
-      { label: 'Purchase Invoices', path: '/purchases', icon: 'file-invoice' },
-      { label: 'Purchase Orders', path: '/purchase-orders', icon: 'clipboard-list' },
-      { label: 'Supplier Returns', path: '/purchase-returns', icon: 'undo', rbac: ['purchase+returns'] },
-      { label: 'Suppliers Directory', path: '/suppliers', icon: 'truck' },
-    ],
-  },
-  {
     id: 'money',
-    label: 'Money',
+    label: 'Money & GST',
     icon: 'rupee-sign',
-    rbac: ['accounting'],
     items: [
       { label: 'Outstanding Dues', path: '/payments', icon: 'hand-holding-dollar', rbac: ['accounting'] },
       { label: 'Expenses', path: '/expenses', icon: 'wallet', rbac: ['accounting'] },
@@ -71,8 +71,6 @@ const navHubs = [
     id: 'more',
     label: 'More',
     icon: 'ellipsis-h',
-    collapsedByDefault: true,
-    rbac: ['staff','settings','compliance'],
     items: [
       { label: 'H/H1/X Register', path: '/compliance', icon: 'shield-halved', rbac: ['compliance'] },
       { label: 'Narcotics Register', path: '/narcotics', icon: 'triangle-exclamation' },
@@ -128,6 +126,13 @@ export default function Layout() {
 
   const filterItems = (items) => (items || []).filter(it => it.rbac ? hasPerm(it.rbac) : true);
 
+  // A hub is either flat (`items`) or grouped (`groups` of labelled sections)
+  const hubFlatItems = (hub) => (hub.groups ? hub.groups.flatMap(g => g.items || []) : (hub.items || []));
+  const visibleHubGroups = (hub) => (hub.groups
+    ? hub.groups.map(g => ({ ...g, items: filterItems(g.items) })).filter(g => g.items.length > 0)
+    : null);
+  const visibleHubItems = (hub) => filterItems(hubFlatItems(hub));
+
   const companyName =
     company?.name && company.name !== 'Pharmacy'
       ? company.name
@@ -137,7 +142,7 @@ export default function Layout() {
     let best = null;
     let bestLen = 0;
     navHubs.forEach(hub => {
-      filterItems(hub.items).forEach(item => {
+      hubFlatItems(hub).forEach(item => {
         const p = location.pathname;
         if ((p === item.path || p.startsWith(item.path + '/')) && item.path.length > bestLen) {
           best = hub.id;
@@ -189,12 +194,21 @@ export default function Layout() {
   const allEntries = useMemo(() => {
     const dashboardEntry = [{ type: 'nav', label: 'Command Centre Dashboard', path: '/dashboard', icon: 'gauge-high', section: 'Overview', category: 'home' }];
     const nav = navHubs.flatMap(hub =>
-      filterItems(hub.items).map(item => ({
-        type: 'nav',
-        ...item,
-        section: hub.label,
-        category: hub.id,
-      }))
+      visibleHubGroups(hub)
+        ? visibleHubGroups(hub).flatMap(g =>
+            g.items.map(item => ({
+              type: 'nav',
+              ...item,
+              section: `${hub.label} · ${g.label}`,
+              category: hub.id,
+            }))
+          )
+        : visibleHubItems(hub).map(item => ({
+            type: 'nav',
+            ...item,
+            section: hub.label,
+            category: hub.id,
+          }))
     );
     const ext = importantLinks.map(link => ({
       type: 'ext',
@@ -211,8 +225,8 @@ export default function Layout() {
     { id: 'all', label: 'All' },
     { id: 'home', label: 'Home' },
     ...navHubs
-      .filter(hub => filterItems(hub.items).length > 0)
-      .map(hub => ({ id: hub.id, label: hub.label })),
+      .filter(hub => visibleHubItems(hub).length > 0)
+      .map(hub => ({ id: hub.id, label: hub.id === 'trade' ? 'Trade' : hub.label })),
     { id: 'portals', label: 'Govt Portals' },
   ]), [user]);
 
@@ -278,7 +292,7 @@ export default function Layout() {
 
   const crumbs = useMemo(() => {
     const labelMap = {};
-    navHubs.forEach(hub => filterItems(hub.items).forEach(i => { labelMap[i.path] = i.label; }));
+    navHubs.forEach(hub => hubFlatItems(hub).forEach(i => { labelMap[i.path] = i.label; }));
     const segments = location.pathname.split('/').filter(Boolean);
     let acc = '';
     return segments.map(seg => {
@@ -303,7 +317,7 @@ export default function Layout() {
     navigate(path);
   };
 
-  const renderDropItems = (hub) => filterItems(hub.items).map(item => (
+  const renderDropItems = (items) => (items || []).map(item => (
     <NavLink
       key={item.path}
       to={item.path}
@@ -372,11 +386,15 @@ export default function Layout() {
               <span>Home</span>
             </NavLink>
 
+            <span className="nav-divider" aria-hidden="true"></span>
+
             {navHubs.map(hub => {
-              const visibleItems = filterItems(hub.items);
+              const groups = visibleHubGroups(hub);
+              const visibleItems = visibleHubItems(hub);
               if (visibleItems.length === 0) return null;
               const isOpen = openMenu === hub.id;
               const isActive = activeHubId === hub.id;
+              const multiGroup = groups && groups.length > 1;
               return (
                 <div
                   key={hub.id}
@@ -399,10 +417,28 @@ export default function Layout() {
                   </button>
 
                   {isOpen && (
-                    <div className="nav-dropdown animate-slide-in" data-nav-menu="">
-                      <div className={`grid gap-0.5 ${visibleItems.length > 5 ? 'grid-cols-2 min-w-[26rem]' : 'grid-cols-1 min-w-[17rem]'}`}>
-                        {renderDropItems(hub)}
-                      </div>
+                    <div
+                      className={`nav-dropdown animate-slide-in ${multiGroup ? 'nav-dropdown-wide' : ''}`}
+                      data-nav-menu=""
+                    >
+                      {groups ? (
+                        /* Grouped dropdown — labelled sections side by side */
+                        <div className={`grid gap-x-2 gap-y-1 ${multiGroup ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                          {groups.map(g => (
+                            <div key={g.label} className="min-w-0">
+                              <p className="nav-group-label">{g.label}</p>
+                              <div className="grid grid-cols-1 gap-0.5">
+                                {renderDropItems(g.items)}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        /* Flat dropdown */
+                        <div className={`grid gap-0.5 ${visibleItems.length > 5 ? 'grid-cols-2 min-w-[26rem]' : 'grid-cols-1 min-w-[17rem]'}`}>
+                          {renderDropItems(visibleItems)}
+                        </div>
+                      )}
                       {hub.id === 'more' && (
                         <div className="mt-1.5 pt-2 border-t border-slate-200 dark:border-slate-700/60 grid grid-cols-1 gap-0.5">
                           {importantLinks.map(link => (
@@ -630,10 +666,24 @@ export default function Layout() {
             </NavLink>
 
             {navHubs.map(hub => {
-              const visibleItems = filterItems(hub.items);
+              const groups = visibleHubGroups(hub);
+              const visibleItems = visibleHubItems(hub);
               if (visibleItems.length === 0) return null;
               const isOpen = mobileHub === hub.id;
               const isActive = activeHubId === hub.id;
+              const mobileItem = (item, key) => (
+                <NavLink
+                  key={key}
+                  to={item.path}
+                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''} ${item.hot && !isActive ? 'nav-hot' : ''}`}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <i className={`fas fa-${item.icon}`}></i>
+                  <span className="truncate">{item.label}</span>
+                  {item.shortcut && <span className="ml-auto kbd">{item.shortcut}</span>}
+                  {item.alert && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse"></span>}
+                </NavLink>
+              );
               return (
                 <div key={hub.id}>
                   <button
@@ -648,19 +698,14 @@ export default function Layout() {
                   </button>
                   {isOpen && (
                     <div className="space-y-0.5 pl-1 animate-fade-in">
-                      {visibleItems.map(item => (
-                        <NavLink
-                          key={item.path}
-                          to={item.path}
-                          className={({ isActive }) => `nav-link ${isActive ? 'active' : ''} ${item.hot && !isActive ? 'nav-hot' : ''}`}
-                          onClick={() => setMobileOpen(false)}
-                        >
-                          <i className={`fas fa-${item.icon}`}></i>
-                          <span className="truncate">{item.label}</span>
-                          {item.shortcut && <span className="ml-auto kbd">{item.shortcut}</span>}
-                          {item.alert && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse"></span>}
-                        </NavLink>
-                      ))}
+                      {groups
+                        ? groups.map(g => (
+                            <div key={g.label}>
+                              <p className="sidebar-section-label !mt-1.5">{g.label}</p>
+                              {g.items.map((item, i) => mobileItem(item, `${g.label}-${i}`))}
+                            </div>
+                          ))
+                        : visibleItems.map((item, i) => mobileItem(item, i))}
                     </div>
                   )}
                 </div>
