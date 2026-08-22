@@ -201,7 +201,7 @@ export default function Landing() {
             url: SITE + '/',
             logo: { '@type': 'ImageObject', url: SITE + '/logo.png', width: 1254, height: 1254 },
             sameAs: ['https://www.instagram.com/calcuttanode/', 'https://www.linkedin.com/in/danishshoaib-in/', 'https://wa.me/918584885450'],
-            address: { '@type': 'PostalAddress', streetAddress: '22, College Street', addressLocality: 'Kolkata', addressRegion: 'West Bengal', postalCode: '700073', addressCountry: 'IN' },
+            address: { '@type': 'PostalAddress', addressLocality: 'Kolkata', addressRegion: 'West Bengal', addressCountry: 'IN' },
             contactPoint: [{ '@type': 'ContactPoint', contactType: 'customer support', telephone: '+91-85848-85450', email: 'calcuttanode@gmail.com', availableLanguage: ['en', 'bn', 'hi'], areaServed: 'IN-WB', url: SITE + '/' }],
           },
           {
@@ -216,7 +216,7 @@ export default function Landing() {
             foundingDate: '2025',
             founder: { '@type': 'Person', name: 'Danish Shoaib', sameAs: 'https://www.linkedin.com/in/danishshoaib-in/' },
             parentOrganization: { '@id': SITE + '/#org' },
-            address: { '@type': 'PostalAddress', streetAddress: '22, College Street', addressLocality: 'Kolkata', addressRegion: 'West Bengal', postalCode: '700073', addressCountry: 'IN' },
+            address: { '@type': 'PostalAddress', addressLocality: 'Kolkata', addressRegion: 'West Bengal', addressCountry: 'IN' },
             geo: { '@type': 'GeoCoordinates', latitude: 22.5726, longitude: 88.3639 },
             areaServed: [{ '@type': 'City', name: 'Kolkata' }, { '@type': 'City', name: 'Howrah' }, { '@type': 'City', name: 'Hooghly' }, { '@type': 'AdministrativeArea', name: 'North 24 Parganas' }, { '@type': 'AdministrativeArea', name: 'South 24 Parganas' }, { '@type': 'City', name: 'Asansol' }, { '@type': 'City', name: 'Siliguri' }, { '@type': 'City', name: 'Durgapur' }, { '@type': 'AdministrativeArea', name: 'West Bengal' }],
             sameAs: ['https://www.instagram.com/calcuttanode/', 'https://www.linkedin.com/in/danishshoaib-in/', 'https://wa.me/918584885450'],
@@ -604,13 +604,9 @@ export default function Landing() {
               </div>
               <p className="text-xs text-slate-500 leading-relaxed"><BrandWordmark className="text-slate-700 dark:text-slate-300 text-xs" /> — Bengal-er chemist-er jonno. Cloud-e billing. GST-e tension-free.</p>
               <p className="text-xs text-slate-400 mt-1">Cloud pharmacy billing built in Kolkata, for West Bengal. Bill faster. Waste less. File GST without fear.</p>
-              <address className="not-italic mt-3 text-xs text-slate-500 leading-relaxed">
-                <span className="font-semibold text-slate-700 dark:text-slate-300">Calcutta Node</span> — 22, College Street, Kolkata 700073, West Bengal<br />
+              <p className="mt-3 text-xs text-slate-500 leading-relaxed">
                 <a href="tel:+918584885450" className="hover:text-pharma-600 font-mono">+91 85848 85450</a> · <a href="mailto:calcuttanode@gmail.com" className="hover:text-pharma-600">calcuttanode@gmail.com</a>
-              </address>
-              <div className="mt-3 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 h-32">
-                <iframe title="CalcuttaRx — Kolkata location map" src="https://www.openstreetmap.org/export/embed.html?bbox=88.350%2C22.560%2C88.380%2C22.585&layer=mapnik&marker=22.5726%2C88.3639" className="w-full h-full border-0" loading="lazy" referrerPolicy="no-referrer-when-downgrade"></iframe>
-              </div>
+              </p>
             </div>
             <div>
               <p className="font-bold text-slate-700 dark:text-slate-200 mb-2 text-xs uppercase tracking-wider">Product</p>
