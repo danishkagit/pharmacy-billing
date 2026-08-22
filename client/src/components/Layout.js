@@ -6,8 +6,6 @@ import { useWorkspace, MODE_META } from '../context/WorkspaceContext';
 import AiAssistant from './AiAssistant';
 import { Logo, BrandWordmark } from './Logo';
 
-const APP_VERSION = 'v2.5';
-
 /* ────────────────────────────────────────────────────────────────
    Operational Hubs — rendered as horizontal top navigation with
    grouped dropdown menus (desktop) and an accordion drawer (mobile).
@@ -345,7 +343,7 @@ export default function Layout() {
       {/* ═══════════ HORIZONTAL TOP NAVIGATION ═══════════ */}
       <header className="topnav no-print flex-shrink-0 z-40">
         {/* Main bar */}
-        <div className="h-14 px-3 lg:px-5 flex items-center gap-2 lg:gap-3">
+        <div className="h-14 px-3 lg:px-5 flex items-center gap-2 lg:gap-2.5">
           <button
             className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
             onClick={() => setMobileOpen(v => !v)}
@@ -356,34 +354,35 @@ export default function Layout() {
             <i className={`fas ${mobileOpen ? 'fa-xmark' : 'fa-bars'} text-base`}></i>
           </button>
 
-          {/* Brand lockup */}
+          {/* Brand lockup — never allowed to shrink or clip */}
           <button
-            className="flex items-center gap-2 min-w-0 group text-left overflow-hidden"
+            className="flex items-center gap-2 flex-shrink-0 group text-left"
             onClick={() => go('/dashboard')}
             title="Calcutta Node Home"
           >
-            <Logo size={28} className="flex-shrink-0" />
-            <span className="flex flex-col leading-tight min-w-0 justify-center">
+            <Logo size={30} className="flex-shrink-0" />
+            <span className="flex flex-col leading-tight justify-center min-w-0">
               <span className="flex items-center gap-1.5 min-w-0">
-                <BrandWordmark className="text-[13px] sm:text-[14px]" />
-                <span className="hidden xl:inline-flex items-center text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 font-bold border border-emerald-500/30 flex-shrink-0">{APP_VERSION}</span>
+                <span className="truncate"><BrandWordmark className="text-[13px] sm:text-[14px]" /></span>
               </span>
-              <span className="text-[9px] sm:text-[9.5px] text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium mt-0.5 min-w-0">
+              <span className="text-[10px] text-slate-600 dark:text-slate-400 flex items-center gap-1 font-medium mt-0.5 min-w-0">
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
-                <span className="truncate max-w-[96px] sm:max-w-[150px] md:max-w-[220px] lg:max-w-[150px] xl:max-w-[190px]">{companyName}</span>
+                <span className="truncate max-w-[130px] sm:max-w-[170px] xl:max-w-[210px]">{companyName}</span>
               </span>
             </span>
           </button>
 
           {/* Horizontal hub tabs + dropdowns (desktop) */}
-          <nav className="hidden lg:flex items-stretch self-stretch ml-3 flex-shrink-0" onMouseLeave={scheduleDropdownClose}>
+          {/* Icons below xl, labels from xl — the brand never competes for space */}
+          <nav className="hidden lg:flex items-stretch self-stretch ml-1 min-w-0 overflow-x-auto crx-nav-scroll" onMouseLeave={scheduleDropdownClose}>
             <NavLink
               to="/dashboard"
               end
+              title="Home"
               className={({ isActive }) => `nav-tab ${isActive ? 'active' : ''}`}
             >
               <i className="fas fa-gauge-high text-[11px]"></i>
-              <span>Home</span>
+              <span className="hidden xl:inline">Home</span>
             </NavLink>
 
             <span className="nav-divider" aria-hidden="true"></span>
@@ -409,11 +408,12 @@ export default function Layout() {
                   <button
                     onClick={() => (isOpen ? setOpenMenu(null) : openDropdown(hub.id))}
                     aria-expanded={isOpen}
+                    title={hub.label}
                     className={`nav-tab ${isActive ? 'active' : ''} ${isOpen ? 'is-open' : ''} ${hub.emphasized && !isActive ? 'nav-tab-billing' : ''}`}
                   >
                     <i className={`fas fa-${hub.icon} text-[11px]`}></i>
-                    <span>{hub.label}</span>
-                    <i className={`fas fa-chevron-down text-[8px] transition-transform duration-200 ${isOpen ? 'rotate-180' : 'opacity-50'}`}></i>
+                    <span className="hidden xl:inline">{hub.label}</span>
+                    <i className={`fas fa-chevron-down text-[8px] transition-transform duration-200 ${isOpen ? 'rotate-180' : 'opacity-50'} hidden xl:inline`}></i>
                   </button>
 
                   {isOpen && (
@@ -467,34 +467,14 @@ export default function Layout() {
 
           <div className="flex-1"></div>
 
-          {/* Global Quick Search */}
+          {/* Global Quick Search — single icon button on all breakpoints */}
           <button
             onClick={openPalette}
-            className="hidden md:flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 bg-white/90 dark:bg-slate-800/90 px-2.5 xl:px-3 py-1.5 rounded-lg border border-slate-200/90 dark:border-slate-700/80 shadow-sm hover:border-emerald-400 hover:text-slate-900 dark:hover:text-white transition-all"
-            title="Press Ctrl+K to search"
-          >
-            <i className="fas fa-magnifying-glass text-[11px] text-emerald-600 dark:text-emerald-400"></i>
-            <span className="hidden xl:inline">Quick jump…</span>
-            <span className="kbd kbd-dark hidden xl:inline">Ctrl K</span>
-          </button>
-          <button
-            onClick={openPalette}
-            className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg bg-white/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 shadow-sm"
+            className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 shadow-sm hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-300 transition-all"
             title="Search (Ctrl+K)"
           >
             <i className="fas fa-magnifying-glass text-sm"></i>
           </button>
-
-          {/* GST Status Capsule */}
-          {company?.gstin && (
-            <div className="hidden xl:flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
-              <i className="fas fa-file-invoice text-emerald-600 dark:text-emerald-400 text-[11px]"></i>
-              <span className="font-mono font-bold">{company.gstin.slice(0, 2)}</span>
-              <span className="text-slate-300 dark:text-slate-600">|</span>
-              <span className="font-semibold uppercase text-[11px]">{company?.drugLicenseCategory || 'Retail'}</span>
-              <span className={`w-1.5 h-1.5 rounded-full ${company?.gstType === 'composition' ? 'bg-amber-400' : 'bg-emerald-500'}`}></span>
-            </div>
-          )}
 
           {/* Workspace Mode Switcher / Capsule */}
           {isDual ? (
@@ -544,11 +524,10 @@ export default function Layout() {
           </button>
 
           {/* Primary Quick Sale Button */}
-          <NavLink to="/sales/new" className="btn btn-primary btn-sm btn-glow font-bold">
+          <NavLink to="/sales/new" title="New Sale Bill (F2)" className="btn btn-primary btn-sm btn-glow font-bold">
             <i className="fas fa-plus text-[10px]"></i>
             <span className="hidden sm:inline">New Sale</span>
             <span className="sm:hidden">Sale</span>
-            <span className="kbd kbd-dark hidden xl:inline ml-1 font-mono">F2</span>
           </NavLink>
 
           {/* User Menu */}
@@ -621,6 +600,18 @@ export default function Layout() {
           </nav>
           <div className="flex-1"></div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
+            {/* GST / License status — lives in the subbar where space is free */}
+            {company?.gstin && (
+              <span
+                className="hidden lg:inline-flex status-chip"
+                title={`GSTIN: ${company.gstin} · ${company?.gstType === 'composition' ? 'Composition' : 'Regular'} · ${(company?.drugLicenseCategory || 'retail').toUpperCase()} license`}
+              >
+                <i className="fas fa-file-invoice text-emerald-500 text-[10px]"></i>
+                <span className="font-mono font-bold">{company.gstin.slice(0, 2)}</span>
+                <span className="uppercase font-semibold">{company?.drugLicenseCategory || 'Retail'}</span>
+                <span className={`w-1.5 h-1.5 rounded-full ${company?.gstType === 'composition' ? 'bg-amber-400' : 'bg-emerald-500'}`}></span>
+              </span>
+            )}
             <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500 hidden md:inline">Counter</span>
             {quickTiles.map(tile => (
               <button

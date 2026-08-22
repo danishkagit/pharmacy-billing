@@ -18,7 +18,7 @@ function Logo({ size = 32, className = '', title = 'Calcutta Node' }) {
       alt={title}
       title={title}
       draggable="false"
-      className={`select-none object-contain rounded-lg bg-white ring-1 ring-slate-900/10 shadow-sm flex-shrink-0 ${className}`}
+      className={`select-none object-contain rounded-lg bg-slate-50 dark:bg-slate-800 ring-1 ring-slate-900/10 dark:ring-white/10 shadow-sm flex-shrink-0 ${className}`}
       style={{ height: size, width: Math.round(size * MARK_ASPECT) }}
     />
   );
