@@ -6,7 +6,7 @@ import { Logo, BrandWordmark } from '../components/Logo';
 export default function RegisterPage() {
   const [form, setForm] = useState({
     name: '', email: '', phone: '', password: '', confirmPassword: '',
-    companyName: '', gstin: '', dlNo: '',
+    companyName: '', gstin: '', dlNo: '', drugLicenseCategory: 'retail',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -16,6 +16,12 @@ export default function RegisterPage() {
   const navigate = useNavigate();
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const BUSINESS_TYPES = [
+    { id: 'retail', label: 'Retail Pharmacy', icon: 'store', desc: 'Medical store / chemist counter' },
+    { id: 'wholesale', label: 'Wholesale & Distribution', icon: 'truck-ramp-box', desc: 'Stockist / distributor desk' },
+    { id: 'both', label: 'Retail + Wholesale', icon: 'building-columns', desc: 'Counter and B2B from one login' },
+  ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -48,14 +54,14 @@ export default function RegisterPage() {
           </div>
           <h1 className="text-4xl font-bold leading-tight mb-4">Setup Your Pharmacy</h1>
           <p className="text-lg text-slate-400 leading-relaxed mb-10 max-w-md">
-            Register your retail pharmacy and start billing with full GST compliance and drug regulatory support.
+            Register as a retail chemist, wholesale distributor — or run both desks together — with full GST compliance and drug regulatory support.
           </p>
           <div className="space-y-4">
             {[
               { icon: 'user-shield', text: 'Secure owner account with role-based access' },
               { icon: 'building', text: 'Multi-branch support with centralized data' },
               { icon: 'file-contract', text: 'Auto GSTR-1, 3B & E-Invoice generation' },
-              { icon: 'prescription', text: 'Drug schedule & narcotics register' },
+              { icon: 'truck-ramp-box', text: 'Retail counter + wholesale desk workspaces' },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0">
@@ -116,6 +122,30 @@ export default function RegisterPage() {
                   <input name="companyName" value={form.companyName} onChange={handleChange} required className="app-input" placeholder="Pharmacy name" />
                 </div>
               </div>
+            </div>
+
+            {/* Business Type */}
+            <div className="p-4 rounded-xl glass-card !shadow-none">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Business Type</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {BUSINESS_TYPES.map(t => {
+                  const active = form.drugLicenseCategory === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setForm({ ...form, drugLicenseCategory: t.id })}
+                      aria-pressed={active}
+                      className={`p-3 rounded-xl border text-left transition-all ${active ? 'border-pharma-400 bg-pharma-50/70 ring-1 ring-pharma-300' : 'border-slate-200 bg-white/60 hover:border-pharma-300'}`}
+                    >
+                      <i className={`fas fa-${t.icon} text-sm mb-1.5 block ${active ? 'text-pharma-600' : 'text-slate-400'}`}></i>
+                      <span className={`block text-xs font-bold leading-tight ${active ? 'text-pharma-700' : 'text-slate-600'}`}>{t.label}</span>
+                      <span className="block text-[10px] text-slate-400 mt-0.5 leading-snug">{t.desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[10px] text-slate-400 mt-2"><i className="fas fa-circle-info mr-1"></i>Dual licenses get both the Retail Counter and Wholesale Desk workspaces with a one-tap switch.</p>
             </div>
 
             {/* Regulatory Info */}

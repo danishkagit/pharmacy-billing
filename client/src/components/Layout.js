@@ -2,6 +2,7 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useWorkspace, MODE_META } from '../context/WorkspaceContext';
 import AiAssistant from './AiAssistant';
 import { Logo, BrandWordmark } from './Logo';
 
@@ -102,6 +103,7 @@ const importantLinks = [
 export default function Layout() {
   const { user, company, branch, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const { mode: workspaceMode, setMode: setWorkspaceMode, isDual, meta: wsMeta } = useWorkspace();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -458,6 +460,44 @@ export default function Layout() {
             </div>
           )}
 
+          {/* Workspace Mode Switcher / Capsule */}
+          {isDual ? (
+            <div
+              className="hidden md:flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm"
+              role="group"
+              aria-label="Workspace mode"
+            >
+              {['retail', 'wholesale'].map(m => {
+                const active = workspaceMode === m;
+                return (
+                  <button
+                    key={m}
+                    onClick={() => setWorkspaceMode(m)}
+                    aria-pressed={active}
+                    title={`${MODE_META[m].label} — ${MODE_META[m].tagline}`}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition-all duration-150 ${
+                      active
+                        ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    <i className={`fas fa-${MODE_META[m].icon} text-[10px]`}></i>
+                    <span className="hidden lg:inline">{MODE_META[m].shortLabel}</span>
+                    {active && <span className={`w-1.5 h-1.5 rounded-full ${MODE_META[m].dotClass}`}></span>}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div
+              className="hidden xl:flex items-center gap-1.5 text-xs bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm font-semibold text-slate-600 dark:text-slate-300"
+              title={`${wsMeta.label} — ${wsMeta.tagline}`}
+            >
+              <i className={`fas fa-${wsMeta.icon} text-[11px] text-emerald-600 dark:text-emerald-400`}></i>
+              <span>{wsMeta.shortLabel}</span>
+            </div>
+          )}
+
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
@@ -646,6 +686,39 @@ export default function Layout() {
                   <i className="fas fa-arrow-up-right-from-square ml-auto text-[8px] opacity-40"></i>
                 </a>
               ))}
+            </div>
+
+            <div className="pt-2 mt-2 border-t border-slate-200 dark:border-slate-700/60">
+              <p className="sidebar-section-label">Workspace</p>
+              {isDual ? (
+                <div className="grid grid-cols-2 gap-1.5">
+                  {['retail', 'wholesale'].map(m => {
+                    const active = workspaceMode === m;
+                    return (
+                      <button
+                        key={m}
+                        onClick={() => setWorkspaceMode(m)}
+                        aria-pressed={active}
+                        className={`flex flex-col items-center gap-1 py-2.5 rounded-xl border text-center transition-all ${
+                          active
+                            ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 shadow-sm'
+                            : 'border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-800/60'
+                        }`}
+                      >
+                        <i className={`fas fa-${MODE_META[m].icon} text-sm ${active ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}></i>
+                        <span className={`text-[11px] font-bold ${active ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-400'}`}>
+                          {MODE_META[m].shortLabel}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                  <i className={`fas fa-${wsMeta.icon} text-emerald-500`}></i>
+                  {wsMeta.label} Workspace
+                </div>
+              )}
             </div>
 
             <div className="pt-2 mt-2 border-t border-slate-200 dark:border-slate-700/60 flex items-center gap-2">

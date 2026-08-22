@@ -2,6 +2,15 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext();
 
+export const ACCENTS = [
+  { id: 'emerald', label: 'Clinical Emerald', swatch: '#10B981' },
+  { id: 'blue', label: 'Trust Blue', swatch: '#3B82F6' },
+  { id: 'violet', label: 'Royal Violet', swatch: '#8B5CF6' },
+  { id: 'amber', label: 'Herbal Amber', swatch: '#F59E0B' },
+];
+
+const VALID_ACCENTS = ACCENTS.map(a => a.id);
+
 export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState(() => {
     if (typeof window === 'undefined') return 'light';
@@ -14,6 +23,14 @@ export function ThemeProvider({ children }) {
       }
     } catch {}
     return 'light';
+  });
+
+  const [accent, setAccentState] = useState(() => {
+    try {
+      const saved = localStorage.getItem('crx_accent');
+      if (saved && VALID_ACCENTS.includes(saved)) return saved;
+    } catch {}
+    return 'emerald';
   });
 
   useEffect(() => {
@@ -32,6 +49,18 @@ export function ThemeProvider({ children }) {
     } catch {}
   }, [theme]);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    if (VALID_ACCENTS.includes(accent)) {
+      root.setAttribute('data-accent', accent);
+    } else {
+      root.removeAttribute('data-accent');
+    }
+    try {
+      localStorage.setItem('crx_accent', accent);
+    } catch {}
+  }, [accent]);
+
   const toggleTheme = () => {
     setThemeState(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
@@ -42,8 +71,14 @@ export function ThemeProvider({ children }) {
     }
   };
 
+  const setAccent = (newAccent) => {
+    if (VALID_ACCENTS.includes(newAccent)) {
+      setAccentState(newAccent);
+    }
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, isDark: theme === 'dark', toggleTheme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, isDark: theme === 'dark', toggleTheme, setTheme, accent, setAccent }}>
       {children}
     </ThemeContext.Provider>
   );

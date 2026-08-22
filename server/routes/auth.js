@@ -8,13 +8,14 @@ const Branch = require('../models/Branch');
 
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, phone, password, companyName, gstin, dlNo } = req.body;
+    const { name, email, phone, password, companyName, gstin, dlNo, drugLicenseCategory } = req.body;
     if (!name || !email || !password || !companyName) {
       return res.status(400).json({ success: false, error: 'Name, email, password, and company name required' });
     }
     const existing = await User.findOne({ email });
     if (existing) return res.status(400).json({ success: false, error: 'Email already registered' });
-    const company = await Company.create({ name: companyName, gstin, dlNo, drugLicenseCategory: 'retail' });
+    const category = ['retail', 'wholesale', 'both'].includes(drugLicenseCategory) ? drugLicenseCategory : 'retail';
+    const company = await Company.create({ name: companyName, gstin, dlNo, drugLicenseCategory: category });
     const branch = await Branch.create({
       name: 'Head Office',
       company: company._id,

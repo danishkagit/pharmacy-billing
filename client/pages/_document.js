@@ -20,8 +20,18 @@ export default class MyDocument extends Document {
           <meta name="geo.region" content="IN-WB" />
           <meta name="geo.placename" content="Kolkata" />
           <meta name="ICBM" content="22.5726, 88.3639" />
-          <link rel="icon" type="image/png" href="/logo.png" />
-          <link rel="apple-touch-icon" href="/logo.png" />
+          <meta name="application-name" content="CalcuttaRx" />
+          <meta name="apple-mobile-web-app-title" content="CalcuttaRx" />
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="mobile-web-app-capable" content="yes" />
+          <meta name="msapplication-TileColor" content="#059669" />
+          <link rel="icon" type="image/png" sizes="32x32" href="/logo.png" />
+          <link rel="icon" type="image/png" sizes="192x192" href="/logo-mark.png" />
+          <link rel="apple-touch-icon" sizes="180x180" href="/logo.png" />
+          <meta property="og:image:width" content="1536" />
+          <meta property="og:image:height" content="1024" />
+          <meta property="og:image:alt" content="CalcuttaRx — Cloud Based Pharmacy Billing Software by Calcutta Node" />
+          <meta name="twitter:image:alt" content="CalcuttaRx — Cloud Based Pharmacy Billing Software by Calcutta Node" />
           <title>CalcuttaRx – Cloud Pharmacy Billing &amp; GST Inventory Software | Kolkata</title>
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />

@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import API from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { useWorkspace } from '../context/WorkspaceContext';
 import { PageHeader, GlassCard, GlassModal } from '../components/ui';
 import MedicinePicker from '../components/MedicinePicker';
 import { GST_SLABS, DEFAULT_MEDICINE_GST, amountInWords, inclusiveBreakup, rateWiseSummary, STATE_CODES, isInterStateSupply } from '../utils/gst';
@@ -10,7 +11,9 @@ const HOLD_KEY = 'ph_held_bills';
 
 export default function SaleInvoiceCreate() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { company } = useAuth();
+  const { isWholesale: wsWholesale } = useWorkspace();
   const isRetail = company?.drugLicenseCategory === 'retail' || company?.drugLicenseCategory === 'both';
   const isWholesale = company?.drugLicenseCategory === 'wholesale' || company?.drugLicenseCategory === 'both';
 
@@ -18,7 +21,14 @@ export default function SaleInvoiceCreate() {
   const [prescriptions, setPrescriptions] = useState([]);
   const [batches, setBatches] = useState({});
   const [form, setForm] = useState({
-    type: isRetail && !isWholesale ? 'retail' : isWholesale && !isRetail ? 'wholesale' : 'retail',
+    type: (() => {
+      const qType = searchParams.get('type');
+      if ((qType === 'wholesale' && isWholesale) || (qType === 'retail' && isRetail)) return qType;
+      // Fall back to the active workspace desk
+      if (!isRetail && isWholesale) return 'wholesale';
+      if (isRetail && !isWholesale) return 'retail';
+      return wsWholesale ? 'wholesale' : 'retail';
+    })(),
     customer: '', customerName: '', customerPhone: '', customerGstin: '',
     prescription: '', prescriptionNo: '', doctorName: '', patientName: '',
     invoiceDate: new Date().toISOString().split('T')[0], dueDate: '',

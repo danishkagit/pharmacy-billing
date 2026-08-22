@@ -138,6 +138,77 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════
+   ACCENT THEMES (user-customizable via Settings → Appearance)
+   data-accent on <html> swaps the entire clinical accent scale.
+   Emerald is the default; each theme re-tints buttons, focus rings,
+   nav active states, badges and chips through the --accent-* tokens.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Trust Blue ── */
+[data-accent="blue"] {
+  --accent-50: #EFF6FF; --accent-100: #DBEAFE; --accent-200: #BFDBFE; --accent-300: #93C5FD;
+  --accent-400: #60A5FA; --accent-500: #3B82F6; --accent-600: #2563EB; --accent-700: #1D4ED8;
+  --accent-800: #1E40AF; --accent-900: #1E3A8A;
+  --accent-glow:        rgba(59, 130, 246, 0.30);
+  --accent-glow-strong: rgba(37, 99, 235, 0.45);
+  --ring:               0 0 0 3px rgba(59, 130, 246, 0.22);
+}
+[data-theme="dark"][data-accent="blue"] {
+  --accent-50: #1E3A8A; --accent-100: #1E40AF; --accent-200: #1D4ED8; --accent-300: #2563EB;
+  --accent-400: #3B82F6; --accent-500: #60A5FA; --accent-600: #93C5FD; --accent-700: #BFDBFE;
+  --accent-800: #DBEAFE; --accent-900: #EFF6FF;
+  --accent-glow:        rgba(96, 165, 250, 0.32);
+  --accent-glow-strong: rgba(96, 165, 250, 0.48);
+  --ring:               0 0 0 3px rgba(96, 165, 250, 0.30);
+}
+
+/* ── Royal Violet ── */
+[data-accent="violet"] {
+  --accent-50: #F5F3FF; --accent-100: #EDE9FE; --accent-200: #DDD6FE; --accent-300: #C4B5FD;
+  --accent-400: #A78BFA; --accent-500: #8B5CF6; --accent-600: #7C3AED; --accent-700: #6D28D9;
+  --accent-800: #5B21B6; --accent-900: #4C1D95;
+  --accent-glow:        rgba(139, 92, 246, 0.30);
+  --accent-glow-strong: rgba(124, 58, 237, 0.45);
+  --ring:               0 0 0 3px rgba(139, 92, 246, 0.22);
+}
+[data-theme="dark"][data-accent="violet"] {
+  --accent-50: #4C1D95; --accent-100: #5B21B6; --accent-200: #6D28D9; --accent-300: #7C3AED;
+  --accent-400: #8B5CF6; --accent-500: #A78BFA; --accent-600: #C4B5FD; --accent-700: #DDD6FE;
+  --accent-800: #EDE9FE; --accent-900: #F5F3FF;
+  --accent-glow:        rgba(167, 139, 250, 0.32);
+  --accent-glow-strong: rgba(167, 139, 250, 0.48);
+  --ring:               0 0 0 3px rgba(167, 139, 250, 0.30);
+}
+
+/* ── Herbal Amber ── */
+[data-accent="amber"] {
+  --accent-50: #FFFBEB; --accent-100: #FEF3C7; --accent-200: #FDE68A; --accent-300: #FCD34D;
+  --accent-400: #FBBF24; --accent-500: #F59E0B; --accent-600: #D97706; --accent-700: #B45309;
+  --accent-800: #92400E; --accent-900: #78350F;
+  --accent-glow:        rgba(245, 158, 11, 0.30);
+  --accent-glow-strong: rgba(217, 119, 6, 0.45);
+  --ring:               0 0 0 3px rgba(245, 158, 11, 0.22);
+}
+[data-theme="dark"][data-accent="amber"] {
+  --accent-50: #78350F; --accent-100: #92400E; --accent-200: #B45309; --accent-300: #D97706;
+  --accent-400: #F59E0B; --accent-500: #FBBF24; --accent-600: #FCD34D; --accent-700: #FDE68A;
+  --accent-800: #FEF3C7; --accent-900: #FFFBEB;
+  --accent-glow:        rgba(251, 191, 36, 0.32);
+  --accent-glow-strong: rgba(251, 191, 36, 0.48);
+  --ring:               0 0 0 3px rgba(251, 191, 36, 0.30);
+}
+
+/* Default (emerald) glow tokens so var-based rules always resolve */
+:root {
+  --accent-glow:        rgba(16, 185, 129, 0.30);
+  --accent-glow-strong: rgba(16, 185, 129, 0.45);
+}
+[data-theme="dark"]:not([data-accent]) {
+  --accent-glow:        rgba(52, 211, 153, 0.32);
+  --accent-glow-strong: rgba(52, 211, 153, 0.48);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
    GLOBAL BASE & RESET
    ═══════════════════════════════════════════════════════════════════ */
 html {
@@ -242,7 +313,7 @@ td[data-type="qty"] {
   bottom: 0;
   height: 2.5px;
   border-radius: 3px 3px 0 0;
-  background: linear-gradient(90deg, #059669, #10B981);
+  background: linear-gradient(90deg, var(--accent-600), var(--accent-500));
   transform: scaleX(0);
   opacity: 0;
   transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.15s ease;
@@ -476,10 +547,10 @@ td[data-type="qty"] {
 }
 
 .tile-sale {
-  background: linear-gradient(135deg, #059669, #10B981);
+  background: linear-gradient(135deg, var(--accent-600), var(--accent-500));
   color: #FFFFFF;
-  border-color: #059669;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  border-color: var(--accent-600);
+  box-shadow: 0 4px 12px var(--accent-glow);
 }
 
 .tile-purchase {
@@ -527,15 +598,15 @@ td[data-type="qty"] {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #059669 0%, #10B981 100%);
+  background: linear-gradient(135deg, var(--accent-600) 0%, var(--accent-500) 100%);
   color: #FFFFFF;
-  border-color: #059669;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  border-color: var(--accent-600);
+  box-shadow: 0 2px 8px var(--accent-glow);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #047857 0%, #059669 100%);
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.45);
+  background: linear-gradient(135deg, var(--accent-700) 0%, var(--accent-600) 100%);
+  box-shadow: 0 4px 14px var(--accent-glow-strong);
 }
 
 .btn-secondary {
@@ -665,6 +736,49 @@ textarea:focus {
   background-color: var(--bg-card-subtle);
   color: var(--text-secondary);
   border-color: var(--border);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STATUS CHIPS (pill-style contextual indicators)
+   ═══════════════════════════════════════════════════════════════════ */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background-color: var(--bg-card-subtle);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.status-chip-success {
+  background-color: var(--success-bg);
+  color: var(--success-text);
+  border-color: var(--success-border);
+}
+
+.status-chip-info {
+  background-color: var(--info-bg);
+  color: var(--info-text);
+  border-color: var(--info-border);
+}
+
+.status-chip-warning {
+  background-color: var(--warning-bg);
+  color: var(--warning-text);
+  border-color: var(--warning-border);
+}
+
+.status-chip-danger {
+  background-color: var(--danger-bg);
+  color: var(--danger-text);
+  border-color: var(--danger-border);
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -938,4 +1052,97 @@ textarea:focus {
   .print-header { text-align: center; margin-bottom: 10mm; font-weight: bold; }
   .print-total { font-weight: bold; text-align: right; margin-top: 10mm; }
   @page { size: A4; margin: 15mm; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STAGGERED ENTRANCE (KPI card reveal)
+   ═══════════════════════════════════════════════════════════════════ */
+.stagger > * {
+  animation: staggerIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+.stagger > *:nth-child(1) { animation-delay: 0.04s; }
+.stagger > *:nth-child(2) { animation-delay: 0.08s; }
+.stagger > *:nth-child(3) { animation-delay: 0.12s; }
+.stagger > *:nth-child(4) { animation-delay: 0.16s; }
+.stagger > *:nth-child(5) { animation-delay: 0.20s; }
+.stagger > *:nth-child(6) { animation-delay: 0.24s; }
+
+@keyframes staggerIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stagger > * {
+    animation: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE POLISH
+   Comfortable touch targets, no iOS input zoom, safe-area support.
+   ═══════════════════════════════════════════════════════════════════ */
+html {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+@media (max-width: 640px) {
+  /* Prevent iOS Safari zoom-on-focus (needs ≥16px computed font) */
+  .app-input,
+  .glass-input,
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  input[type="email"],
+  input[type="password"],
+  select,
+  textarea {
+    font-size: 16px;
+    height: 42px;
+  }
+
+  /* Comfortable tap targets for primary controls */
+  .btn {
+    min-height: 40px;
+  }
+
+  .btn-sm {
+    min-height: 34px;
+  }
+
+  .nav-tab {
+    padding: 0 0.65rem;
+  }
+
+  /* Full-bleed modals feel native on phones */
+  .cmdk-panel {
+    margin: 0.5rem;
+  }
+
+  /* Tables scroll instead of squashing */
+  .table-responsive-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .page-title {
+    font-size: 1.15rem;
+  }
+
+  .color-block-md { width: 2.4rem; height: 2.4rem; }
+}
+
+@media (pointer: coarse) {
+  .nav-drop-item,
+  .nav-link {
+    min-height: 40px;
+  }
+}
+
+/* Safe-area padding for notched devices */
+@supports (padding: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }

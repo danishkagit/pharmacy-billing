@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme, ACCENTS } from '../context/ThemeContext';
+import { useWorkspace, MODE_META } from '../context/WorkspaceContext';
 import API from '../utils/api';
 import { PageHeader, GlassCard, GlassTabs } from '../components/ui';
 import { GST_SLABS, GST_EFFECTIVE_DATE } from '../utils/gst';
@@ -11,8 +13,21 @@ const INVOICE_TEMPLATES = [
   { value: 'thermal58', label: 'Thermal 58mm' }
 ];
 
+function useCompanyCategory() {
+  const { company } = useAuth();
+  const [category, setCategory] = useState(company?.drugLicenseCategory || null);
+  useEffect(() => {
+    API.get('/company').then(res => {
+      if (res.success) setCategory(res.data.drugLicenseCategory || 'both');
+    }).catch(() => {});
+  }, []);
+  return category || company?.drugLicenseCategory || 'both';
+}
+
 export default function Settings() {
   const { user, logout } = useAuth();
+  const { theme, setTheme, accent, setAccent } = useTheme();
+  const { mode, setMode, availableModes } = useWorkspace();
   const isOwner = user?.role === 'owner' || user?.role === 'admin';
   const [tab, setTab] = useState('invoice');
   const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -30,6 +45,7 @@ export default function Settings() {
   const [ratesInfo, setRatesInfo] = useState(null);
   const [migrating, setMigrating] = useState(false);
   const [migrateMsg, setMigrateMsg] = useState('');
+  const companyCategory = useCompanyCategory();
 
   useEffect(() => {
     API.get('/company').then(res => {
@@ -111,6 +127,7 @@ export default function Settings() {
   };
 
   const tabs = [
+    { key: 'workspace', label: 'Workspace', icon: 'sliders' },
     { key: 'invoice', label: 'Invoice & Printing', icon: 'file-invoice' },
     { key: 'gst', label: 'GST & Compliance', icon: 'percent' },
     { key: 'discounts', label: 'Discounts', icon: 'badge-percent' },
@@ -135,6 +152,77 @@ export default function Settings() {
       <PageHeader icon="cog" title="Settings" subtitle="Configure invoicing, GST engine, discounts and your account" />
 
       <GlassTabs tabs={tabs} active={tab} onChange={setTab} />
+
+      {/* ══════════ WORKSPACE & APPEARANCE ══════════ */}
+      {tab === 'workspace' && (
+        <>
+          <GlassCard>
+            <h2 className="text-base font-semibold text-slate-700 mb-1 flex items-center gap-2"><i className="fas fa-store text-pharma-500"></i>Workspace Desk</h2>
+            <p className="text-xs text-slate-500 mb-4">
+              Your drug license category is <b className="capitalize">{companyCategory}</b>.
+              {availableModes.length > 1
+                ? ' Choose the desk this browser opens with. You can switch between Retail Counter and Wholesale Desk anytime from the top bar.'
+                : ' This device is locked to a single workspace desk.'}
+            </p>
+            {availableModes.length > 1 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {availableModes.map(m => {
+                  const active = mode === m;
+                  return (
+                    <button key={m} type="button" onClick={() => setMode(m)}
+                      className={`text-left p-4 rounded-xl border transition-all ${active ? 'border-pharma-400 bg-pharma-50/70 dark:bg-pharma-900/20 ring-1 ring-pharma-300' : 'border-slate-200 bg-white/60 dark:bg-slate-800/60 hover:border-pharma-300'}`}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-sm font-bold text-slate-800 dark:text-slate-100">{MODE_META[m].label}</span>
+                        <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${active ? 'border-pharma-500' : 'border-slate-300'}`}>
+                          {active && <span className="w-2 h-2 rounded-full bg-pharma-500"></span>}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500">{MODE_META[m].tagline}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                <i className={`fas fa-${MODE_META[mode].icon} text-emerald-500`}></i>
+                {MODE_META[mode].label} — single-desk license
+              </div>
+            )}
+            <p className="text-[10px] text-slate-400 mt-3"><i className="fas fa-circle-info mr-1"></i>Desk preference is stored per device. Change license category in Company Setup.</p>
+          </GlassCard>
+
+          <GlassCard>
+            <h2 className="text-base font-semibold text-slate-700 mb-1 flex items-center gap-2"><i className="fas fa-palette text-pharma-500"></i>Appearance</h2>
+            <p className="text-xs text-slate-500 mb-4">Pick a theme mode and accent colour. The accent re-tints buttons, focus rings, navigation and badges across the whole app.</p>
+
+            <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Theme Mode</label>
+            <div className="grid grid-cols-2 max-w-xs mb-5 p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              {[{ id: 'light', label: 'Light', icon: 'sun' }, { id: 'dark', label: 'Dark', icon: 'moon' }].map(t => (
+                <button key={t.id} type="button" onClick={() => setTheme(t.id)}
+                  className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all ${theme === t.id ? 'bg-white dark:bg-slate-900 shadow-sm text-pharma-600' : 'text-slate-500'}`}>
+                  <i className={`fas fa-${t.icon}`}></i>{t.label}
+                </button>
+              ))}
+            </div>
+
+            <label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Accent Colour</label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {ACCENTS.map(a => (
+                <button key={a.id} type="button" onClick={() => setAccent(a.id)}
+                  className={`p-3 rounded-xl border text-left transition-all ${accent === a.id ? 'border-pharma-400 bg-pharma-50/70 dark:bg-pharma-900/20 ring-1 ring-pharma-300' : 'border-slate-200 bg-white/60 dark:bg-slate-800/60 hover:border-slate-300'}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="w-7 h-7 rounded-lg shadow-inner-glass" style={{ backgroundColor: a.swatch }}></span>
+                    {accent === a.id && <i className="fas fa-circle-check text-pharma-500"></i>}
+                  </div>
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{a.label}</p>
+                  <p className="text-[10px] font-mono text-slate-400">{a.swatch}</p>
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-slate-400 mt-3"><i className="fas fa-circle-info mr-1"></i>Appearance is saved on this device and respects your system light/dark preference by default.</p>
+          </GlassCard>
+        </>
+      )}
 
       {/* ══════════ INVOICE & PRINTING ══════════ */}
       {tab === 'invoice' && (
