@@ -24,6 +24,49 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get('/overdue', async (req, res) => {
+  try {
+    const SaleInvoice = require('../models/SaleInvoice');
+    const invoices = await SaleInvoice.find({
+      companyRef: req.company._id,
+      branch: req.activeBranch || { $exists: true },
+      paymentStatus: { $in: ['pending', 'partial'] }
+    }).populate('customer', 'name phone creditDays creditLimit').sort({ invoiceDate: 1 });
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    const overdue = [];
+    let totalOverdue = 0;
+    invoices.forEach(inv => {
+      const due = (inv.totalAmount || 0) - (inv.paidAmount || 0);
+      if (due <= 0) return;
+      const creditDays = inv.customer?.creditDays || 0;
+      const baseDate = inv.dueDate || inv.invoiceDate;
+      const dueDate = new Date(new Date(baseDate).getTime() + creditDays * 86400000);
+      dueDate.setHours(23, 59, 59, 999);
+      const daysOverdue = Math.floor((today - dueDate) / 86400000);
+      if (daysOverdue <= 0) return;
+      totalOverdue += due;
+      overdue.push({
+        invoiceId: inv._id,
+        invoiceNo: inv.invoiceNo,
+        invoiceDate: inv.invoiceDate,
+        dueDate,
+        customerName: inv.customer?.name || inv.customerName || 'Walk-in',
+        customerPhone: inv.customer?.phone || inv.customerPhone || '',
+        creditLimit: inv.customer?.creditLimit || 0,
+        creditDays,
+        total: inv.totalAmount,
+        paid: inv.paidAmount || 0,
+        due,
+        daysOverdue
+      });
+    });
+    res.json({ success: true, data: { overdue, count: overdue.length, totalOverdue } });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     const customer = await Customer.findOne({ _id: req.params.id, companyRef: req.company._id });
