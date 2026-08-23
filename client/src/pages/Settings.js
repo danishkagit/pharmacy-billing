@@ -45,12 +45,14 @@ export default function Settings() {
   const [ratesInfo, setRatesInfo] = useState(null);
   const [migrating, setMigrating] = useState(false);
   const [migrateMsg, setMigrateMsg] = useState('');
+  const [planInfo, setPlanInfo] = useState({ plan: 'trial', trialEndDate: null });
   const companyCategory = useCompanyCategory();
 
   useEffect(() => {
     API.get('/company').then(res => {
       if (res.success) {
         const d = res.data;
+        setPlanInfo({ plan: d.plan || 'trial', trialEndDate: d.trialEndDate || null });
         if (d.discountSlabs?.length) setSlabs(d.discountSlabs);
         setInv({
           invoiceTemplate: d.invoiceTemplate || 'a4',
@@ -128,6 +130,7 @@ export default function Settings() {
 
   const tabs = [
     { key: 'workspace', label: 'Workspace', icon: 'sliders' },
+    { key: 'plan', label: 'Plan & Billing', icon: 'crown' },
     { key: 'invoice', label: 'Invoice & Printing', icon: 'file-invoice' },
     { key: 'gst', label: 'GST & Compliance', icon: 'percent' },
     { key: 'discounts', label: 'Discounts', icon: 'badge-percent' },
@@ -219,6 +222,62 @@ export default function Settings() {
             <p className="text-[10px] text-slate-400 mt-3"><i className="fas fa-circle-info mr-1"></i>Appearance is saved on this device and respects your system light/dark preference by default.</p>
           </GlassCard>
         </>
+      )}
+
+      {/* ══════════ PLAN & BILLING ══════════ */}
+      {tab === 'plan' && (
+        <GlassCard>
+          <h2 className="text-base font-semibold text-slate-700 mb-1 flex items-center gap-2"><i className="fas fa-crown text-pharma-500"></i>Plan &amp; Billing</h2>
+          <p className="text-xs text-slate-500 mb-4">Start free — pay per shop. No hidden AMC, no invoice caps.</p>
+
+          {(() => {
+            const daysLeft = planInfo.trialEndDate ? Math.max(0, Math.ceil((new Date(planInfo.trialEndDate) - new Date()) / 86400000)) : null;
+            const isTrial = planInfo.plan === 'trial';
+            const expired = isTrial && daysLeft !== null && daysLeft <= 0;
+            return (
+              <>
+                <div className={`rounded-xl p-4 mb-4 border ${expired ? 'border-red-200 bg-red-50/70' : 'border-emerald-200 bg-emerald-50/60'}`}>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold tracking-widest uppercase text-slate-500">Current Plan</p>
+                      <p className="text-lg font-extrabold text-slate-800 capitalize">{planInfo.plan}</p>
+                      {isTrial && (
+                        <p className="text-xs mt-1">
+                          {expired
+                            ? <span className="text-red-600 font-semibold"><i className="fas fa-triangle-exclamation mr-1"></i>Trial ended on {planInfo.trialEndDate ? new Date(planInfo.trialEndDate).toLocaleDateString('en-IN') : '-'}</span>
+                            : <span className="text-emerald-700 font-medium"><i className="fas fa-clock mr-1"></i>14-day free trial · {daysLeft} day{daysLeft === 1 ? '' : 's'} left (no card required)</span>}
+                        </p>
+                      )}
+                    </div>
+                    {!isTrial && <span className="badge badge-success">Active</span>}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    { name: 'Starter', price: 799, features: '1 Branch · 2 Users · Unlimited bills' },
+                    { name: 'Growth', price: 1299, popular: true, features: '5 Users · Khata · Prescription registry' },
+                    { name: 'Enterprise', price: null, features: 'Unlimited branches · Audit log · SLA' },
+                  ].map(p => (
+                    <div key={p.name} className={`relative rounded-xl border p-4 ${p.popular ? 'border-pharma-400 bg-pharma-50/50 ring-1 ring-pharma-300' : 'border-slate-200 bg-white/60'}`}>
+                      {p.popular && <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 badge badge-success text-[9px] whitespace-nowrap">Most Popular</span>}
+                      <p className="text-sm font-bold text-slate-800">{p.name}</p>
+                      <p className="mt-1 font-extrabold font-mono text-pharma-600">{p.price ? <>₹{Math.round(p.price * 0.8)}<span className="text-[10px] text-slate-400 font-sans">/shop/mo yearly</span></> : 'Custom'}</p>
+                      <p className="text-[10px] text-slate-400 mt-1.5 leading-snug">{p.features}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pt-4 flex flex-wrap items-center gap-3">
+                  <a href="https://wa.me/918584885450?text=Hi!%20I%20want%20to%20upgrade%20my%20CalcuttaRx%20plan." target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-glow">
+                    <i className="fab fa-whatsapp mr-1"></i>Upgrade on WhatsApp — 85848 85450
+                  </a>
+                  <span className="text-[10px] text-slate-400"><i className="fas fa-circle-info mr-1"></i>FREE migration &amp; staff training included with every plan</span>
+                </div>
+              </>
+            );
+          })()}
+        </GlassCard>
       )}
 
       {/* ══════════ INVOICE & PRINTING ══════════ */}

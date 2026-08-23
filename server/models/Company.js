@@ -50,7 +50,10 @@ const companySchema = new mongoose.Schema({
     }],
     default: [{ minMRP: 0, discountPercent: 10 }, { minMRP: 100, discountPercent: 15 }]
   },
-  isActive: { type: Boolean, default: true }
+  isActive: { type: Boolean, default: true },
+  // Subscription — 14-day free trial stamped at registration (no card required)
+  plan: { type: String, enum: ['trial', 'starter', 'growth', 'enterprise'], default: 'trial', index: true },
+  trialEndDate: { type: Date }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Company', companySchema);
