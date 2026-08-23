@@ -82,12 +82,12 @@
 }
 
 [data-theme="dark"] {
-  /* Professional Slate — neutral charcoal with soft depth (Tailwind slate-900 family) */
-  --bg-app:          #0F172A;
-  --bg-card:         #1E293B;
-  --bg-card-subtle:  #1A2536;
-  --bg-hover:        #233447;
-  --bg-active:       #2A3F5C;
+  /* Warm Graphite — neutral professional dark, distinct from the blue-slate family */
+  --bg-app:          #111314;
+  --bg-card:         #1C1F24;
+  --bg-card-subtle:  #1F2328;
+  --bg-hover:        #262B32;
+  --bg-active:       #2F353E;
 
   --accent-50:       #064E3B;
   --accent-100:      #065F46;
@@ -101,38 +101,38 @@
   --accent-900:      #ECFDF5;
 
   --success-text:    #34D399;
-  --success-bg:      rgba(16, 185, 129, 0.14);
-  --success-border:  rgba(16, 185, 129, 0.28);
+  --success-bg:      rgba(16, 185, 129, 0.16);
+  --success-border:  rgba(16, 185, 129, 0.30);
   --success-solid:   #10B981;
 
   --danger-text:     #F87171;
-  --danger-bg:       rgba(239, 68, 68, 0.14);
-  --danger-border:   rgba(239, 68, 68, 0.28);
+  --danger-bg:       rgba(239, 68, 68, 0.16);
+  --danger-border:   rgba(239, 68, 68, 0.30);
   --danger-solid:    #EF4444;
 
   --warning-text:    #FBBF24;
-  --warning-bg:      rgba(245, 158, 11, 0.14);
-  --warning-border:  rgba(245, 158, 11, 0.28);
+  --warning-bg:      rgba(245, 158, 11, 0.16);
+  --warning-border:  rgba(245, 158, 11, 0.30);
   --warning-solid:   #F59E0B;
 
   --info-text:       #60A5FA;
-  --info-bg:         rgba(59, 130, 246, 0.14);
-  --info-border:     rgba(59, 130, 246, 0.28);
+  --info-bg:         rgba(59, 130, 246, 0.16);
+  --info-border:     rgba(59, 130, 246, 0.30);
   --info-solid:      #3B82F6;
 
-  --text-primary:    #F1F5F9;
-  --text-secondary:  #94A3B8;
-  --text-tertiary:   #64748B;
+  --text-primary:    #E6E8EA;
+  --text-secondary:  #9AA0A6;
+  --text-tertiary:   #5F6368;
 
-  --border:          #1E293B;
-  --border-strong:   #334155;
-  --border-subtle:   #162032;
+  --border:          #262B32;
+  --border-strong:   #353C46;
+  --border-subtle:   #1C1F24;
 
-  --shadow-xs:       0 1px 2px rgba(0, 0, 0, 0.28);
-  --shadow-sm:       0 2px 4px rgba(0, 0, 0, 0.34);
-  --shadow-md:       0 6px 16px -2px rgba(0, 0, 0, 0.45);
-  --shadow-lg:       0 12px 32px -4px rgba(0, 0, 0, 0.55);
-  --shadow-glow:     0 0 24px rgba(16, 185, 129, 0.28);
+  --shadow-xs:       0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-sm:       0 2px 4px rgba(0, 0, 0, 0.40);
+  --shadow-md:       0 6px 16px -2px rgba(0, 0, 0, 0.50);
+  --shadow-lg:       0 12px 32px -4px rgba(0, 0, 0, 0.60);
+  --shadow-glow:     0 0 24px rgba(16, 185, 129, 0.22);
   --ring:            0 0 0 3px rgba(16, 185, 129, 0.28);
 }
 
