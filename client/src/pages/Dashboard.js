@@ -19,8 +19,8 @@ function KpiCard({ icon, label, value, sub, link, grad }) {
         <i className={`fas fa-${icon} text-sm`}></i>
       </div>
       <div className="min-w-0">
-        <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide truncate">{label}</p>
-        <p className="text-lg sm:text-xl font-bold text-slate-800 mt-0.5 leading-tight">{value}</p>
+        <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide truncate">{label}</p>
+        <p className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white mt-0.5 leading-tight">{value}</p>
         {sub && <p className="text-[11px] text-slate-400 mt-1 truncate">{sub}</p>}
       </div>
     </Card>
@@ -97,13 +97,13 @@ export default function Dashboard() {
       <div className="dashboard-header">
           <div className="flex items-start justify-between flex-wrap gap-3 sm:gap-4">
             <div className="min-w-0">
-                 <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5 truncate">
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5 truncate">
                 <i className="fas fa-store mr-1.5"></i>{company?.name || 'Pharmacy'}
               </p>
-               <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">
+               <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                 {Greeting()}, {user?.name?.split(' ')[0] || 'User'}
               </h1>
-                <p className="text-xs sm:text-sm text-slate-500 mt-1.5">
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1.5">
                 {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
             </div>
@@ -182,11 +182,11 @@ export default function Dashboard() {
 
           {/* Quick Actions — adapt per workspace desk */}
           <div className="glass-accent p-4 sm:p-5 grad-edge">
-            <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
-              <span className="color-block color-block-sm grad-hero text-white">
-                <i className="fas fa-bolt text-[11px]"></i>
-              </span>
-              {isWs ? 'Wholesale Quick Actions' : 'Counter Quick Actions'}
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-100 mb-4 flex items-center gap-2">
+                <span className="color-block color-block-sm grad-hero text-white">
+                  <i className="fas fa-bolt text-[11px]"></i>
+                </span>
+                {isWs ? 'Wholesale Quick Actions' : 'Counter Quick Actions'}
             </h3>
             <div className="grid grid-cols-3 gap-2.5">
               {quickActions.map(a => (
@@ -204,7 +204,7 @@ export default function Dashboard() {
           {isWs && (
             <div className="glass-accent p-4 sm:p-5 grad-edge border-l-4 border-l-blue-400">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-100 flex items-center gap-2">
                   <span className="color-block color-block-sm grad-cool text-white">
                     <i className="fas fa-truck-ramp-box text-[11px]"></i>
                   </span>
@@ -237,7 +237,7 @@ export default function Dashboard() {
           {/* Low Stock Alerts */}
           <div className="glass-accent p-4 sm:p-5 grad-edge border-l-4 border-l-orange-400">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-100 flex items-center gap-2">
                 <span className="color-block color-block-sm grad-gold text-white">
                   <i className="fas fa-exclamation-triangle text-[11px]"></i>
                 </span>
@@ -274,7 +274,7 @@ export default function Dashboard() {
           {/* Expiring Batches */}
           <div className="glass-accent p-4 sm:p-5 grad-edge">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-100 flex items-center gap-2">
                 <span className="color-block color-block-sm grad-gold text-white">
                   <i className="fas fa-clock text-[11px]"></i>
                 </span>
@@ -320,7 +320,7 @@ export default function Dashboard() {
           {/* Medicine Catalog */}
           <div className="glass-accent p-4 sm:p-5 grad-edge">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-100 flex items-center gap-2">
                 <span className="color-block color-block-sm grad-warm text-white">
                   <i className="fas fa-pills text-[11px]"></i>
                 </span>
@@ -352,7 +352,7 @@ export default function Dashboard() {
 
       {/* Bottom Stats Row */}
       <div className="glass-accent p-4 sm:p-5 grad-edge">
-        <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-100 mb-4 flex items-center gap-2">
           <span className="color-block color-block-sm grad-cool text-white">
             <i className="fas fa-chart-bar text-[11px]"></i>
           </span>
