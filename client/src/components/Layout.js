@@ -374,7 +374,7 @@ export default function Layout() {
 
           {/* Horizontal hub tabs + dropdowns (desktop) */}
           {/* Icons below xl, labels from xl — the brand never competes for space */}
-          <nav className="hidden lg:flex items-stretch self-stretch ml-1 min-w-0 overflow-x-auto crx-nav-scroll" onMouseLeave={scheduleDropdownClose}>
+          <nav className="hidden lg:flex items-stretch self-stretch ml-1" onMouseLeave={scheduleDropdownClose}>
             <NavLink
               to="/dashboard"
               end
