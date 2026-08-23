@@ -613,10 +613,10 @@ export default function Landing() {
                 </div>
                 <i className="fas fa-arrow-right ml-auto text-slate-300 group-hover:text-emerald-500 transition-colors"></i>
               </a>
-              <a href="mailto:calcuttanode@gmail.com" className="app-card app-card-hover p-4 flex items-center gap-3 group">
+              <a href="mailto:calcuttarx@gmail.com" className="app-card app-card-hover p-4 flex items-center gap-3 group">
                 <div className="w-10 h-10 rounded-xl bg-indigo-500 text-white flex items-center justify-center flex-shrink-0"><i className="fas fa-envelope text-sm"></i></div>
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-slate-800 dark:text-slate-100 break-all">calcuttanode@gmail.com</p>
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-100 break-all">calcuttarx@gmail.com</p>
                   <p className="text-[11px] text-slate-500">Send stock files &amp; Marg backups here</p>
                 </div>
                 <i className="fas fa-arrow-right ml-auto text-slate-300 group-hover:text-indigo-500 transition-colors"></i>
@@ -663,7 +663,7 @@ export default function Landing() {
               {contactSent && (
                 <p className="text-xs text-emerald-600 font-medium flex items-center gap-1.5 animate-fade-up"><i className="fas fa-circle-check"></i> WhatsApp opened with your message — just press send. We reply same day.</p>
               )}
-              <p className="text-center text-[11px] text-slate-400">Prefer email? <a href={`mailto:calcuttanode@gmail.com?subject=${encodeURIComponent('CalcuttaRx enquiry — ' + (contact.shop || contact.name || 'New chemist'))}`} className="text-pharma-600 font-semibold hover:underline">calcuttanode@gmail.com</a></p>
+              <p className="text-center text-[11px] text-slate-400">Prefer email? <a href={`mailto:calcuttarx@gmail.com?subject=${encodeURIComponent('CalcuttaRx enquiry — ' + (contact.shop || contact.name || 'New chemist'))}`} className="text-pharma-600 font-semibold hover:underline">calcuttarx@gmail.com</a></p>
             </form>
           </div>
         </section>
