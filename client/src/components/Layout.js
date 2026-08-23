@@ -70,6 +70,7 @@ const navHubs = [
     label: 'More',
     icon: 'ellipsis-h',
     items: [
+      { label: 'Pharmacy Profile', path: '/company', icon: 'store', rbac: ['settings'] },
       { label: 'H/H1/X Register', path: '/compliance', icon: 'shield-halved', rbac: ['compliance'] },
       { label: 'Narcotics Register', path: '/narcotics', icon: 'triangle-exclamation' },
       { label: 'Digital Prescriptions', path: '/prescriptions', icon: 'prescription-bottle-medical' },

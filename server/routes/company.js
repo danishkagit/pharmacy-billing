@@ -17,6 +17,7 @@ const EDITABLE_KEYS = [
   'name', 'legalName', 'address', 'city', 'state', 'pincode', 'phone', 'email',
   'gstin', 'pan', 'dlNo', 'dlNoWholesale', 'fssaiNo', 'dlExpiryDate', 'fssaiExpiryDate',
   'drugLicenseCategory', 'logo', 'invoicePrefix', 'invoiceNote',
+  'pharmacistName', 'pharmacistRegNo', 'pharmacistSignature',
   'gstType', 'bankName', 'bankAccountNo', 'bankIfsc', 'upiId',
   'invoiceTemplate', 'showHsnOnPrint', 'showExpiryOnPrint', 'showMrpOnPrint',
   'billCopies', 'printAfterSave', 'declarationNote', 'scheduleWarningNote',

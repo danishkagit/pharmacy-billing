@@ -17,6 +17,10 @@ const companySchema = new mongoose.Schema({
   fssaiExpiryDate: { type: Date },
   drugLicenseCategory: { type: String, enum: ['retail', 'wholesale', 'both'], default: 'retail' },
   logo: { type: String },
+  // Registered pharmacist — signature printed on sales bills
+  pharmacistName: { type: String, trim: true },
+  pharmacistRegNo: { type: String, trim: true, uppercase: true },
+  pharmacistSignature: { type: String },
   invoicePrefix: { type: String, default: 'PH' },
   invoiceNote: { type: String, default: 'Thank you for your business!' },
   gstType: { type: String, enum: ['regular', 'composition'], default: 'regular' },

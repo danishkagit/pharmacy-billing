@@ -193,7 +193,21 @@ export default function SaleInvoiceView() {
       <div className="border-t border-dashed border-black my-2"></div>
       {declarations.map((d, i) => <p key={i} className="text-[9px] leading-tight">* {d}</p>)}
       <p className="text-center mt-2 font-bold">{co.invoiceNote || 'Thank You! Visit Again'}</p>
-      <p className="text-center text-[9px]">Powered by <BrandWordmark className="text-[10px] align-middle" /></p>
+      {/* Registered Pharmacist — signature prints on every bill */}
+      {(co.pharmacistName || company?.pharmacistName || co.pharmacistSignature || company?.pharmacistSignature) && (
+        <div className="mt-3 pt-3 border-t border-black flex justify-between items-end gap-4">
+          <div className="text-[9px] text-slate-500 self-end">Customer Signature</div>
+          <div className="text-center">
+            {(co.pharmacistSignature || company?.pharmacistSignature) && (
+              <img src={co.pharmacistSignature || company?.pharmacistSignature} alt="Registered pharmacist signature" className="h-10 w-auto max-w-[140px] object-contain mx-auto mb-1 bg-white" />
+            )}
+            <p className="text-[10px] font-bold">Registered Pharmacist</p>
+            {(co.pharmacistName || company?.pharmacistName) && <p className="text-[9px] font-semibold">{co.pharmacistName || company?.pharmacistName}</p>}
+            {(co.pharmacistRegNo || company?.pharmacistRegNo) && <p className="text-[8px] font-mono">Reg No: {co.pharmacistRegNo || company?.pharmacistRegNo}</p>}
+          </div>
+        </div>
+      )}
+      <p className="text-center text-[9px] mt-3">Powered by <BrandWordmark className="text-[10px] align-middle" /></p>
     </div>
   );
 
@@ -376,10 +390,17 @@ export default function SaleInvoiceView() {
               <p className="text-[9px] text-slate-400 mt-0.5">Scan to Pay via UPI</p>
             </div>
           )}
-          <div className="text-center">
+          <div className="text-center min-w-[160px]">
             <p className="text-xs font-bold">For {co.name || store}</p>
-            <div className="h-10"></div>
-            <p className="text-[10px] text-slate-400 border-t border-slate-300 pt-1 px-4">Authorised Signatory</p>
+            {(co.pharmacistSignature || company?.pharmacistSignature) ? (
+              <img src={co.pharmacistSignature || company?.pharmacistSignature} alt="Registered pharmacist signature" className="h-12 w-auto max-w-[180px] object-contain mx-auto my-1 bg-white p-1 rounded" />
+            ) : (
+              <div className="h-12"></div>
+            )}
+            <p className="text-[11px] font-bold">Registered Pharmacist</p>
+            {(co.pharmacistName || company?.pharmacistName) && <p className="text-[10px] font-semibold">{co.pharmacistName || company?.pharmacistName}</p>}
+            {(co.pharmacistRegNo || company?.pharmacistRegNo) && <p className="text-[10px] font-mono text-slate-500">Reg No: {co.pharmacistRegNo || company?.pharmacistRegNo}</p>}
+            <p className="text-[10px] text-slate-400 border-t border-slate-300 pt-1 mt-1 px-4">Authorised Signatory</p>
           </div>
         </div>
       </div>
