@@ -28,7 +28,7 @@ async function seed() {
       state: 'West Bengal',
       pincode: '712224',
       phone: '8584885450',
-      email: 'calcuttanode@gmail.com',
+      email: 'calcuttarx@gmail.com',
       gstin: '19AABCC1234H1Z5',
       pan: 'AABCC1234H',
       dlNo: 'WB/HUG/DL/2025/20471',

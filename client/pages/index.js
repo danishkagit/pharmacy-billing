@@ -211,7 +211,7 @@ export default function Landing() {
             logo: { '@type': 'ImageObject', url: SITE + '/logo.png', width: 1254, height: 1254 },
             sameAs: ['https://www.instagram.com/calcuttanode/', 'https://www.linkedin.com/in/danishshoaib-in/', 'https://wa.me/918584885450'],
             address: { '@type': 'PostalAddress', addressLocality: 'Kolkata', addressRegion: 'West Bengal', addressCountry: 'IN' },
-            contactPoint: [{ '@type': 'ContactPoint', contactType: 'customer support', telephone: '+91-85848-85450', email: 'calcuttanode@gmail.com', availableLanguage: ['en', 'bn', 'hi'], areaServed: 'IN-WB', url: SITE + '/' }],
+            contactPoint: [{ '@type': 'ContactPoint', contactType: 'customer support', telephone: '+91-85848-85450', email: 'calcuttarx@gmail.com', availableLanguage: ['en', 'bn', 'hi'], areaServed: 'IN-WB', url: SITE + '/' }],
           },
           {
             '@type': 'LocalBusiness',
@@ -220,7 +220,7 @@ export default function Landing() {
             alternateName: 'CalcuttaRx',
             url: SITE + '/',
             telephone: '+91-85848-85450',
-            email: 'calcuttanode@gmail.com',
+            email: 'calcuttarx@gmail.com',
             priceRange: '\u20B9799 - \u20B91299',
             foundingDate: '2025',
             founder: { '@type': 'Person', name: 'Danish Shoaib', sameAs: 'https://www.linkedin.com/in/danishshoaib-in/' },
@@ -697,7 +697,7 @@ export default function Landing() {
               <p className="text-xs text-slate-500 leading-relaxed"><BrandWordmark className="text-slate-700 dark:text-slate-300 text-xs" /> — Bengal-er chemist-er jonno. Cloud-e billing. GST-e tension-free.</p>
               <p className="text-xs text-slate-400 mt-1">Cloud pharmacy billing built in Kolkata, for West Bengal. Bill faster. Waste less. File GST without fear.</p>
               <p className="mt-3 text-xs text-slate-500 leading-relaxed">
-                <a href="tel:+918584885450" className="hover:text-pharma-600 font-mono">+91 85848 85450</a> · <a href="mailto:calcuttanode@gmail.com" className="hover:text-pharma-600">calcuttanode@gmail.com</a>
+                <a href="tel:+918584885450" className="hover:text-pharma-600 font-mono">+91 85848 85450</a> · <a href="mailto:calcuttarx@gmail.com" className="hover:text-pharma-600">calcuttarx@gmail.com</a>
               </p>
             </div>
             <div>
