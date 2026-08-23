@@ -48,17 +48,20 @@ export default function LoginPage() {
           </p>
           <div className="mt-10 grid grid-cols-2 gap-3 max-w-[30rem]">
             {[
-              { icon: 'file-invoice-dollar', title: 'GST 2.0 Ready', desc: 'Nil · 5% · 18% · 40% auto' },
-              { icon: 'shield-halved', title: 'Schedule H Compliant', desc: 'H / H1 / X & Narcotics' },
-              { icon: 'boxes-stacked', title: 'Batch & Expiry', desc: 'Expiry alerts by batch' },
-              { icon: 'chart-line', title: 'Owner Reports', desc: 'Sales · P&L · Outstanding' },
+              { title: 'GST 2.0 Ready', desc: 'Nil · 5% · 18% · 40% auto', img: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=260&fit=crop&auto=format', alt: 'GST invoice billing — pharmacy tax invoice with GST calculation' },
+              { title: 'Schedule H Compliant', desc: 'H / H1 / X & Narcotics', img: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&h=260&fit=crop&auto=format', alt: 'Pharmacy compliance shield — Schedule H prescription validation' },
+              { title: 'Batch & Expiry', desc: 'Expiry alerts by batch', img: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400&h=260&fit=crop&auto=format', alt: 'Pharmacy batch and expiry tracking — medicine stock shelves' },
+              { title: 'Owner Reports', desc: 'Sales · P&L · Outstanding', img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=260&fit=crop&auto=format', alt: 'Pharmacy owner reports — sales and profit analytics dashboard' },
             ].map((item) => (
-              <div key={item.title} className="rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600 transition-all">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/25 border border-emerald-100 dark:border-emerald-800/30 flex items-center justify-center mb-3">
-                  <i className={`fas fa-${item.icon} text-emerald-600 dark:text-emerald-400 text-[15px]`}></i>
+              <div key={item.title} className="group rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-lg hover:border-slate-300 dark:hover:border-slate-600 transition-all">
+                <div className="h-[96px] overflow-hidden bg-slate-100 dark:bg-slate-700 relative">
+                  <img src={item.img} alt={item.alt} loading="lazy" className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent"></div>
                 </div>
-                <p className="text-sm font-bold text-slate-800 dark:text-white leading-tight">{item.title}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-snug">{item.desc}</p>
+                <div className="p-3.5">
+                  <p className="text-sm font-bold text-slate-800 dark:text-white leading-tight">{item.title}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-snug">{item.desc}</p>
+                </div>
               </div>
             ))}
           </div>
