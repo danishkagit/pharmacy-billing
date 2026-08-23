@@ -9,9 +9,9 @@ const faqs = [
   { q: 'Is this GST 2.0 pharmacy billing software ready for Nil/5%/18%/40% slabs?', a: 'Yes — CalcuttaRx is GST 2.0 ready pharmacy billing software. It auto-picks Nil, 5%, 18% and 40% by HSN, applies CGST/SGST for West Bengal and IGST out-of-state, prints Rule 46 invoices, and exports GSTR-1, GSTR-3B & HSN Table 12 for your CA — no manual math.' },
   { q: 'Can you move my old stock & party data from Marg or Tally?', a: 'That\u2019s our job. Send us your CSV / Excel / Marg backup. We import medicines, batches with expiry, customers & suppliers. Most Kolkata shops start billing the same day. First import is free with onboarding — no data entry operator needed.' },
   { q: 'What if my internet goes down at the counter?', a: 'CalcuttaRx is cloud pharmacy billing software, so billing needs internet. But saved data is never lost — every bill is auto-saved. For short cuts, a \u20B9150 mobile hotspot keeps you billing. Unlike desktop dongles that crash and lose the day\u2019s sale, your GSTR data stays safe.' },
-  { q: 'Can CalcuttaRx handle wholesale pharmacy billing and retail POS together?', a: 'Yes — same login runs retail POS (3-second thermal billing) and wholesale pharmacy billing (bulk invoices, credit/udhaar khata, party-wise outstanding, delivery challans, scheme & free quantity). Switch modes instantly — ideal for Bagri Market distributors and College Street wholesalers.' },
+  { q: 'Can I offer credit/udhaar to regular retail customers?', a: 'Yes — retail customer khata with credit limit, credit days and overdue alerts. Set credit for trusted patients, track outstanding per customer, and send WhatsApp reminders — built for neighbourhood chemist counters.' },
   { q: 'Do you support Schedule H and H1 prescription tracking for medical stores?', a: 'Yes — every bill links patient + doctor + prescription photo (webcam/phone/PDF) to the invoice. This Schedule H software flags Schedule H/H1 drugs at billing, keeps a searchable prescription registry for inspection, and stores data audit-logged per branch.' },
-  { q: 'What is pharmacy billing software price in Kolkata? Is there a free trial?', a: 'Start free for 14 days — no card. Then pharmacy billing software price is \u20B9799/shop/mo (Starter, 1 branch) or \u20B91,299 for wholesale + retail (Growth, 5 users) when billed yearly — save 20%. Includes GST 2.0 billing, batch & expiry tracking, GSTR-1/3B, prescription registry and Bangla/Hindi/English support. Chain plans custom. No hidden AMC, no invoice caps like Marg.' },
+  { q: 'What is pharmacy billing software price in Kolkata? Is there a free trial?', a: 'Start free for 14 days — no card. Then pharmacy billing software price is \u20B9799/shop/mo (Starter, 1 branch) or \u20B91,299 for Growth (5 users, multi-counter retail) when billed yearly — save 20%. Includes GST 2.0 billing, batch & expiry tracking, GSTR-1/3B, prescription registry and Bangla/Hindi/English support. Chain plans custom. No hidden AMC, no invoice caps like Marg.' },
   // ── New long-tail FAQs for comparison & specialty intent ────────────
   { q: 'Marg vs CalcuttaRx — which pharmacy billing software is better for Kolkata chemists?', a: 'Marg needs dongle/AMC and manual GST 2.0 updates; CalcuttaRx is cloud pharmacy billing software with auto Nil/5%/18%/40% by HSN, no dongle, free data import from Marg/Tally, and WhatsApp support in Bangla. Pricing from \u20B9799 vs Marg \u20B912k+/yr AMC. Most Bengal shops switch in one afternoon.' },
   { q: 'How does batch and expiry tracking work? Will it alert before medicines expire?', a: 'This batch expiry tracking software captures batch number + expiry on every purchase. The dashboard flags stock expiring in 30/60/90 days, batch-wise and rack-wise, with auto return list to supplier — shops save \u20B92–3 lakh yearly. Works for barcode scan and bulk Excel import.' },
@@ -48,16 +48,16 @@ const features = [
   {
     id: 'reports',
     label: 'Reports',
-    h2: 'Wholesale Billing & Owner Reports — Profit on Your Phone',
+    h2: 'Owner Reports — Profit on Your Phone',
     icon: 'chart-line',
-    body: 'Wholesale pharmacy billing and retail reporting in one place. Check today\u2019s sale from home, chase party-wise udhaar before month-end, and know your real profit per branch — without calling the accountant.',
-    bullets: ['Wholesale billing + daily sale & profit on mobile — branch-wise margins', 'Recover udhaar faster — party khata with credit days & overdue alerts', 'Track every rupee out — payments & kharchi against supplier/party', 'One login for all branches — consolidated view for chains from Kolkata to Siliguri'],
+    body: 'Retail reporting you can check from home — today\u2019s sale, party-wise udhaar before month-end, and real profit per branch — without calling the accountant.',
+    bullets: ['Daily sale & profit on mobile — branch-wise margins for retail counters', 'Recover udhaar faster — retail customer khata with credit days & overdue alerts', 'Track every rupee out — payments & kharchi against suppliers', 'One login for all branches — consolidated view for chains from Kolkata to Siliguri'],
   },
 ];
 
 const testimonials = [
   { name: 'Amitava Ghosh', shop: 'Ghosh Medical Hall — College Street, Kolkata', tag: 'Retail · 18 yrs', quote: 'GSTR file korte 2 din lagto, ekhon 20 minute. GST 2.0 slab niye aar tension nei.', trans: 'It took 2 days to file GSTR — now 20 minutes. No more GST 2.0 tension.' },
-  { name: 'Sk. Riazuddin', shop: 'Rahmania Pharmacy — Howrah Maidan', tag: 'Wholesale + Retail', quote: 'Expiry list agey khata dekhe khujtam. Ekhon dashboard-ei dekhiye dey — 3 lakh taka loss beche geche.', trans: 'We used to hunt expiry in the khata. Now the dashboard shows it — saved \u20B93 lakh.' },
+  { name: 'Sk. Riazuddin', shop: 'Rahmania Pharmacy — Howrah Maidan', tag: 'Retail · Howrah', quote: 'Expiry list agey khata dekhe khujtam. Ekhon dashboard-ei dekhiye dey — 3 lakh taka loss beche geche.', trans: 'We used to hunt expiry in the khata. Now the dashboard shows it — saved \u20B93 lakh.' },
   { name: 'Mithu Das', shop: 'Das Pharma Chain — Siliguri', tag: '2 Branches', quote: 'Dui dokan er stock ek phone-e dekhi. Siliguri theke Jalpaiguri transfer ek click-e.', trans: 'Both shops\u2019 stock on one phone. Siliguri \u2192 Jalpaiguri transfer in one click.' },
 ];
 
@@ -71,7 +71,7 @@ const comparisonRows = [
 
 const pricing = [
   { name: 'Starter', sub: 'For your first shop', price: 799, popular: false, cta: 'Start Free Trial', features: ['1 Branch · 2 Users', 'Unlimited bills', 'GST 2.0 + Rule 46 invoices', 'Batch & expiry tracking', 'GSTR-1 / 3B reports'] },
-  { name: 'Growth', sub: 'For busy retail + wholesale', price: 1299, popular: true, cta: 'Book a Free Demo', features: ['Everything in Starter', '5 Users', 'Wholesale + udhaar khata', 'Prescription registry', 'Barcode printing', 'WhatsApp priority support'] },
+  { name: 'Growth', sub: 'For busy retail counters', price: 1299, popular: true, cta: 'Book a Free Demo', features: ['Everything in Starter', '5 Users', 'Retail customer khata (udhaar)', 'Prescription registry', 'Barcode printing', 'WhatsApp priority support'] },
   { name: 'Enterprise', sub: 'For chains & hospitals', price: null, popular: false, cta: 'Talk to Kolkata Team', features: ['Everything in Growth', 'Unlimited branches & users', 'Multi-branch stock transfer', 'Role permissions & audit log', 'Priority onboarding & SLA'] },
 ];
 
@@ -227,7 +227,7 @@ export default function Landing() {
               name: 'CalcuttaRx Plans',
               itemListElement: [
                 { '@type': 'Offer', name: 'Starter — Pharmacy Billing Software', price: '799', priceCurrency: 'INR', availability: 'https://schema.org/InStock', url: SITE + '/#pricing', description: '1 branch, 2 users, unlimited bills' },
-                { '@type': 'Offer', name: 'Growth — Wholesale + Retail', price: '1299', priceCurrency: 'INR', availability: 'https://schema.org/InStock', url: SITE + '/#pricing' },
+                { '@type': 'Offer', name: 'Growth — Retail (5 Users)', price: '1299', priceCurrency: 'INR', availability: 'https://schema.org/InStock', url: SITE + '/#pricing' },
                 { '@type': 'Offer', name: '14-day Free Trial', price: '0', priceCurrency: 'INR', availability: 'https://schema.org/InStock', description: '14-day free trial, no card, includes migration & training', url: SITE + '/#pricing' },
               ],
             },
@@ -424,14 +424,14 @@ export default function Landing() {
 
         {/* Who it's for */}
         <section id="who" className="max-w-5xl mx-auto px-5 pb-12">
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-2 text-center">Made for Medical Stores in West Bengal — Retail, Wholesale &amp; Chains</h2>
-          <p className="text-sm text-slate-500 text-center mb-6 max-w-2xl mx-auto">Whether you run a para medicine shop or a wholesale hub in Bagri Market — this medical store billing software fits your counter.</p>
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-2 text-center">Made for Retail Medical Stores in West Bengal</h2>
+          <p className="text-sm text-slate-500 text-center mb-6 max-w-2xl mx-auto">Whether you run a single para medicine shop or a 5-store retail chain — this retail pharmacy billing software fits your counter.</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               ['store', 'Retail Chemist', 'Fast POS for the evening rush, prescription photo & expiry alerts. Ideal from Shyambazar to Siliguri.'],
-              ['truck', 'Wholesaler', 'Bulk invoicing, credit days, party khata & delivery challans. 500 bills before lunch.'],
+              ['clock', 'Neighbourhood 24/7 Store', 'Quick billing for walk-in patients, loyalty points & khata for regulars.'],
               ['hospital-user', 'Hospital Dispensary', 'Patient + doctor + Schedule H prescription linked per dispense. H/H1 validation & audit trail.'],
-              ['code-branch', '2–20 Store Chain', 'One owner login, per-branch stock, consolidated P&L. Pharmacy chain software.'],
+              ['code-branch', '2–20 Store Retail Chain', 'One owner login, per-branch stock, consolidated P&L. Retail chain software.'],
             ].map(([icon, t, d], i) => (
               <div key={i} className="app-card app-card-hover p-5">
                 <div className="color-block color-block-sm grad-brand text-white mb-3"><i className={`fas fa-${icon} text-xs`}></i></div>

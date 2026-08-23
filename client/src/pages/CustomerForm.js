@@ -16,7 +16,7 @@ export default function CustomerForm() {
       API.get(`/customers/${id}`).then(res => {
         if (res.success) {
           const c = res.data;
-          setForm({ name: c.name, type: c.type, phone: c.phone || '', email: c.email || '', gstin: c.gstin || '', pan: c.pan || '', address: c.address || '', city: c.city || '', state: c.state || '', pincode: c.pincode || '', creditLimit: c.creditLimit, creditDays: c.creditDays, dob: c.dob ? c.dob.split('T')[0] : '', notes: c.notes || '' });
+          setForm({ name: c.name, type: 'retail', phone: c.phone || '', email: c.email || '', gstin: c.gstin || '', pan: c.pan || '', address: c.address || '', city: c.city || '', state: c.state || '', pincode: c.pincode || '', creditLimit: c.creditLimit, creditDays: c.creditDays, dob: c.dob ? c.dob.split('T')[0] : '', notes: c.notes || '' });
         }
       }).catch(err => setError(err?.error || 'Failed to load'));
     }
@@ -39,7 +39,8 @@ export default function CustomerForm() {
     setLoading(true);
     setError('');
     try {
-      const res = isEdit ? await API.put(`/customers/${id}`, form) : await API.post('/customers', form);
+      const payload = { ...form, type: 'retail' };
+      const res = isEdit ? await API.put(`/customers/${id}`, payload) : await API.post('/customers', payload);
       if (res.success) navigate('/customers');
     } catch (err) { setError(err?.error || 'Failed to save'); }
     finally { setLoading(false); }
@@ -53,7 +54,7 @@ export default function CustomerForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Name *</label><input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required className="glass-input" /></div>
-            <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Type</label><select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} className="glass-select"><option value="retail">Retail</option><option value="wholesale">Wholesale</option><option value="both">Both</option></select></div>
+            <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Type</label><div className="glass-input flex items-center bg-slate-50 dark:bg-slate-800 font-medium">Retail — Walk-in Customer</div></div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Phone</label><input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="glass-input" /></div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Email</label><input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="glass-input" /></div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">GSTIN</label><input value={form.gstin} onChange={e => setForm({ ...form, gstin: e.target.value })} className="glass-input uppercase" /></div>

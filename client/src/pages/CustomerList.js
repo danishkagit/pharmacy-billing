@@ -7,13 +7,12 @@ export default function CustomerList() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [type, setType] = useState('');
 
   useEffect(() => {
-    API.get('/customers', { params: { search, type: type || undefined, limit: 200 } }).then(res => {
+    API.get('/customers', { params: { search: search || undefined, limit: 200 } }).then(res => {
       if (res.success) setCustomers(res.data);
     }).catch(console.error).finally(() => setLoading(false));
-  }, [search, type]);
+  }, [search]);
 
   const columns = [
     {
@@ -33,13 +32,7 @@ export default function CustomerList() {
       label: 'Type',
       className: 'text-center',
       tdClass: 'p-3 text-center',
-      render: c => {
-        let cls = 'badge badge-blue';
-        if (c.type === 'wholesale') cls = 'badge badge-purple';
-        else if (c.type === 'both') cls = 'badge badge-green';
-        else if (c.type === 'retail') cls = 'badge badge-gray';
-        return <span className={cls}>{c.type}</span>;
-      }
+      render: c => <span className="badge badge-blue">Retail</span>
     },
     {
       key: 'creditLimit',
@@ -78,11 +71,7 @@ export default function CustomerList() {
       </PageHeader>
       <GlassCard className="mb-6">
         <div className="flex gap-4 mb-4">
-          <input placeholder="Search by name or phone..." value={search} onChange={e => setSearch(e.target.value)} className="glass-input flex-1" />
-          <select value={type} onChange={e => setType(e.target.value)} className="glass-input w-40">
-            <option value="">All Types</option>
-            <option value="retail">Retail</option><option value="wholesale">Wholesale</option><option value="both">Both</option>
-          </select>
+          <input placeholder="Search by name or phone — retail customers..." value={search} onChange={e => setSearch(e.target.value)} className="glass-input flex-1" />
         </div>
         <div className="overflow-x-auto">
           <GlassTable columns={columns} data={customers} loading={loading} emptyMessage="No customers found" />

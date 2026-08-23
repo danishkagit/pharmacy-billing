@@ -216,7 +216,7 @@ export default function SaleInvoiceView() {
           <h3 className={`inline-block px-3 py-1 border-2 border-slate-800 rounded font-bold tracking-widest ${template === 'a5' ? 'text-xs' : 'text-sm'}`}>
             {isComposition ? 'BILL OF SUPPLY' : 'TAX INVOICE'}
           </h3>
-          <p className="text-[10px] text-slate-400 mt-1">{invoice.type === 'wholesale' ? 'Wholesale Sale' : 'Retail Sale'}{copies > 1 ? ` • Copy 1 of ${copies}` : ''}</p>
+          <p className="text-[10px] text-slate-400 mt-1">Retail Sale{copies > 1 ? ` • Copy 1 of ${copies}` : ''}</p>
         </div>
       </div>
 

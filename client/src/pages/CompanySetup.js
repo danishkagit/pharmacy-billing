@@ -5,13 +5,13 @@ import { PageHeader, GlassCard } from '../components/ui';
 
 export default function CompanySetup() {
   const { company } = useAuth();
-  const [form, setForm] = useState({ name: '', legalName: '', address: '', city: '', state: '', pincode: '', phone: '', email: '', gstin: '', pan: '', dlNo: '', dlNoWholesale: '', fssaiNo: '', dlExpiryDate: '', fssaiExpiryDate: '', drugLicenseCategory: 'both', invoiceNote: '', upiId: '', bankName: '', bankAccountNo: '', bankIfsc: '' });
+  const [form, setForm] = useState({ name: '', legalName: '', address: '', city: '', state: '', pincode: '', phone: '', email: '', gstin: '', pan: '', dlNo: '', dlNoWholesale: '', fssaiNo: '', dlExpiryDate: '', fssaiExpiryDate: '', drugLicenseCategory: 'retail', invoiceNote: '', upiId: '', bankName: '', bankAccountNo: '', bankIfsc: '' });
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (company) {
-      setForm({ name: company.name || '', legalName: company.legalName || '', address: company.address || '', city: company.city || '', state: company.state || '', pincode: company.pincode || '', phone: company.phone || '', email: company.email || '', gstin: company.gstin || '', pan: company.pan || '', dlNo: company.dlNo || '', dlNoWholesale: company.dlNoWholesale || '', fssaiNo: company.fssaiNo || '', dlExpiryDate: company.dlExpiryDate ? company.dlExpiryDate.split('T')[0] : '', fssaiExpiryDate: company.fssaiExpiryDate ? company.fssaiExpiryDate.split('T')[0] : '', drugLicenseCategory: company.drugLicenseCategory || 'both', invoiceNote: company.invoiceNote || 'Thank you for your business!', upiId: company.upiId || '', bankName: company.bankName || '', bankAccountNo: company.bankAccountNo || '', bankIfsc: company.bankIfsc || '' });
+      setForm({ name: company.name || '', legalName: company.legalName || '', address: company.address || '', city: company.city || '', state: company.state || '', pincode: company.pincode || '', phone: company.phone || '', email: company.email || '', gstin: company.gstin || '', pan: company.pan || '', dlNo: company.dlNo || '', dlNoWholesale: company.dlNoWholesale || '', fssaiNo: company.fssaiNo || '', dlExpiryDate: company.dlExpiryDate ? company.dlExpiryDate.split('T')[0] : '', fssaiExpiryDate: company.fssaiExpiryDate ? company.fssaiExpiryDate.split('T')[0] : '', drugLicenseCategory: 'retail', invoiceNote: company.invoiceNote || 'Thank you for your business!', upiId: company.upiId || '', bankName: company.bankName || '', bankAccountNo: company.bankAccountNo || '', bankIfsc: company.bankIfsc || '' });
     }
   }, [company]);
 
@@ -49,14 +49,11 @@ export default function CompanySetup() {
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">GSTIN</label><input value={form.gstin} onChange={e => setForm({ ...form, gstin: e.target.value })} className="glass-input uppercase" /></div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">PAN</label><input value={form.pan} onChange={e => setForm({ ...form, pan: e.target.value })} className="glass-input uppercase" /></div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">DL No — Retail (Form 20/21)</label><input value={form.dlNo} onChange={e => setForm({ ...form, dlNo: e.target.value })} className="glass-input uppercase" /></div>
-            <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">DL No — Wholesale (Form 20-B/21-B)</label><input value={form.dlNoWholesale} onChange={e => setForm({ ...form, dlNoWholesale: e.target.value })} className="glass-input uppercase" /></div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">DL Expiry</label><input type="date" value={form.dlExpiryDate} onChange={e => setForm({ ...form, dlExpiryDate: e.target.value })} className="glass-input" /></div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">FSSAI No</label><input value={form.fssaiNo} onChange={e => setForm({ ...form, fssaiNo: e.target.value })} className="glass-input" /></div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">FSSAI Expiry</label><input type="date" value={form.fssaiExpiryDate} onChange={e => setForm({ ...form, fssaiExpiryDate: e.target.value })} className="glass-input" /></div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">License Category</label>
-              <select value={form.drugLicenseCategory} onChange={e => setForm({ ...form, drugLicenseCategory: e.target.value })} className="glass-select">
-                <option value="retail">Retail</option><option value="wholesale">Wholesale</option><option value="both">Both</option>
-              </select>
+              <div className="glass-input flex items-center bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">Retail — Chemist Counter</div>
             </div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Phone</label><input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="glass-input" /></div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Email</label><input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="glass-input" /></div>

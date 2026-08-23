@@ -15,57 +15,28 @@ export const MODE_META = {
     chipClass: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
     dotClass: 'bg-emerald-500',
   },
-  wholesale: {
-    id: 'wholesale',
-    label: 'Wholesale Desk',
-    shortLabel: 'Wholesale',
-    icon: 'truck-ramp-box',
-    tagline: 'B2B invoicing · Purchases · Distributor credit',
-    chipClass: 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30',
-    dotClass: 'bg-blue-500',
-  },
 };
 
 export function WorkspaceProvider({ children }) {
-  const { company } = useAuth();
+  // Retail-only build — single workspace mode. Company category is forced to retail elsewhere.
+  const availableModes = useMemo(() => ['retail'], []);
+  const isDual = false;
 
-  const category = company?.drugLicenseCategory || 'both';
+  const [mode, setModeState] = useState('retail');
 
-  const availableModes = useMemo(() => {
-    if (category === 'retail') return ['retail'];
-    if (category === 'wholesale') return ['wholesale'];
-    return ['retail', 'wholesale'];
-  }, [category]);
-
-  const isDual = availableModes.length > 1;
-
-  const [mode, setModeState] = useState(() => {
+  // Keep any legacy stored wholesale value harmlessly migrated to retail
+  useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved === 'retail' || saved === 'wholesale') return saved;
+      if (saved && saved !== 'retail') localStorage.setItem(STORAGE_KEY, 'retail');
     } catch {}
-    return 'retail';
-  });
-
-  // Clamp stored mode to what the company's drug license actually permits
-  useEffect(() => {
-    setModeState(prev => (availableModes.includes(prev) ? prev : availableModes[0]));
-  }, [availableModes]);
-
-  const setMode = useCallback((next) => {
-    setModeState(next);
-    try { localStorage.setItem(STORAGE_KEY, next); } catch {}
   }, []);
 
-  const toggleMode = useCallback(() => {
-    setModeState(prev => {
-      const next = prev === 'retail' ? 'wholesale' : 'retail';
-      try { localStorage.setItem(STORAGE_KEY, next); } catch {}
-      return next;
-    });
-  }, []);
+  const setMode = useCallback(() => {}, []);
 
-  const isWholesale = mode === 'wholesale';
+  const toggleMode = useCallback(() => {}, []);
+
+  const isWholesale = false;
 
   return (
     <WorkspaceContext.Provider value={{ mode, setMode, toggleMode, availableModes, isDual, isWholesale, meta: MODE_META[mode] }}>

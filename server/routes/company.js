@@ -29,6 +29,8 @@ router.put('/', rbac('owner', 'admin'), async (req, res) => {
     for (const key of EDITABLE_KEYS) {
       if (req.body[key] !== undefined) patch[key] = req.body[key];
     }
+    // Retail-only build — force license category to retail
+    patch.drugLicenseCategory = 'retail';
     const company = await Company.findByIdAndUpdate(req.company._id, patch, { new: true, runValidators: true });
     if (!company) return res.status(404).json({ success: false, error: 'Company not found' });
     res.json({ success: true, data: company });

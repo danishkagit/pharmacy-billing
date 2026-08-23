@@ -15,7 +15,7 @@ const companySchema = new mongoose.Schema({
   fssaiNo: { type: String, trim: true },
   dlExpiryDate: { type: Date },
   fssaiExpiryDate: { type: Date },
-  drugLicenseCategory: { type: String, enum: ['retail', 'wholesale', 'both'], default: 'both' },
+  drugLicenseCategory: { type: String, enum: ['retail', 'wholesale', 'both'], default: 'retail' },
   logo: { type: String },
   invoicePrefix: { type: String, default: 'PH' },
   invoiceNote: { type: String, default: 'Thank you for your business!' },

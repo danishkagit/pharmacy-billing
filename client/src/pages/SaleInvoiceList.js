@@ -1,30 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../utils/api';
-import { PageHeader, GlassCard, GlassTable, GlassTabs } from '../components/ui';
+import { PageHeader, GlassCard, GlassTable } from '../components/ui';
 
 export default function SaleInvoiceList() {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
-  const [type, setType] = useState('');
 
   useEffect(() => {
     const params = {};
     if (from) params.from = from;
     if (to) params.to = to;
-    if (type) params.type = type;
     API.get('/sale-invoices', { params }).then(res => {
       if (res.success) setInvoices(res.data);
     }).catch(console.error).finally(() => setLoading(false));
-  }, [from, to, type]);
-
-  const tabs = [
-    { key: '', label: 'All' },
-    { key: 'retail', label: 'Retail' },
-    { key: 'wholesale', label: 'Wholesale' },
-  ];
+  }, [from, to]);
 
   const statusColor = {
     paid: 'green',
@@ -37,7 +29,7 @@ export default function SaleInvoiceList() {
     { label: 'Customer', className: 'text-left', render: row => row.customerName || row.customer?.name || 'Walk-in', tdClass: '' },
     {
       label: 'Type', className: 'text-center', tdClass: 'text-center',
-      render: row => <span className={`badge badge-${row.type === 'wholesale' ? 'purple' : 'blue'}`}>{row.type}</span>,
+      render: () => <span className="badge badge-blue">Retail</span>,
     },
     {
       label: 'Date', className: 'text-left', tdClass: 'text-gray-500',
@@ -69,7 +61,6 @@ export default function SaleInvoiceList() {
         <div className="flex flex-wrap gap-4 mb-4 items-center">
           <input type="date" value={from} onChange={e => setFrom(e.target.value)} className="glass-input" />
           <input type="date" value={to} onChange={e => setTo(e.target.value)} className="glass-input" />
-          <GlassTabs tabs={tabs} active={type} onChange={setType} />
         </div>
         <GlassTable columns={columns} data={invoices} loading={loading} emptyMessage="No sale invoices found" />
       </GlassCard>

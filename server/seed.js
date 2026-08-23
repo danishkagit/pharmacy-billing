@@ -34,7 +34,7 @@ async function seed() {
       dlNo: 'WB/HUG/DL/2025/20471',
       fssaiNo: '12824998000123',
       dlExpiryDate: new Date('2030-12-31'),
-      drugLicenseCategory: 'both',
+      drugLicenseCategory: 'retail',
       upiId: 'calcuttarx@ybl',
       bankName: 'State Bank of India',
       declarationNote: 'Goods once sold will not be taken back or exchanged.',
@@ -112,8 +112,8 @@ async function seed() {
     const customers = await Customer.insertMany([
       { name: 'Rajesh Sharma', phone: '9999999901', type: 'retail', city: 'Pune', loyaltyPoints: 150, companyRef: company._id },
       { name: 'Priya Patel', phone: '9999999902', type: 'retail', city: 'Pune', loyaltyPoints: 75, companyRef: company._id },
-      { name: 'Suresh Medicals', phone: '9999999903', gstin: '27AABCC7890H1Z5', type: 'wholesale', city: 'Pune', creditLimit: 50000, creditDays: 30, companyRef: company._id },
-      { name: 'Aarav Health Store', phone: '9999999904', gstin: '27AABCC2345H1Z5', type: 'wholesale', city: 'Mumbai', creditLimit: 75000, creditDays: 45, companyRef: company._id },
+      { name: 'Suresh Medicals', phone: '9999999903', gstin: '27AABCC7890H1Z5', type: 'retail', city: 'Pune', creditLimit: 50000, creditDays: 30, companyRef: company._id },
+      { name: 'Aarav Health Store', phone: '9999999904', gstin: '27AABCC2345H1Z5', type: 'retail', city: 'Mumbai', creditLimit: 75000, creditDays: 45, companyRef: company._id },
       { name: 'Mrs. Meera Joshi', phone: '9999999905', type: 'retail', city: 'Pune', isChronicPatient: true, chronicConditions: ['Diabetes', 'Hypertension'], dob: new Date('1980-05-15'), loyaltyPoints: 320, companyRef: company._id }
     ]);
     console.log(`${customers.length} customers created`);

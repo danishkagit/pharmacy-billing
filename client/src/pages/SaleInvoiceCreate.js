@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import API from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import { useWorkspace } from '../context/WorkspaceContext';
 import { PageHeader, GlassCard, GlassModal } from '../components/ui';
 import MedicinePicker from '../components/MedicinePicker';
 import { GST_SLABS, DEFAULT_MEDICINE_GST, amountInWords, inclusiveBreakup, rateWiseSummary, STATE_CODES, isInterStateSupply } from '../utils/gst';
@@ -11,29 +10,17 @@ const HOLD_KEY = 'ph_held_bills';
 
 export default function SaleInvoiceCreate() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { company } = useAuth();
-  const { isWholesale: wsWholesale } = useWorkspace();
-  const isRetail = company?.drugLicenseCategory === 'retail' || company?.drugLicenseCategory === 'both';
-  const isWholesale = company?.drugLicenseCategory === 'wholesale' || company?.drugLicenseCategory === 'both';
 
   const [customers, setCustomers] = useState([]);
   const [prescriptions, setPrescriptions] = useState([]);
   const [batches, setBatches] = useState({});
   const [form, setForm] = useState({
-    type: (() => {
-      const qType = searchParams.get('type');
-      if ((qType === 'wholesale' && isWholesale) || (qType === 'retail' && isRetail)) return qType;
-      // Fall back to the active workspace desk
-      if (!isRetail && isWholesale) return 'wholesale';
-      if (isRetail && !isWholesale) return 'retail';
-      return wsWholesale ? 'wholesale' : 'retail';
-    })(),
+    type: 'retail',
     customer: '', customerName: '', customerPhone: '', customerGstin: '',
     prescription: '', prescriptionNo: '', doctorName: '', patientName: '',
     invoiceDate: new Date().toISOString().split('T')[0], dueDate: '',
-    paymentMode: 'cash', notes: '',
-    creditDays: 0, billingAddress: '', deliveryAddress: ''
+    paymentMode: 'cash', notes: ''
   });
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -132,7 +119,7 @@ export default function SaleInvoiceCreate() {
   const totalMRP = items.reduce((s, i) => s + (i.qty || 0) * (i.mrp || i.rate || 0), 0);
   const slabs = (company?.discountSlabs && company.discountSlabs.length) ? company.discountSlabs : [{ minMRP: 0, discountPercent: 10 }, { minMRP: 100, discountPercent: 15 }];
   const slab = [...slabs].filter(s => totalMRP >= (s.minMRP || 0)).sort((a, b) => (b.minMRP || 0) - (a.minMRP || 0))[0];
-  const customerDiscountPercent = form.type === 'wholesale' ? 0 : (slab?.discountPercent || 0);
+  const customerDiscountPercent = (slab?.discountPercent || 0);
   const customerDiscount = subtotal > 0 ? (subtotal * customerDiscountPercent) / 100 : 0;
   const invoiceBase = Math.max(0, subtotal - customerDiscount);
   const totalAmount = Math.round(invoiceBase);
@@ -411,21 +398,9 @@ export default function SaleInvoiceCreate() {
 
   return (
     <div className="space-y-6">
-      <PageHeader icon="cash-register" title={form.type === 'retail' ? 'New Retail Sale' : 'New Wholesale Invoice'}
+      <PageHeader icon="cash-register" title="New Retail Sale"
         subtitle={<span>Create a new sale invoice with medicine items <span className="ml-2 text-[10px] text-slate-400 hidden md:inline">Shortcuts: F2 add item · F9 hold · F10 recall · Ctrl+Enter save</span></span>}>
         <div className="flex gap-2">
-          {isRetail && isWholesale && (
-            <div className="glass-tabs inline-flex bg-white/60 border border-gray-200/60 rounded-morph-xs p-0.5">
-              <button type="button" onClick={() => setForm({ ...form, type: 'retail' })}
-                className={`px-3 py-1.5 rounded-morph-xs text-xs font-medium transition-all ${form.type === 'retail' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-500'}`}>
-                <i className="fas fa-store mr-1"></i>Retail
-              </button>
-              <button type="button" onClick={() => setForm({ ...form, type: 'wholesale' })}
-                className={`px-3 py-1.5 rounded-morph-xs text-xs font-medium transition-all ${form.type === 'wholesale' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-500'}`}>
-                <i className="fas fa-warehouse mr-1"></i>Wholesale
-              </button>
-            </div>
-          )}
           <button type="button" onClick={holdBill} className="btn-secondary text-xs py-2" title="Hold current bill (F9)">
             <i className="fas fa-pause mr-1"></i>Hold{heldBills.length > 0 && <span className="ml-1 badge badge-yellow">{heldBills.length}</span>}
           </button>
@@ -474,11 +449,9 @@ export default function SaleInvoiceCreate() {
                   <option value="">Walk-in Customer</option>
                   {customers.map(c => <option key={c._id} value={c._id}>{c.name} {c.phone ? `(${c.phone})` : ''}</option>)}
                 </select>
-                {isRetail && (
-                  <button type="button" onClick={() => setShowQuickCustomer(true)} className="btn-ghost px-2" title="Quick Add Customer">
-                    <i className="fas fa-plus"></i>
-                  </button>
-                )}
+                <button type="button" onClick={() => setShowQuickCustomer(true)} className="btn-ghost px-2" title="Quick Add Customer">
+                  <i className="fas fa-plus"></i>
+                </button>
               </div>
             </div>
             <div>
@@ -500,9 +473,8 @@ export default function SaleInvoiceCreate() {
             </div>
           </div>
 
-          {/* Prescription Info (retail) */}
-          {(isRetail || form.type === 'retail') && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Prescription Info */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Prescription</label>
                 <select value={form.prescription} onChange={e => handlePrescriptionSelect(e.target.value)} className="glass-select">
@@ -519,26 +491,6 @@ export default function SaleInvoiceCreate() {
                 <input value={form.patientName} onChange={e => setForm({ ...form, patientName: e.target.value })} className="glass-input text-sm" />
               </div>
             </div>
-          )}
-
-          {/* Wholesale extra fields */}
-          {form.type === 'wholesale' && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Credit Days</label>
-                <input type="number" value={form.creditDays} onChange={e => setForm({ ...form, creditDays: parseInt(e.target.value) || 0 })}
-                  min={0} className="glass-input text-sm" placeholder="0" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Billing Address</label>
-                <input value={form.billingAddress} onChange={e => setForm({ ...form, billingAddress: e.target.value })} className="glass-input text-sm" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Delivery Address</label>
-                <input value={form.deliveryAddress} onChange={e => setForm({ ...form, deliveryAddress: e.target.value })} className="glass-input text-sm" />
-              </div>
-            </div>
-          )}
 
           {/* Prescription Attachment */}
           <div>
@@ -782,7 +734,7 @@ export default function SaleInvoiceCreate() {
             <button type="submit" disabled={loading}
               className="btn-primary text-base px-8 py-3">
               <i className="fas fa-check-circle"></i>
-              {loading ? 'Creating...' : `Create ${form.type === 'retail' ? 'Sale' : 'Invoice'} (₹${totalAmount.toFixed(2)})`}
+              {loading ? 'Creating...' : `Create Sale (₹${totalAmount.toFixed(2)})`}
             </button>
             <button type="button" onClick={() => navigate('/sales')} className="btn-secondary">Cancel</button>
           </div>
@@ -823,14 +775,7 @@ export default function SaleInvoiceCreate() {
             <input value={quickCustomer.phone} onChange={e => setQuickCustomer({ ...quickCustomer, phone: e.target.value })}
               className="glass-input" placeholder="Phone number" />
           </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Type</label>
-            <select value={quickCustomer.type} onChange={e => setQuickCustomer({ ...quickCustomer, type: e.target.value })} className="glass-select">
-              <option value="retail">Retail</option>
-              <option value="wholesale">Wholesale</option>
-              <option value="both">Both</option>
-            </select>
-          </div>
+
           <div className="flex gap-2 justify-end pt-2">
             <button onClick={() => setShowQuickCustomer(false)} className="btn-secondary">Cancel</button>
             <button onClick={handleQuickCustomerAdd} className="btn-primary">

@@ -36,7 +36,7 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const customer = await Customer.create({ ...req.body, companyRef: req.company._id });
+    const customer = await Customer.create({ ...req.body, companyRef: req.company._id, type: 'retail' });
     res.status(201).json({ success: true, data: customer });
   } catch (error) {
     if (error.code === 11000) return res.status(400).json({ success: false, error: 'Customer with this phone already exists' });
@@ -48,7 +48,7 @@ router.put('/:id', async (req, res) => {
   try {
     const customer = await Customer.findOneAndUpdate(
       { _id: req.params.id, companyRef: req.company._id },
-      req.body,
+      { ...req.body, type: 'retail' },
       { new: true, runValidators: true }
     );
     if (!customer) return res.status(404).json({ success: false, error: 'Customer not found' });

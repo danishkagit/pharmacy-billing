@@ -211,11 +211,10 @@ router.post('/', hasPermission('billing'), upload.fields([{ name: 'billFile', ma
     }
 
     // Automatic customer discount for retail sales based on total MRP slabs
-    // configured in Settings (discountSlabs on the company).
     const totalMRP = items.reduce((s, it) => s + (it.qty || 0) * (it.mrp || it.rate || 0), 0);
     let customerDiscountPercent = 0;
     let customerDiscount = 0;
-    if (req.body.type !== 'wholesale') {
+    {
       const slabs = (req.company.discountSlabs && req.company.discountSlabs.length)
         ? req.company.discountSlabs
         : [{ minMRP: 0, discountPercent: 10 }, { minMRP: 100, discountPercent: 15 }];
@@ -257,7 +256,7 @@ router.post('/', hasPermission('billing'), upload.fields([{ name: 'billFile', ma
 
     const invoice = await SaleInvoice.create([{
       invoiceNo,
-      type: req.body.type || 'retail',
+      type: 'retail',
       customer: req.body.customer,
       customerName: req.body.customerName,
       customerPhone: req.body.customerPhone,

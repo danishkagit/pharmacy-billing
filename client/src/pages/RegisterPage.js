@@ -18,9 +18,7 @@ export default function RegisterPage() {
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const BUSINESS_TYPES = [
-    { id: 'retail', label: 'Retail Pharmacy', icon: 'store', desc: 'Medical store / chemist counter' },
-    { id: 'wholesale', label: 'Wholesale & Distribution', icon: 'truck-ramp-box', desc: 'Stockist / distributor desk' },
-    { id: 'both', label: 'Retail + Wholesale', icon: 'building-columns', desc: 'Counter and B2B from one login' },
+    { id: 'retail', label: 'Retail Pharmacy', icon: 'store', desc: 'Medical store / chemist counter — walk-in POS billing' },
   ];
 
   const handleSubmit = async (e) => {
@@ -52,16 +50,16 @@ export default function RegisterPage() {
           <div className="w-14 h-14 rounded-2xl bg-pharma-500/20 border border-pharma-500/30 flex items-center justify-center mb-8">
             <i className="fas fa-store text-pharma-400 text-2xl"></i>
           </div>
-          <h1 className="text-4xl font-bold leading-tight mb-4">Setup Your Pharmacy</h1>
+          <h1 className="text-4xl font-bold leading-tight mb-4">Setup Your Retail Pharmacy</h1>
           <p className="text-lg text-slate-400 leading-relaxed mb-10 max-w-md">
-            Register as a retail chemist, wholesale distributor — or run both desks together — with full GST compliance and drug regulatory support.
+            Register your retail chemist counter — fast POS billing, batch-wise stock and GST compliance for single and multi-branch pharmacies.
           </p>
           <div className="space-y-4">
             {[
               { icon: 'user-shield', text: 'Secure owner account with role-based access' },
               { icon: 'building', text: 'Multi-branch support with centralized data' },
               { icon: 'file-contract', text: 'Auto GSTR-1, 3B & E-Invoice generation' },
-              { icon: 'truck-ramp-box', text: 'Retail counter + wholesale desk workspaces' },
+              { icon: 'prescription', text: 'Prescription & Schedule H/H1 register' },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0">
@@ -124,28 +122,18 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* Business Type */}
+            {/* Business Type — retail-only build */}
             <div className="p-4 rounded-xl glass-card !shadow-none">
               <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Business Type</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                {BUSINESS_TYPES.map(t => {
-                  const active = form.drugLicenseCategory === t.id;
-                  return (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => setForm({ ...form, drugLicenseCategory: t.id })}
-                      aria-pressed={active}
-                      className={`p-3 rounded-xl border text-left transition-all ${active ? 'border-pharma-400 bg-pharma-50/70 ring-1 ring-pharma-300' : 'border-slate-200 bg-white/60 hover:border-pharma-300'}`}
-                    >
-                      <i className={`fas fa-${t.icon} text-sm mb-1.5 block ${active ? 'text-pharma-600' : 'text-slate-400'}`}></i>
-                      <span className={`block text-xs font-bold leading-tight ${active ? 'text-pharma-700' : 'text-slate-600'}`}>{t.label}</span>
-                      <span className="block text-[10px] text-slate-400 mt-0.5 leading-snug">{t.desc}</span>
-                    </button>
-                  );
-                })}
+              <div className="p-3 rounded-xl border border-pharma-300 bg-pharma-50/70 ring-1 ring-pharma-300 flex items-center gap-3">
+                <span className="w-9 h-9 rounded-xl bg-white border border-pharma-200 flex items-center justify-center flex-shrink-0"><i className="fas fa-store text-pharma-600 text-sm"></i></span>
+                <div>
+                  <p className="text-sm font-bold text-pharma-700">Retail Pharmacy</p>
+                  <p className="text-xs text-slate-500">Walk-in POS billing for medical stores &amp; chemist counters</p>
+                </div>
+                <span className="ml-auto text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-500 text-white">Retail-only</span>
               </div>
-              <p className="text-[10px] text-slate-400 mt-2"><i className="fas fa-circle-info mr-1"></i>Dual licenses get both the Retail Counter and Wholesale Desk workspaces with a one-tap switch.</p>
+              <input type="hidden" name="drugLicenseCategory" value="retail" />
             </div>
 
             {/* Regulatory Info */}

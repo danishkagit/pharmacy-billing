@@ -159,10 +159,7 @@ export default function Settings() {
           <GlassCard>
             <h2 className="text-base font-semibold text-slate-700 mb-1 flex items-center gap-2"><i className="fas fa-store text-pharma-500"></i>Workspace Desk</h2>
             <p className="text-xs text-slate-500 mb-4">
-              Your drug license category is <b className="capitalize">{companyCategory}</b>.
-              {availableModes.length > 1
-                ? ' Choose the desk this browser opens with. You can switch between Retail Counter and Wholesale Desk anytime from the top bar.'
-                : ' This device is locked to a single workspace desk.'}
+              Retail-only build — your pharmacy is configured for <b>Retail Counter</b> billing (walk-in POS, prescriptions &amp; loyalty).
             </p>
             {availableModes.length > 1 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
