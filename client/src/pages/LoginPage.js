@@ -27,15 +27,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-[#F8FAFC] dark:bg-[#0B1120]">
-      {/* Left branding panel — desktop — light background so Rx gradient stays vibrant */}
-      <div className="hidden lg:flex lg:w-[52%] bg-white dark:bg-slate-900 relative overflow-hidden border-r border-slate-200 dark:border-slate-800">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-12 left-12 w-[28rem] h-[28rem] bg-emerald-50 dark:bg-emerald-900/15 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-12 right-12 w-80 h-80 bg-indigo-50 dark:bg-indigo-900/15 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/2 left-1/3 w-56 h-56 bg-teal-50 dark:bg-teal-900/10 rounded-full blur-3xl"></div>
+    <div className="min-h-screen flex bg-[var(--bg-app)]">
+      {/* Left branding panel — desktop — same palette as dashboard */}
+      <div className="hidden lg:flex lg:w-[52%] bg-[var(--bg-card)] relative overflow-hidden border-r border-[var(--border)]">
+        <div className="absolute inset-0 pointer-events-none opacity-40">
+          <div className="absolute top-12 left-12 w-[28rem] h-[28rem] bg-emerald-500/5 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-12 right-12 w-80 h-80 bg-indigo-500/5 rounded-full blur-3xl"></div>
         </div>
-        <div className="absolute inset-0 opacity-[0.04] dark:opacity-[0.06]" style={{ backgroundImage: 'linear-gradient(var(--border-strong) 1px, transparent 1px), linear-gradient(90deg, var(--border-strong) 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
         <div className="relative z-10 flex flex-col justify-center px-14 xl:px-16 w-full">
           <div className="mb-10 flex flex-col items-start gap-3">
             <img src="/logo-mark.png" alt="CalcuttaRx" width="512" height="512" className="h-[88px] xl:h-[104px] w-auto drop-shadow-lg" />
@@ -53,14 +51,14 @@ export default function LoginPage() {
               { title: 'Batch & Expiry', desc: 'Expiry alerts by batch', img: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400&h=260&fit=crop&auto=format', alt: 'Pharmacy batch and expiry tracking — medicine stock shelves' },
               { title: 'Owner Reports', desc: 'Sales · P&L · Outstanding', img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=260&fit=crop&auto=format', alt: 'Pharmacy owner reports — sales and profit analytics dashboard' },
             ].map((item) => (
-              <div key={item.title} className="group rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-lg hover:border-slate-300 dark:hover:border-slate-600 transition-all">
-                <div className="h-[96px] overflow-hidden bg-slate-100 dark:bg-slate-700 relative">
+              <div key={item.title} className="group rounded-2xl glass-accent overflow-hidden hover:shadow-md transition-all">
+                <div className="h-[96px] overflow-hidden bg-[var(--bg-card-subtle)] relative">
                   <img src={item.img} alt={item.alt} loading="lazy" className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
                 </div>
                 <div className="p-3.5">
-                  <p className="text-sm font-bold text-slate-800 dark:text-white leading-tight">{item.title}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-snug">{item.desc}</p>
+                  <p className="text-sm font-bold text-[var(--text-primary)] leading-tight">{item.title}</p>
+                  <p className="text-xs text-[var(--text-tertiary)] mt-1 leading-snug">{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -75,13 +73,9 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right login form */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 relative bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 overflow-y-auto">
-        {/* soft orbs */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute -top-16 -right-16 w-[28rem] h-[28rem] bg-emerald-200/30 dark:bg-emerald-900/20 rounded-full blur-3xl"></div>
-          <div className="absolute -bottom-20 -left-20 w-[26rem] h-[26rem] bg-indigo-200/25 dark:bg-indigo-900/15 rounded-full blur-3xl"></div>
-        </div>
+      {/* Right login form — same background as dashboard */}
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 relative bg-[var(--bg-app)] overflow-y-auto">
+        <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.04]" style={{ backgroundImage: 'linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)', backgroundSize: '36px 36px' }}></div>
         <div className="w-full max-w-[420px] relative">
           {/* Mobile brand — big & stacked like landing */}
           <div className="lg:hidden flex flex-col items-center text-center mb-6 sm:mb-8">
@@ -96,7 +90,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-800 rounded-[20px] border border-slate-200/70 dark:border-slate-700 shadow-[0_8px_30px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.06)] p-6 sm:p-8">
+          <div className="glass-accent rounded-[20px] p-6 sm:p-8">
             <div className="mb-7">
               <span className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-700/30"><i className="fas fa-lock text-[10px]"></i> Secure sign in</span>
               <h2 className="text-[26px] font-extrabold text-slate-900 dark:text-white tracking-tight mt-3">Welcome back</h2>
