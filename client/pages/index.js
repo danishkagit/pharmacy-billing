@@ -87,6 +87,8 @@ export default function Landing() {
   const [scrolled, setScrolled] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [statsInView, setStatsInView] = useState(false);
+  const [contact, setContact] = useState({ name: '', phone: '', shop: '', city: '', message: '' });
+  const [contactSent, setContactSent] = useState(false);
   const statsRef = useRef(null);
   const [billQtys, setBillQtys] = useState([2, 1, 3]);
 
@@ -122,6 +124,13 @@ export default function Landing() {
   }, []);
 
   const filteredFaqs = faqs.filter(f => f.q.toLowerCase().includes(faqQuery.toLowerCase()) || f.a.toLowerCase().includes(faqQuery.toLowerCase()));
+
+  const handleContactSubmit = (e) => {
+    e.preventDefault();
+    const text = `Hi! I'm ${contact.name}${contact.shop ? ` from ${contact.shop}` : ''}${contact.city ? `, ${contact.city}` : ''}. ${contact.message}${contact.phone ? ` (My number: ${contact.phone})` : ''}`;
+    window.open(`https://wa.me/918584885450?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+    setContactSent(true);
+  };
 
   const billItems = [
     { name: 'Azithral 500', hsn: '30042019', mrp: 45, rate: 42.86 },
@@ -259,6 +268,7 @@ export default function Landing() {
               <a href="#features" className="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 px-2.5 py-1.5 rounded-lg hover:bg-white/60">Features</a>
               <a href="#pricing" className="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 px-2.5 py-1.5 rounded-lg hover:bg-white/60">Pricing</a>
               <a href="#faq" className="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 px-2.5 py-1.5 rounded-lg hover:bg-white/60">FAQ</a>
+              <a href="#contact" className="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 px-2.5 py-1.5 rounded-lg hover:bg-white/60">Contact</a>
             </nav>
             <div className="flex items-center gap-2">
               <a href="/login" className="hidden sm:inline-flex btn btn-secondary btn-sm">Sign In</a>
@@ -273,6 +283,7 @@ export default function Landing() {
               <a href="#who" onClick={() => setMobileNav(false)} className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50"> <i className="fas fa-store text-pharma-500 text-xs"></i> Who it&apos;s for</a>
               <a href="#pricing" onClick={() => setMobileNav(false)} className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50"> <i className="fas fa-tags text-pharma-500 text-xs"></i> Pricing</a>
               <a href="#faq" onClick={() => setMobileNav(false)} className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50"> <i className="fas fa-circle-question text-pharma-500 text-xs"></i> FAQ</a>
+              <a href="#contact" onClick={() => setMobileNav(false)} className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50"> <i className="fas fa-envelope text-pharma-500 text-xs"></i> Contact</a>
               <a href="/login" className="btn btn-secondary w-full justify-center mt-2">Sign In</a>
             </div>
           )}
@@ -576,6 +587,87 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* Contact */}
+        <section id="contact" className="max-w-5xl mx-auto px-5 pb-16">
+          <div className="text-center mb-6">
+            <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-pharma-600">We pick up — promise</p>
+            <h2 className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Contact Us — Talk to the Kolkata Team</h2>
+            <p className="mt-2 text-sm text-slate-500 max-w-xl mx-auto">Demo, pricing or Marg migration — call, WhatsApp or drop a message. Same-day reply in Bangla / Hindi / English.</p>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-6 items-start">
+            {/* Contact methods */}
+            <div className="space-y-3">
+              <a href="tel:+918584885450" className="app-card app-card-hover p-4 flex items-center gap-3 group">
+                <div className="w-10 h-10 rounded-xl grad-hero text-white flex items-center justify-center flex-shrink-0"><i className="fas fa-phone text-sm"></i></div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Call — +91 85848 85450</p>
+                  <p className="text-[11px] text-slate-500">Mon–Sat · 10 AM – 7 PM IST</p>
+                </div>
+                <i className="fas fa-arrow-right ml-auto text-slate-300 group-hover:text-pharma-500 transition-colors"></i>
+              </a>
+              <a href="https://wa.me/918584885450?text=Hi!%20I%20want%20a%20CalcuttaRx%20demo%20for%20my%20pharmacy." target="_blank" rel="noopener noreferrer" className="app-card app-card-hover p-4 flex items-center gap-3 group">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center flex-shrink-0"><i className="fab fa-whatsapp text-lg"></i></div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-100">WhatsApp — Book a Demo</p>
+                  <p className="text-[11px] text-slate-500">Avg. reply under 10 minutes</p>
+                </div>
+                <i className="fas fa-arrow-right ml-auto text-slate-300 group-hover:text-emerald-500 transition-colors"></i>
+              </a>
+              <a href="mailto:calcuttanode@gmail.com" className="app-card app-card-hover p-4 flex items-center gap-3 group">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500 text-white flex items-center justify-center flex-shrink-0"><i className="fas fa-envelope text-sm"></i></div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-100 break-all">calcuttanode@gmail.com</p>
+                  <p className="text-[11px] text-slate-500">Send stock files &amp; Marg backups here</p>
+                </div>
+                <i className="fas fa-arrow-right ml-auto text-slate-300 group-hover:text-indigo-500 transition-colors"></i>
+              </a>
+              <div className="app-card p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-400 text-white flex items-center justify-center flex-shrink-0"><i className="fas fa-location-dot text-sm"></i></div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Kolkata, West Bengal</p>
+                  <p className="text-[11px] text-slate-500">Serving all 23 districts · On-site training in Kolkata &amp; Howrah</p>
+                </div>
+              </div>
+              <p className="text-xs text-slate-400 px-1"><i className="fas fa-shield-halved mr-1 text-emerald-500"></i>No spam — your details go straight to our Kolkata team.</p>
+            </div>
+
+            {/* Contact form → WhatsApp */}
+            <form onSubmit={handleContactSubmit} className="glass-card p-5 sm:p-6 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="c-name" className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Your Name *</label>
+                  <input id="c-name" required value={contact.name} onChange={e => setContact({ ...contact, name: e.target.value })} placeholder="Amitava Ghosh" className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400" />
+                </div>
+                <div>
+                  <label htmlFor="c-phone" className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">WhatsApp Number *</label>
+                  <input id="c-phone" required type="tel" pattern="[0-9+ ]{10,15}" value={contact.phone} onChange={e => setContact({ ...contact, phone: e.target.value })} placeholder="98300 00000" className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400" />
+                </div>
+                <div>
+                  <label htmlFor="c-shop" className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Shop Name</label>
+                  <input id="c-shop" value={contact.shop} onChange={e => setContact({ ...contact, shop: e.target.value })} placeholder="Ghosh Medical Hall" className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400" />
+                </div>
+                <div>
+                  <label htmlFor="c-city" className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">City / District</label>
+                  <select id="c-city" value={contact.city} onChange={e => setContact({ ...contact, city: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400">
+                    <option value="">Select your city</option>
+                    {districts.map(c => <option key={c} value={c}>{c}</option>)}
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label htmlFor="c-msg" className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">How can we help? *</label>
+                <textarea id="c-msg" required rows={3} value={contact.message} onChange={e => setContact({ ...contact, message: e.target.value })} placeholder="e.g. I want to move 4,000 items from Marg to CalcuttaRx — can you import my backup?" className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 resize-none"></textarea>
+              </div>
+              <button type="submit" className="btn btn-primary btn-glow w-full justify-center"><i className="fab fa-whatsapp" style={{ color: '#fff' }}></i> Send on WhatsApp — 85848 85450</button>
+              {contactSent && (
+                <p className="text-xs text-emerald-600 font-medium flex items-center gap-1.5 animate-fade-up"><i className="fas fa-circle-check"></i> WhatsApp opened with your message — just press send. We reply same day.</p>
+              )}
+              <p className="text-center text-[11px] text-slate-400">Prefer email? <a href={`mailto:calcuttanode@gmail.com?subject=${encodeURIComponent('CalcuttaRx enquiry — ' + (contact.shop || contact.name || 'New chemist'))}`} className="text-pharma-600 font-semibold hover:underline">calcuttanode@gmail.com</a></p>
+            </form>
+          </div>
+        </section>
+
         {/* Final CTA */}
         <section className="max-w-4xl mx-auto px-5 pb-10 text-center">
           <div className="rounded-3xl grad-hero p-8 sm:p-12 shadow-glow relative overflow-hidden">
@@ -614,6 +706,7 @@ export default function Landing() {
                 <li><a className="hover:text-pharma-600" href="#features">GST Billing &amp; POS — Pharmacy Software</a></li>
                 <li><a className="hover:text-pharma-600" href="#how">How It Works</a></li>
                 <li><a className="hover:text-pharma-600" href="#pricing">Pharmacy Billing Software Price</a></li>
+                <li><a className="hover:text-pharma-600" href="#contact">Contact Us</a></li>
                 <li><a className="hover:text-pharma-600" href="/login">Customer Login</a></li>
               </ul>
             </div>
