@@ -48,27 +48,17 @@ export default function LoginPage() {
           </p>
           <div className="mt-10 grid grid-cols-2 gap-3 max-w-[30rem]">
             {[
-              { icon: 'file-invoice-dollar', title: 'GST 2.0 Ready', desc: 'Nil · 5% · 18% · 40% auto', grad: 'grad-hero', accent: 'from-emerald-500/10 to-teal-500/10' },
-              { icon: 'shield-halved', title: 'Schedule H Compliant', desc: 'H / H1 / X & Narcotics', grad: 'grad-warm', accent: 'from-amber-500/10 to-orange-500/10' },
-              { icon: 'boxes-stacked', title: 'Batch & Expiry', desc: 'Expiry alerts by batch', grad: 'grad-cool', accent: 'from-sky-500/10 to-indigo-500/10' },
-              { icon: 'chart-line', title: 'Owner Reports', desc: 'Sales · P&L · Outstanding', grad: 'grad-gold', accent: 'from-amber-500/10 to-yellow-500/10' },
+              { icon: 'file-invoice-dollar', title: 'GST 2.0 Ready', desc: 'Nil · 5% · 18% · 40% auto' },
+              { icon: 'shield-halved', title: 'Schedule H Compliant', desc: 'H / H1 / X & Narcotics' },
+              { icon: 'boxes-stacked', title: 'Batch & Expiry', desc: 'Expiry alerts by batch' },
+              { icon: 'chart-line', title: 'Owner Reports', desc: 'Sales · P&L · Outstanding' },
             ].map((item) => (
-              <div key={item.title} className="group rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-lg hover:border-slate-300 dark:hover:border-slate-600 transition-all">
-                <div className={`h-[88px] ${item.grad} relative flex items-center justify-center overflow-hidden`}>
-                  <div className={`absolute inset-0 bg-gradient-to-br ${item.accent} opacity-0 group-hover:opacity-100 transition-opacity`}></div>
-                  <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 30% 30%, white 1px, transparent 1px)', backgroundSize: '14px 14px' }}></div>
-                  <div className="relative w-14 h-14 rounded-2xl bg-white/95 dark:bg-slate-900/90 backdrop-blur shadow-lg flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <i className={`fas fa-${item.icon} text-lg ${item.title.includes('GST') ? 'text-emerald-600' : item.title.includes('Schedule') ? 'text-amber-600' : item.title.includes('Batch') ? 'text-sky-600' : 'text-amber-600'}`}></i>
-                  </div>
-                  <div className="absolute bottom-2 right-2 flex gap-1 opacity-60">
-                    <span className="w-6 h-1 rounded-full bg-white/70"></span>
-                    <span className="w-3 h-1 rounded-full bg-white/40"></span>
-                  </div>
+              <div key={item.title} className="rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600 transition-all">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/25 border border-emerald-100 dark:border-emerald-800/30 flex items-center justify-center mb-3">
+                  <i className={`fas fa-${item.icon} text-emerald-600 dark:text-emerald-400 text-[15px]`}></i>
                 </div>
-                <div className="p-3.5">
-                  <p className="text-sm font-bold text-slate-800 dark:text-white leading-tight">{item.title}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{item.desc}</p>
-                </div>
+                <p className="text-sm font-bold text-slate-800 dark:text-white leading-tight">{item.title}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-snug">{item.desc}</p>
               </div>
             ))}
           </div>
