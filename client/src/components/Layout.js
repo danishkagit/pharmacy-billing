@@ -15,7 +15,7 @@ const navHubs = [
   {
     id: 'trade',
     label: 'Sales & Purchase',
-    icon: 'right-left',
+    icon: 'arrow-right-arrow-left',
     emphasized: true,
     groups: [
       {
@@ -46,8 +46,8 @@ const navHubs = [
     label: 'Inventory',
     icon: 'boxes-stacked',
     items: [
-      { label: 'Add Stock', path: '/stock-adjustments/new', icon: 'plus-circle', hot: true, shortcut: 'F7' },
-      { label: 'Batch Stock', path: '/batches', icon: 'boxes' },
+      { label: 'Add Stock', path: '/stock-adjustments/new', icon: 'circle-plus', hot: true, shortcut: 'F7' },
+      { label: 'Batch Stock', path: '/batches', icon: 'boxes-stacked' },
       { label: 'Medicines Master', path: '/medicines', icon: 'pills' },
       { label: 'Expiry Tracker', path: '/expiry', icon: 'clock-rotate-left', alert: true },
       { label: 'Branch Transfers', path: '/transfers', icon: 'arrow-right-arrow-left', rbac: ['allBranches'] },
@@ -72,7 +72,7 @@ const navHubs = [
     items: [
       { label: 'H/H1/X Register', path: '/compliance', icon: 'shield-halved', rbac: ['compliance'] },
       { label: 'Narcotics Register', path: '/narcotics', icon: 'triangle-exclamation' },
-      { label: 'Digital Prescriptions', path: '/prescriptions', icon: 'prescription' },
+      { label: 'Digital Prescriptions', path: '/prescriptions', icon: 'prescription-bottle-medical' },
       { label: 'Doctors', path: '/doctors', icon: 'user-doctor' },
       { label: 'Patients', path: '/patients', icon: 'bed-pulse' },
       { label: 'Drug License', path: '/drug-license', icon: 'certificate', rbac: ['compliance'] },
