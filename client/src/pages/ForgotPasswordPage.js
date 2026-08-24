@@ -6,7 +6,7 @@ import { BrandWordmark } from '../components/Logo';
 export default function ForgotPasswordPage() {
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
-  const [token, setToken] = useState('');
+  const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -14,7 +14,7 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSendToken = async (e) => {
+  const handleSendOtp = async (e) => {
     e.preventDefault();
     setError('');
     setMessage('');
@@ -22,8 +22,7 @@ export default function ForgotPasswordPage() {
     try {
       const res = await API.post('/auth/forgot-password', { email });
       if (res.success) {
-        setMessage(res.message || 'Reset token generated.');
-        if (res.resetToken) setToken(res.resetToken);
+        setMessage(res.message || 'If this account exists, an OTP has been sent via SMS.');
         setStep(2);
       }
     } catch (err) {
@@ -37,10 +36,11 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setError('');
     setMessage('');
+    if (!/^\d{6}$/.test(otp.trim())) return setError('Enter the 6-digit OTP from your SMS');
     if (newPassword.length < 6) return setError('Password must be at least 6 characters');
     setLoading(true);
     try {
-      const res = await API.post('/auth/reset-password', { email, token, newPassword });
+      const res = await API.post('/auth/reset-password', { email, otp: otp.trim(), newPassword });
       if (res.success) {
         setMessage('Password reset successfully. Redirecting to sign in...');
         setTimeout(() => navigate('/login'), 1500);
@@ -85,12 +85,12 @@ export default function ForgotPasswordPage() {
 
           <div className="mb-8">
             <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-              {step === 1 ? 'Forgot password' : 'Set a new password'}
+              {step === 1 ? 'Forgot password' : 'Enter OTP'}
             </h2>
             <p className="text-sm text-slate-500 mt-1.5">
               {step === 1
-                ? 'Enter the email linked to your account to receive a reset token'
-                : `Enter the reset token${token ? ' (we filled it in for you)' : ''} and a new password`}
+                ? 'Enter the email linked to your account — we will SMS you a 6-digit OTP'
+                : `Enter the 6-digit OTP sent to your registered phone${email ? ` for ${email}` : ''}`}
             </p>
           </div>
 
@@ -108,7 +108,7 @@ export default function ForgotPasswordPage() {
           )}
 
           {step === 1 ? (
-            <form onSubmit={handleSendToken} className="space-y-4">
+            <form onSubmit={handleSendOtp} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email address</label>
                 <input
@@ -129,8 +129,8 @@ export default function ForgotPasswordPage() {
                   </>
                 ) : (
                   <>
-                    <i className="fas fa-paper-plane"></i>
-                    Get Reset Token
+                    <i className="fas fa-comment-sms"></i>
+                    Send OTP via SMS
                   </>
                 )}
               </button>
@@ -138,14 +138,17 @@ export default function ForgotPasswordPage() {
           ) : (
             <form onSubmit={handleReset} className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Reset token</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">6-digit OTP</label>
                 <input
                   type="text"
-                  value={token}
-                  onChange={e => setToken(e.target.value)}
+                  value={otp}
+                  onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   required
-                  className="app-input font-mono"
-                  placeholder="Paste the reset token"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  className="app-input font-mono tracking-[0.4em] text-center text-lg"
+                  placeholder="••••••"
+                  autoFocus
                 />
               </div>
               <div>

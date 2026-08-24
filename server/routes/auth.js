@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Company = require('../models/Company');
 const Branch = require('../models/Branch');
+const { sendSMS } = require('../utils/sms');
 
 router.post('/register', async (req, res) => {
   try {
@@ -82,42 +83,59 @@ router.post('/forgot-password', async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ success: false, error: 'Email required' });
     const user = await User.findOne({ email: email.toLowerCase().trim() });
-    if (!user) {
-      return res.json({ success: true, message: 'If an account exists for this email, a reset token has been generated.' });
-    }
-    const resetToken = crypto.randomBytes(24).toString('hex');
-    user.resetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-    user.resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
+    const generic = { success: true, message: 'If this account exists with a registered phone number, an OTP has been sent via SMS. It is valid for 10 minutes.' };
+    if (!user || !user.isActive) return res.json(generic);
+
+    // Fail closed — without SMS delivery there must be no usable reset path.
+    if (!user.phone) return res.json(generic);
+    const otp = crypto.randomInt(100000, 1000000).toString();
+    user.resetOtpHash = crypto.createHash('sha256').update(otp).digest('hex');
+    user.resetOtpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+    user.resetOtpAttempts = 0;
     await user.save();
-    res.json({
-      success: true,
-      message: 'Password reset token generated (valid for 1 hour). Use it to set a new password.',
-      resetToken
-    });
+
+    const sms = await sendSMS(user.phone, `Your CalcuttaRx password reset OTP is ${otp}. Valid for 10 minutes. Never share this code.`, 'otp');
+    if (!sms.success) {
+      user.resetOtpHash = undefined;
+      user.resetOtpExpiry = undefined;
+      await user.save();
+      return res.json({ success: true, message: 'If this account exists, password reset by OTP is currently unavailable (SMS delivery not configured). Please contact your pharmacy owner or WhatsApp support at 85848 85450.' });
+    }
+    res.json(generic);
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error('Forgot password error:', error.message);
+    res.status(500).json({ success: false, error: 'Something went wrong. Please try again.' });
   }
 });
 
 router.post('/reset-password', async (req, res) => {
   try {
-    const { email, token, newPassword } = req.body;
-    if (!email || !token || !newPassword) {
-      return res.status(400).json({ success: false, error: 'Email, reset token, and new password required' });
+    const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ success: false, error: 'Email, OTP, and new password required' });
     }
-    if (newPassword.length < 6) {
+    if (String(newPassword).length < 6) {
       return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
     }
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-    const user = await User.findOne({
-      email: email.toLowerCase().trim(),
-      resetToken: hashedToken,
-      resetTokenExpiry: { $gt: new Date() }
-    });
-    if (!user) return res.status(400).json({ success: false, error: 'Invalid or expired reset token' });
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    // Uniform error — never reveal whether the email or the OTP was wrong.
+    const invalid = { success: false, error: 'Invalid or expired OTP' };
+    if (!user || !user.resetOtpHash || !user.resetOtpExpiry || user.resetOtpExpiry < new Date()) {
+      return res.status(400).json(invalid);
+    }
+    if ((user.resetOtpAttempts || 0) >= 5) {
+      return res.status(429).json({ success: false, error: 'Too many attempts. Request a new OTP.' });
+    }
+    const hashedOtp = crypto.createHash('sha256').update(String(otp).trim()).digest('hex');
+    if (hashedOtp !== user.resetOtpHash) {
+      user.resetOtpAttempts = (user.resetOtpAttempts || 0) + 1;
+      await user.save();
+      return res.status(400).json(invalid);
+    }
     user.password = newPassword;
-    user.resetToken = undefined;
-    user.resetTokenExpiry = undefined;
+    user.resetOtpHash = undefined;
+    user.resetOtpExpiry = undefined;
+    user.resetOtpAttempts = 0;
     await user.save();
     res.json({ success: true, message: 'Password reset successfully. You can now sign in.' });
   } catch (error) {

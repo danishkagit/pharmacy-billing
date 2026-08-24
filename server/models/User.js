@@ -23,8 +23,9 @@ const userSchema = new mongoose.Schema({
   },
   isActive: { type: Boolean, default: true },
   lastLogin: { type: Date },
-  resetToken: { type: String },
-  resetTokenExpiry: { type: Date }
+  resetOtpHash: { type: String },
+  resetOtpExpiry: { type: Date },
+  resetOtpAttempts: { type: Number, default: 0 }
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {
