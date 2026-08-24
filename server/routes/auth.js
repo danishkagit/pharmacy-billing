@@ -143,6 +143,84 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
+// ── Phone OTP login (self-hosted, SMS via MSG91) ─────────────────────────
+function normalizePhone(raw) {
+  const digits = String(raw || '').replace(/[^0-9]/g, '');
+  return digits.length >= 10 ? digits.slice(-10) : '';
+}
+
+router.post('/otp/request', async (req, res) => {
+  try {
+    const phone = normalizePhone(req.body.phone);
+    if (!phone) return res.status(400).json({ success: false, error: 'Enter a valid 10-digit mobile number' });
+    const users = await User.find({ isActive: true, phone: new RegExp(phone + '$') }).limit(2);
+    if (users.length > 1) {
+      return res.status(400).json({ success: false, error: 'Multiple accounts share this number. Please sign in with your email and password.' });
+    }
+    if (users.length === 0) {
+      // Uniform response — do not reveal whether the number is registered.
+      return res.json({ success: true, message: 'If this number is registered, an OTP has been sent via SMS. It is valid for 10 minutes.' });
+    }
+    const user = users[0];
+    if (user.otpLastSentAt && Date.now() - new Date(user.otpLastSentAt).getTime() < 60 * 1000) {
+      return res.status(429).json({ success: false, error: 'Please wait a minute before requesting another OTP.' });
+    }
+    const otp = crypto.randomInt(100000, 1000000).toString();
+    user.loginOtpHash = crypto.createHash('sha256').update(otp).digest('hex');
+    user.loginOtpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+    user.loginOtpAttempts = 0;
+    user.otpLastSentAt = new Date();
+    await user.save();
+
+    const sms = await sendSMS(user.phone, `${otp} is your CalcuttaRx sign-in OTP. Valid for 10 minutes. Never share this code.`, 'otp');
+    if (!sms.success) {
+      user.loginOtpHash = undefined;
+      user.loginOtpExpiry = undefined;
+      await user.save();
+      return res.status(503).json({ success: false, error: 'SMS delivery is currently unavailable. Please sign in with your email and password.' });
+    }
+    res.json({ success: true, message: 'OTP sent via SMS. It is valid for 10 minutes.' });
+  } catch (error) {
+    console.error('OTP request error:', error.message);
+    res.status(500).json({ success: false, error: 'Something went wrong. Please try again.' });
+  }
+});
+
+router.post('/otp/verify', async (req, res) => {
+  try {
+    const { otp } = req.body;
+    const phone = normalizePhone(req.body.phone);
+    const invalid = { success: false, error: 'Invalid or expired OTP' };
+    if (!phone || !/^\d{6}$/.test(String(otp || '').trim())) return res.status(400).json(invalid);
+    const users = await User.find({ isActive: true, phone: new RegExp(phone + '$') }).limit(2);
+    if (users.length !== 1) return res.status(401).json(invalid);
+    const user = users[0];
+    if (!user.loginOtpHash || !user.loginOtpExpiry || user.loginOtpExpiry < new Date()) {
+      return res.status(401).json(invalid);
+    }
+    if ((user.loginOtpAttempts || 0) >= 5) {
+      return res.status(429).json({ success: false, error: 'Too many attempts. Request a new OTP.' });
+    }
+    const hashed = crypto.createHash('sha256').update(String(otp).trim()).digest('hex');
+    if (hashed !== user.loginOtpHash) {
+      user.loginOtpAttempts = (user.loginOtpAttempts || 0) + 1;
+      await user.save();
+      return res.status(401).json(invalid);
+    }
+    user.loginOtpHash = undefined;
+    user.loginOtpExpiry = undefined;
+    user.loginOtpAttempts = 0;
+    user.lastLogin = new Date();
+    await user.save();
+    await user.populate('company branch');
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
+    res.json({ success: true, data: { user, company: user.company, branch: user.branch, token } });
+  } catch (error) {
+    console.error('OTP verify error:', error.message);
+    res.status(500).json({ success: false, error: 'Something went wrong. Please try again.' });
+  }
+});
+
 router.post('/change-password', async (req, res) => {
   try {
     const header = req.header('Authorization');

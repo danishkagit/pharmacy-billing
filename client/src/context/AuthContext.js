@@ -63,6 +63,18 @@ export function AuthProvider({ children }) {
     return res;
   };
 
+  const loginWithOtp = async (phone, otp) => {
+    const res = await API.post('/auth/otp/verify', { phone, otp });
+    if (res.success) {
+      localStorage.setItem('token', res.data.token);
+      localStorage.setItem('user', JSON.stringify({ user: res.data.user, company: res.data.company, branch: res.data.branch }));
+      setUser(res.data.user);
+      setCompany(res.data.company);
+      setBranch(res.data.branch);
+    }
+    return res;
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -79,7 +91,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, company, branch, loading, login, register, logout, hasPermission }}>
+    <AuthContext.Provider value={{ user, company, branch, loading, login, register, loginWithOtp, logout, hasPermission }}>
       {children}
     </AuthContext.Provider>
   );

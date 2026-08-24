@@ -25,7 +25,11 @@ const userSchema = new mongoose.Schema({
   lastLogin: { type: Date },
   resetOtpHash: { type: String },
   resetOtpExpiry: { type: Date },
-  resetOtpAttempts: { type: Number, default: 0 }
+  resetOtpAttempts: { type: Number, default: 0 },
+  loginOtpHash: { type: String },
+  loginOtpExpiry: { type: Date },
+  loginOtpAttempts: { type: Number, default: 0 },
+  otpLastSentAt: { type: Date }
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {
