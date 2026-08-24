@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme, ACCENTS } from '../context/ThemeContext';
 import { useWorkspace, MODE_META } from '../context/WorkspaceContext';
 import API from '../utils/api';
-import { PageHeader, GlassCard, GlassTabs } from '../components/ui';
+import { PageHeader, GlassCard, GlassTabs, GlassModal } from '../components/ui';
 import { GST_SLABS, GST_EFFECTIVE_DATE } from '../utils/gst';
 
 const INVOICE_TEMPLATES = [
@@ -45,14 +45,23 @@ export default function Settings() {
   const [ratesInfo, setRatesInfo] = useState(null);
   const [migrating, setMigrating] = useState(false);
   const [migrateMsg, setMigrateMsg] = useState('');
-  const [planInfo, setPlanInfo] = useState({ plan: 'trial', trialEndDate: null });
+  const [planInfo, setPlanInfo] = useState({ plan: 'trial', trialEndDate: null, planExpiresAt: null });
+  const [cycle, setCycle] = useState('yearly');
+  const [checkoutLoading, setCheckoutLoading] = useState('');
+  const [billingMsg, setBillingMsg] = useState(null);
+  const [paySheet, setPaySheet] = useState(null);
+  const [sheetStatus, setSheetStatus] = useState('CREATED');
+  const [sheetClosedByUser, setSheetClosedByUser] = useState(false);
+  const [utr, setUtr] = useState('');
+  const [utrLoading, setUtrLoading] = useState(false);
+  const [txns, setTxns] = useState([]);
   const companyCategory = useCompanyCategory();
 
   useEffect(() => {
     API.get('/company').then(res => {
       if (res.success) {
         const d = res.data;
-        setPlanInfo({ plan: d.plan || 'trial', trialEndDate: d.trialEndDate || null });
+        setPlanInfo({ plan: d.plan || 'trial', trialEndDate: d.trialEndDate || null, planExpiresAt: d.planExpiresAt || null });
         if (d.discountSlabs?.length) setSlabs(d.discountSlabs);
         setInv({
           invoiceTemplate: d.invoiceTemplate || 'a4',
@@ -127,6 +136,84 @@ export default function Settings() {
     } catch (err) { setMigrateMsg(err?.error || 'Migration failed'); }
     finally { setMigrating(false); }
   };
+
+  const refreshPlan = () => {
+    API.get('/company').then(r => {
+      if (r.success) setPlanInfo({ plan: r.data.plan || 'trial', trialEndDate: r.data.trialEndDate || null, planExpiresAt: r.data.planExpiresAt || null });
+    }).catch(() => {});
+  };
+
+  const loadTxns = () => {
+    API.get('/billing/transactions').then(r => { if (r.success) setTxns(r.data || []); }).catch(() => {});
+  };
+
+  const openSheet = async (plan) => {
+    setCheckoutLoading(plan);
+    setBillingMsg(null);
+    try {
+      const res = await API.post('/billing/checkout', { plan, cycle });
+      if (res.success && res.data?.txnId) {
+        setPaySheet(res.data);
+        setSheetStatus(String(res.data.orderStatus || 'CREATED').toUpperCase());
+        setSheetClosedByUser(false);
+        setUtr('');
+        return;
+      }
+      setBillingMsg({ type: 'error', text: res.error || 'Could not start checkout. Try again or WhatsApp us.' });
+    } catch (err) {
+      setBillingMsg({ type: 'error', text: err?.error || 'Checkout failed. Try again or WhatsApp us.' });
+    } finally {
+      setCheckoutLoading('');
+    }
+  };
+
+  const submitUtr = async () => {
+    if (!paySheet?.txnId) return;
+    setUtrLoading(true);
+    try {
+      const res = await API.post('/billing/submit-utr', { transactionId: paySheet.txnId, referenceNumber: utr });
+      if (res.success) {
+        setSheetStatus(String(res.data.status).toUpperCase());
+        if (res.data.status === 'completed') {
+          setBillingMsg({ type: 'success', text: `Payment confirmed — ${paySheet.planLabel} activated.` });
+          refreshPlan();
+          loadTxns();
+          setTimeout(() => setPaySheet(null), 1500);
+        } else {
+          setBillingMsg({ type: 'info', text: 'UTR submitted — we are confirming with your bank. Usually done within a minute; keep this window open.' });
+        }
+      } else {
+        setBillingMsg({ type: 'error', text: res.error || 'Could not submit reference number.' });
+      }
+    } catch (err) {
+      setBillingMsg({ type: 'error', text: err?.error || 'Could not submit reference number.' });
+    } finally {
+      setUtrLoading(false);
+    }
+  };
+
+  // While the UPI sheet is open, poll order status until COMPLETED.
+  useEffect(() => {
+    if (!paySheet?.txnId || sheetClosedByUser || sheetStatus === 'COMPLETED') return undefined;
+    let stop = false;
+    const iv = setInterval(async () => {
+      try {
+        const r = await API.get(`/billing/status/${encodeURIComponent(paySheet.txnId)}`);
+        if (stop || !r.success) return;
+        setSheetStatus(String(r.data.status || '').toUpperCase());
+        if (r.data.status === 'completed') {
+          setBillingMsg({ type: 'success', text: `Payment received — ${String(r.data.plan).toUpperCase()} activated${r.data.planExpiresAt ? ` · valid till ${new Date(r.data.planExpiresAt).toLocaleDateString('en-IN')}` : ''}.` });
+          refreshPlan();
+          loadTxns();
+          clearInterval(iv);
+          setTimeout(() => setPaySheet(null), 1800);
+        }
+      } catch (e) { /* keep polling */ }
+    }, 4000);
+    return () => { stop = true; clearInterval(iv); };
+  }, [paySheet?.txnId, sheetClosedByUser, sheetStatus]);
+
+  useEffect(() => { loadTxns(); }, []);
 
   const tabs = [
     { key: 'workspace', label: 'Workspace', icon: 'sliders' },
@@ -253,27 +340,87 @@ export default function Settings() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {[
-                    { name: 'Starter', price: 799, features: '1 Branch · 2 Users · Unlimited bills' },
-                    { name: 'Growth', price: 1299, popular: true, features: '5 Users · Khata · Prescription registry' },
-                    { name: 'Enterprise', price: null, features: 'Unlimited branches · Audit log · SLA' },
-                  ].map(p => (
-                    <div key={p.name} className={`relative rounded-xl border p-4 ${p.popular ? 'border-pharma-400 bg-pharma-50/50 ring-1 ring-pharma-300' : 'border-slate-200 bg-white/60'}`}>
-                      {p.popular && <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 badge badge-success text-[9px] whitespace-nowrap">Most Popular</span>}
-                      <p className="text-sm font-bold text-slate-800">{p.name}</p>
-                      <p className="mt-1 font-extrabold font-mono text-pharma-600">{p.price ? <>₹{Math.round(p.price * 0.8)}<span className="text-[10px] text-slate-400 font-sans">/shop/mo yearly</span></> : 'Custom'}</p>
-                      <p className="text-[10px] text-slate-400 mt-1.5 leading-snug">{p.features}</p>
-                    </div>
-                  ))}
+                {billingMsg && (
+                  <div className={`px-4 py-3 rounded-xl text-sm mb-4 flex items-center gap-2 border ${billingMsg.type === 'success' ? 'bg-emerald-50/90 text-emerald-700 border-emerald-200' : billingMsg.type === 'info' ? 'bg-sky-50/90 text-sky-700 border-sky-200' : 'bg-red-50/90 text-red-600 border-red-200'}`}>
+                    <i className="fas fa-circle-info"></i>{billingMsg.text}
+                  </div>
+                )}
+
+                {!isTrial && planInfo.planExpiresAt && (
+                  <p className="text-xs text-slate-500 mb-4"><i className="fas fa-calendar-check mr-1.5 text-emerald-500"></i>Active till <b className="text-slate-700 dark:text-slate-200">{new Date(planInfo.planExpiresAt).toLocaleDateString('en-IN')}</b> — renew anytime, days carry forward on upgrade.</p>
+                )}
+
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Pay via any UPI app (GPay · PhonePe · Paytm) — powered by UroPay</p>
+                  <div className="inline-flex items-center gap-2 p-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    {[{ k: 'monthly', l: 'Monthly' }, { k: 'yearly', l: 'Yearly · Save 20%' }].map(c => (
+                      <button key={c.k} type="button" onClick={() => setCycle(c.k)}
+                        className={`text-xs font-bold px-3 py-1.5 rounded-full transition-all ${cycle === c.k ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-white' : 'text-slate-500'}`}>
+                        {c.l}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                <div className="pt-4 flex flex-wrap items-center gap-3">
-                  <a href="https://wa.me/918584885450?text=Hi!%20I%20want%20to%20upgrade%20my%20CalcuttaRx%20plan." target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-glow">
-                    <i className="fab fa-whatsapp mr-1"></i>Upgrade on WhatsApp — 85848 85450
-                  </a>
-                  <span className="text-[10px] text-slate-400"><i className="fas fa-circle-info mr-1"></i>FREE migration &amp; staff training included with every plan</span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    { key: 'starter', name: 'Starter', price: 799, features: '1 Branch · 2 Users · Unlimited bills' },
+                    { key: 'growth', name: 'Growth', price: 1299, popular: true, features: '5 Users · Khata · Prescription registry' },
+                    { key: 'enterprise', name: 'Enterprise', price: null, features: 'Unlimited branches · Audit log · SLA' },
+                  ].map(p => {
+                    const isCurrent = planInfo.plan === p.key;
+                    const perMo = p.price ? Math.round(p.price * (cycle === 'yearly' ? 0.8 : 1)) : null;
+                    return (
+                      <div key={p.name} className={`relative rounded-xl border p-4 flex flex-col ${p.popular ? 'border-pharma-400 bg-pharma-50/50 ring-1 ring-pharma-300' : 'border-slate-200 bg-white/60'} ${isCurrent ? 'ring-2 ring-emerald-400' : ''}`}>
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-bold text-slate-800">{p.name}</p>
+                          {isCurrent && <span className="badge badge-success text-[9px]">Current</span>}
+                          {p.popular && !isCurrent && <span className="badge badge-success text-[9px] whitespace-nowrap">Most Popular</span>}
+                        </div>
+                        {p.price ? (
+                          <>
+                            <p className="mt-1 font-extrabold font-mono text-pharma-600">₹{perMo}<span className="text-[10px] text-slate-400 font-sans">/shop/mo</span></p>
+                            {cycle === 'yearly' && <p className="text-[10px] text-slate-400">₹{(perMo * 12).toLocaleString('en-IN')} billed yearly</p>}
+                          </>
+                        ) : (
+                          <p className="mt-1 font-extrabold font-mono text-pharma-600">Custom</p>
+                        )}
+                        <p className="text-[10px] text-slate-400 mt-1.5 leading-snug flex-1">{p.features}</p>
+                        {p.price ? (
+                          <>
+                            <button onClick={() => openSheet(p.key)} disabled={!isOwner || checkoutLoading === p.key || isCurrent}
+                              className={`btn btn-sm w-full mt-3 justify-center ${isCurrent ? 'btn-secondary opacity-60 cursor-default' : 'btn-primary btn-glow'}`}>
+                              <i className={`fas ${checkoutLoading === p.key ? 'fa-spinner fa-spin' : isCurrent ? 'fa-check' : 'fa-bolt'} mr-1`}></i>
+                              {checkoutLoading === p.key ? 'Opening…' : isCurrent ? 'Current plan' : cycle === 'yearly' ? 'Subscribe yearly' : 'Subscribe monthly'}
+                            </button>
+                            {!isOwner && <p className="text-[9px] text-amber-600 mt-1.5"><i className="fas fa-lock mr-0.5"></i>Owner access required</p>}
+                            <a href="https://wa.me/918584885450?text=Hi!%20I%20want%20to%20upgrade%20my%20CalcuttaRx%20plan." target="_blank" rel="noopener noreferrer" className="text-[10px] text-center text-slate-400 hover:text-pharma-600 mt-1.5">Prefer assisted setup? WhatsApp us</a>
+                          </>
+                        ) : (
+                          <a href="https://wa.me/918584885450?text=Hi!%20I%20want%20an%20Enterprise%20quote%20for%20CalcuttaRx." target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-sm w-full mt-3 justify-center">Talk to Kolkata Team</a>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
+
+                <span className="block text-[10px] text-slate-400 mt-3"><i className="fas fa-circle-info mr-1"></i>FREE migration &amp; staff training included with every plan · No hidden AMC</span>
+
+                {txns.length > 0 && (
+                  <div className="mt-5 pt-4 border-t border-slate-100">
+                    <h3 className="text-sm font-bold text-slate-700 mb-2"><i className="fas fa-receipt mr-1.5 text-pharma-500"></i>Billing History</h3>
+                    <div className="space-y-1.5">
+                      {txns.map(t => (
+                        <div key={t._id} className="flex items-center justify-between gap-2 text-xs px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800/60">
+                          <span className="font-semibold capitalize text-slate-700 dark:text-slate-200">{t.plan} · {t.cycle}</span>
+                          <span className="font-mono font-semibold text-slate-700 dark:text-slate-200">₹{Number(t.amount).toLocaleString('en-IN')}</span>
+                          <span className={`badge ${t.status === 'completed' ? 'badge-success' : t.status === 'failed' ? 'badge-danger' : 'badge-warning'} text-[9px]`}>{t.status}</span>
+                          <span className="text-slate-400 ml-auto">{new Date(t.createdAt).toLocaleDateString('en-IN')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </>
             );
           })()}
@@ -480,6 +627,54 @@ export default function Settings() {
           </GlassCard>
         </>
       )}
+      {/* ══════════ UROPAY PAYMENT SHEET ══════════ */}
+      <GlassModal
+        open={!!paySheet}
+        onClose={() => { setSheetClosedByUser(true); setPaySheet(null); }}
+        title="Pay via UPI — CalcuttaRx"
+        size="sm"
+      >
+        {paySheet && (
+          <div className="text-center space-y-3 py-1">
+            <p className="text-sm text-slate-500">Pay <span className="font-bold text-slate-800">₹{Number(paySheet.amount).toLocaleString('en-IN')}</span> for {paySheet.planLabel} ({paySheet.cycle})</p>
+            {sheetStatus === 'COMPLETED' ? (
+              <div className="py-6">
+                <i className="fas fa-circle-check text-emerald-500 text-4xl mb-2"></i>
+                <p className="font-bold text-emerald-700">Payment confirmed — plan activated!</p>
+              </div>
+            ) : (
+              <>
+                {paySheet.qrCode && <img src={paySheet.qrCode} alt="UPI QR code" className="mx-auto w-52 h-52 rounded-2xl border border-gray-200 shadow-sm bg-white" />}
+                <p className="text-xs text-slate-400">Scan with any UPI app, or</p>
+                {paySheet.upiString && (
+                  <a href={paySheet.upiString} className="btn btn-primary btn-glow w-full justify-center">
+                    <i className="fas fa-mobile-alt mr-1"></i>Open UPI App to Pay
+                  </a>
+                )}
+                <div className="pt-2 border-t border-slate-100 text-left">
+                  <label htmlFor="utr-input" className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">After paying, enter the UPI Reference Number (UTR) from your UPI app</label>
+                  <input id="utr-input" value={utr} onChange={e => setUtr(e.target.value)} placeholder="e.g. 421234567890" inputMode="numeric" autoComplete="off"
+                    className={`w-full px-3 py-2.5 rounded-xl border bg-white dark:bg-slate-800 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/20 ${/^[A-Za-z0-9]{6,22}$/.test(utr.trim()) ? 'border-emerald-400' : 'border-slate-200 dark:border-slate-700'}`} />
+                  <button onClick={submitUtr} disabled={utrLoading || !/^[A-Za-z0-9]{6,22}$/.test(utr.trim())}
+                    className="btn btn-primary btn-glow w-full justify-center mt-2 disabled:opacity-50">
+                    <i className={`fas ${utrLoading ? 'fa-spinner fa-spin' : 'fa-paper-plane'} mr-1`}></i>
+                    {utrLoading ? 'Submitting…' : 'I have paid — Submit UTR'}
+                  </button>
+                  {['UTR_SUBMITTED', 'REVIEW_REQUIRED'].includes(sheetStatus) && (
+                    <p className="text-xs text-amber-600 mt-2 flex items-center gap-1.5 justify-center">
+                      <i className={`fas ${sheetStatus === 'REVIEW_REQUIRED' ? 'fa-hourglass-half' : 'fa-spinner fa-spin'}`}></i>
+                      {sheetStatus === 'REVIEW_REQUIRED'
+                        ? 'Under manual review — our team will approve it shortly.'
+                        : 'Verifying payment… usually completes within a minute.'}
+                    </p>
+                  )}
+                  <p className="text-[10px] text-slate-400 mt-2"><i className="fas fa-shield-halved mr-1"></i>Payment goes directly to our bank via UroPay — zero intermediaries.</p>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </GlassModal>
     </div>
   );
 }

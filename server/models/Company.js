@@ -53,7 +53,8 @@ const companySchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true },
   // Subscription — 14-day free trial stamped at registration (no card required)
   plan: { type: String, enum: ['trial', 'starter', 'growth', 'enterprise'], default: 'trial', index: true },
-  trialEndDate: { type: Date }
+  trialEndDate: { type: Date },
+  planExpiresAt: { type: Date }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Company', companySchema);
