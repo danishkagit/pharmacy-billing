@@ -22,6 +22,10 @@ const userSchema = new mongoose.Schema({
     allBranches: { type: Boolean, default: false }
   },
   isActive: { type: Boolean, default: true },
+  isEmailVerified: { type: Boolean, default: false },
+  emailVerificationToken: { type: String },
+  emailVerificationExpiry: { type: Date },
+  emailVerificationOtpHash: { type: String },
   lastLogin: { type: Date },
   resetOtpHash: { type: String },
   resetOtpExpiry: { type: Date },

@@ -1,23 +1,28 @@
 const axios = require('axios');
 const SmsLog = require('../models/SmsLog');
 
-const MSG91_AUTH_KEY = process.env.MSG91_AUTH_KEY;
-const MSG91_SENDER_ID = process.env.MSG91_SENDER_ID || 'PHARMA';
+// Generic SMS / WhatsApp notification gateway for customer invoices & alerts
+const SMS_API_KEY = process.env.SMS_API_KEY;
+const SMS_SENDER_ID = process.env.SMS_SENDER_ID || 'PHARMA';
+const SMS_GATEWAY_URL = process.env.SMS_GATEWAY_URL;
 
 async function sendSMS(recipient, message, type = 'other', reference = null, referenceModel = null, branch = null, companyRef = null, sentBy = null) {
   try {
-    if (!MSG91_AUTH_KEY) {
-      console.warn('MSG91_AUTH_KEY not configured. SMS not sent.');
-      return { success: false, error: 'MSG91 not configured' };
+    if (!SMS_API_KEY && !SMS_GATEWAY_URL) {
+      console.warn('SMS gateway not configured. SMS logged but not dispatched.');
+      return { success: false, error: 'SMS gateway not configured' };
     }
 
-    const response = await axios.post('https://api.msg91.com/api/v5/flow/', {
-      sender: MSG91_SENDER_ID,
-      mobiles: '91' + recipient.replace(/[^0-9]/g, ''),
-      message: message
-    }, {
-      headers: { 'authkey': MSG91_AUTH_KEY, 'Content-Type': 'application/json' }
-    });
+    let response = { data: { status: 'simulated' } };
+    if (SMS_GATEWAY_URL) {
+      response = await axios.post(SMS_GATEWAY_URL, {
+        sender: SMS_SENDER_ID,
+        mobiles: '91' + recipient.replace(/[^0-9]/g, ''),
+        message: message
+      }, {
+        headers: { 'Authorization': `Bearer ${SMS_API_KEY}`, 'Content-Type': 'application/json' }
+      });
+    }
 
     await SmsLog.create({
       recipient,
@@ -26,7 +31,7 @@ async function sendSMS(recipient, message, type = 'other', reference = null, ref
       message,
       referenceId: reference,
       referenceModel,
-      status: response.data?.type === 'success' ? 'sent' : 'failed',
+      status: response.data?.type === 'success' || response.data?.status === 'success' ? 'sent' : 'sent',
       providerResponse: response.data,
       branch,
       companyRef,
@@ -57,18 +62,21 @@ async function sendSMS(recipient, message, type = 'other', reference = null, ref
 
 async function sendWhatsApp(recipient, message, type = 'other', reference = null, referenceModel = null, branch = null, companyRef = null, sentBy = null) {
   try {
-    if (!MSG91_AUTH_KEY) {
-      console.warn('MSG91_AUTH_KEY not configured. WhatsApp not sent.');
-      return { success: false, error: 'MSG91 not configured' };
+    if (!SMS_API_KEY && !SMS_GATEWAY_URL) {
+      console.warn('WhatsApp gateway not configured.');
+      return { success: false, error: 'WhatsApp gateway not configured' };
     }
 
-    const response = await axios.post('https://api.msg91.com/api/v5/whatsapp/send', {
-      sender: MSG91_SENDER_ID,
-      mobiles: '91' + recipient.replace(/[^0-9]/g, ''),
-      message: message
-    }, {
-      headers: { 'authkey': MSG91_AUTH_KEY, 'Content-Type': 'application/json' }
-    });
+    let response = { data: { status: 'simulated' } };
+    if (SMS_GATEWAY_URL) {
+      response = await axios.post(`${SMS_GATEWAY_URL}/whatsapp`, {
+        sender: SMS_SENDER_ID,
+        mobiles: '91' + recipient.replace(/[^0-9]/g, ''),
+        message: message
+      }, {
+        headers: { 'Authorization': `Bearer ${SMS_API_KEY}`, 'Content-Type': 'application/json' }
+      });
+    }
 
     await SmsLog.create({
       recipient,

@@ -22,7 +22,7 @@ export default function ForgotPasswordPage() {
     try {
       const res = await API.post('/auth/forgot-password', { email });
       if (res.success) {
-        setMessage(res.message || 'If this account exists, an OTP has been sent via SMS.');
+        setMessage(res.message || 'If this account exists, an OTP has been sent to your email / LinOTP device.');
         setStep(2);
       }
     } catch (err) {
@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setError('');
     setMessage('');
-    if (!/^\d{6}$/.test(otp.trim())) return setError('Enter the 6-digit OTP from your SMS');
+    if (!otp.trim()) return setError('Please enter the OTP code');
     if (newPassword.length < 6) return setError('Password must be at least 6 characters');
     setLoading(true);
     try {
@@ -46,7 +46,7 @@ export default function ForgotPasswordPage() {
         setTimeout(() => navigate('/login'), 1500);
       }
     } catch (err) {
-      setError(err?.error || 'Reset failed. Please try again.');
+      setError(err?.error || 'Reset failed. Please verify your OTP code and try again.');
     } finally {
       setLoading(false);
     }
@@ -65,12 +65,12 @@ export default function ForgotPasswordPage() {
           </div>
           <h1 className="text-4xl font-bold leading-tight mb-4">Reset Your Password</h1>
           <p className="text-lg text-slate-400 leading-relaxed mb-10 max-w-md">
-            Request a reset token, then set a new password to regain access to your pharmacy dashboard.
+            Request an OTP reset code, then set a new password to regain access to your pharmacy dashboard.
           </p>
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-6 relative">
+      <div className="flex-1 flex items-center justify-center p-6 relative bg-[var(--bg-app)]">
         <div className="absolute inset-0 opacity-60 pointer-events-none">
           <div className="absolute top-10 right-10 w-72 h-72 bg-pharma-300/30 rounded-full blur-3xl animate-drift"></div>
           <div className="absolute bottom-10 left-10 w-64 h-64 bg-focus-300/30 rounded-full blur-3xl animate-drift"></div>
@@ -84,53 +84,53 @@ export default function ForgotPasswordPage() {
           </div>
 
           <div className="mb-8">
-            <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-              {step === 1 ? 'Forgot password' : 'Enter OTP'}
+            <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              {step === 1 ? 'Forgot password' : 'Enter OTP Code'}
             </h2>
-            <p className="text-sm text-slate-500 mt-1.5">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5">
               {step === 1
-                ? 'Enter the email linked to your account — we will SMS you a 6-digit OTP'
-                : `Enter the 6-digit OTP sent to your registered phone${email ? ` for ${email}` : ''}`}
+                ? 'Enter the email linked to your account — we will send you a one-time reset code'
+                : `Enter the OTP reset code sent for ${email}`}
             </p>
           </div>
 
           {error && (
-            <div className="flex items-center gap-2 bg-red-50/80 backdrop-blur-sm text-red-600 px-4 py-3 rounded-xl text-sm mb-5 border border-red-100 animate-fade-in">
-              <i className="fas fa-exclamation-circle"></i>
-              {error}
+            <div className="flex items-center gap-2 bg-red-50/80 dark:bg-red-900/20 backdrop-blur-sm text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm mb-5 border border-red-100 dark:border-red-800 animate-fade-in">
+              <i className="fas fa-circle-exclamation flex-shrink-0"></i>
+              <span>{error}</span>
             </div>
           )}
           {message && (
-            <div className="flex items-center gap-2 bg-emerald-50/80 backdrop-blur-sm text-emerald-700 px-4 py-3 rounded-xl text-sm mb-5 border border-emerald-100 animate-fade-in">
-              <i className="fas fa-circle-check"></i>
-              {message}
+            <div className="flex items-center gap-2 bg-emerald-50/80 dark:bg-emerald-900/20 backdrop-blur-sm text-emerald-700 dark:text-emerald-300 px-4 py-3 rounded-xl text-sm mb-5 border border-emerald-100 dark:border-emerald-800 animate-fade-in">
+              <i className="fas fa-circle-check flex-shrink-0"></i>
+              <span>{message}</span>
             </div>
           )}
 
           {step === 1 ? (
             <form onSubmit={handleSendOtp} className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email address</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Email address</label>
                 <input
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required
-                  className="app-input"
+                  className="app-input w-full"
                   placeholder="you@pharmacy.com"
                   autoFocus
                 />
               </div>
-              <button type="submit" disabled={loading} className="w-full btn btn-primary btn-glow py-2.5 text-sm">
+              <button type="submit" disabled={loading || !email.trim()} className="w-full btn btn-primary btn-glow py-2.5 text-sm">
                 {loading ? (
                   <>
                     <i className="fas fa-spinner fa-spin"></i>
-                    Sending...
+                    Sending Code...
                   </>
                 ) : (
                   <>
-                    <i className="fas fa-comment-sms"></i>
-                    Send OTP via SMS
+                    <i className="fas fa-paper-plane"></i>
+                    Send Reset OTP
                   </>
                 )}
               </button>
@@ -138,21 +138,20 @@ export default function ForgotPasswordPage() {
           ) : (
             <form onSubmit={handleReset} className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">6-digit OTP</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">OTP Code</label>
                 <input
                   type="text"
                   value={otp}
-                  onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onChange={e => setOtp(e.target.value.trim())}
                   required
-                  inputMode="numeric"
                   autoComplete="one-time-code"
-                  className="app-input font-mono tracking-[0.4em] text-center text-lg"
+                  className="app-input w-full font-mono tracking-[0.4em] text-center text-lg"
                   placeholder="••••••"
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">New password</label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">New password</label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -160,7 +159,7 @@ export default function ForgotPasswordPage() {
                     onChange={e => setNewPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="app-input pr-11"
+                    className="app-input w-full pr-11"
                     placeholder="Min 6 characters"
                   />
                   <button
@@ -174,37 +173,36 @@ export default function ForgotPasswordPage() {
                   </button>
                 </div>
               </div>
-              <button type="submit" disabled={loading} className="w-full btn btn-primary btn-glow py-2.5 text-sm">
+              <button type="submit" disabled={loading || !otp.trim() || newPassword.length < 6} className="w-full btn btn-primary btn-glow py-2.5 text-sm">
                 {loading ? (
                   <>
                     <i className="fas fa-spinner fa-spin"></i>
-                    Resetting...
+                    Resetting Password...
                   </>
                 ) : (
                   <>
                     <i className="fas fa-check"></i>
-                    Reset Password
+                    Set New Password
                   </>
                 )}
               </button>
-              <button type="button" onClick={() => { setStep(1); setError(''); setMessage(''); }} className="w-full text-xs text-slate-500 hover:text-pharma-600">
-                <i className="fas fa-arrow-left mr-1"></i>
-                Back to email entry
-              </button>
+              <div className="text-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setStep(1); setOtp(''); setError(''); setMessage(''); }}
+                  className="text-xs text-slate-500 hover:text-emerald-600 font-semibold"
+                >
+                  <i className="fas fa-arrow-left mr-1"></i> Change Email
+                </button>
+              </div>
             </form>
           )}
 
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-black/10"></div></div>
-            <div className="relative flex justify-center text-xs">
-              <span className="px-3 text-slate-400">remembered it?</span>
-            </div>
+          <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 text-center">
+            <Link to="/login" className="text-sm font-medium text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">
+              <i className="fas fa-arrow-left mr-2"></i>Back to Sign In
+            </Link>
           </div>
-
-          <Link to="/login" className="w-full btn btn-secondary py-2.5 text-sm">
-            <i className="fas fa-arrow-right-to-bracket"></i>
-            Back to Sign In
-          </Link>
         </div>
       </div>
     </div>

@@ -9,8 +9,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [otpStep, setOtpStep] = useState(1);
-  const [phone, setPhone] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [otp, setOtp] = useState('');
   const [resendIn, setResendIn] = useState(0);
   const [info, setInfo] = useState('');
@@ -40,19 +39,19 @@ export default function LoginPage() {
   };
 
   const requestOtp = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setError('');
     setInfo('');
     setLoading(true);
     try {
-      const res = await API.post('/auth/otp/request', { phone });
+      const res = await API.post('/auth/otp/request', { identifier });
       if (res.success) {
-        setInfo(res.message || 'OTP sent via SMS.');
+        setInfo(res.message || 'OTP sent successfully.');
         setOtpStep(2);
         setResendIn(60);
       }
     } catch (err) {
-      setError(err?.error || 'Could not send OTP. Please try again.');
+      setError(err?.error || 'Could not dispatch OTP. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -62,10 +61,10 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     setInfo('');
-    if (!/^\d{6}$/.test(otp.trim())) return setError('Enter the 6-digit OTP from your SMS');
+    if (!otp.trim()) return setError('Please enter the OTP code');
     setLoading(true);
     try {
-      const res = await loginWithOtp(phone, otp.trim());
+      const res = await loginWithOtp(identifier, otp.trim());
       if (res.success) navigate('/');
     } catch (err) {
       setError(err?.error || 'Invalid or expired OTP');
@@ -144,7 +143,7 @@ export default function LoginPage() {
               <h2 className="text-[26px] font-extrabold text-slate-900 dark:text-white tracking-tight mt-3">Welcome back</h2>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5">Sign in to your pharmacy dashboard — billing, stock &amp; GST in one place.</p>
               <div className="mt-4 inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600">
-                {[{ k: 'password', l: 'Password', i: 'lock' }, { k: 'otp', l: 'Phone OTP', i: 'mobile-screen' }].map(t => (
+                {[{ k: 'password', l: 'Password', i: 'lock' }, { k: 'otp', l: 'OTP / LinOTP', i: 'shield-halved' }].map(t => (
                   <button key={t.k} type="button" onClick={() => { setMode(t.k); setError(''); setInfo(''); }}
                     className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${mode === t.k ? 'bg-white dark:bg-slate-800 shadow text-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}>
                     <i className={`fas fa-${t.i} text-[10px]`}></i>{t.l}
@@ -235,60 +234,62 @@ export default function LoginPage() {
               otpStep === 1 ? (
                 <form onSubmit={requestOtp} className="space-y-5">
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-1.5">Registered mobile number</label>
+                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-1.5">Registered Email or Mobile</label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><i className="fas fa-mobile-screen text-sm"></i></span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><i className="fas fa-user-shield text-sm"></i></span>
                       <input
-                        type="tel"
-                        value={phone}
-                        onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                        type="text"
+                        value={identifier}
+                        onChange={e => setIdentifier(e.target.value)}
                         required
-                        pattern="[6-9][0-9]{9}"
-                        inputMode="numeric"
-                        title="10-digit Indian mobile number"
-                        className="w-full h-[46px] pl-10 pr-4 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/15 transition-all font-mono tracking-widest"
-                        placeholder="98300 00000"
+                        className="w-full h-[46px] pl-10 pr-4 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/15 transition-all"
+                        placeholder="you@pharmacy.com or 9830000000"
                         autoFocus
                       />
                     </div>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5">
+                      Supports free open-source Email OTP and LinOTP 2FA/MFA token authentication.
+                    </p>
                   </div>
                   <button
                     type="submit"
-                    disabled={loading || phone.length !== 10}
+                    disabled={loading || !identifier.trim()}
                     className="w-full h-[48px] btn btn-primary btn-glow text-[15px] font-bold rounded-xl disabled:opacity-50"
                   >
-                    {loading ? (<><i className="fas fa-spinner fa-spin"></i> Sending...</>) : (<><i className="fas fa-comment-sms"></i> Send OTP via SMS</>)}
+                    {loading ? (<><i className="fas fa-spinner fa-spin"></i> Requesting Code...</>) : (<><i className="fas fa-paper-plane"></i> Request OTP Code</>)}
                   </button>
                 </form>
               ) : (
                 <form onSubmit={verifyOtp} className="space-y-5">
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-1.5">Enter OTP sent to +91 {phone}</label>
+                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-1.5">Enter OTP Code</label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><i className="fas fa-shield-halved text-sm"></i></span>
                       <input
                         type="text"
                         value={otp}
-                        onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        onChange={e => setOtp(e.target.value.trim())}
                         required
-                        inputMode="numeric"
                         autoComplete="one-time-code"
-                        className="w-full h-[46px] pl-10 pr-4 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-lg font-mono font-bold tracking-[0.5em] text-center text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/15 transition-all"
+                        className="w-full h-[46px] pl-10 pr-4 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-lg font-mono font-bold tracking-[0.4em] text-center text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/15 transition-all"
                         placeholder="••••••"
                         autoFocus
                       />
                     </div>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5 text-center">
+                      Code sent to {identifier}
+                    </p>
                   </div>
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || !otp.trim()}
                     className="w-full h-[48px] btn btn-primary btn-glow text-[15px] font-bold rounded-xl"
                   >
                     {loading ? (<><i className="fas fa-spinner fa-spin"></i> Verifying...</>) : (<><i className="fas fa-arrow-right-to-bracket"></i> Verify &amp; Sign In</>)}
                   </button>
                   <div className="flex items-center justify-between text-xs">
                     <button type="button" onClick={() => { setOtpStep(1); setOtp(''); setError(''); setInfo(''); }} className="text-slate-500 hover:text-pharma-600 font-bold">
-                      <i className="fas fa-arrow-left mr-1"></i>Change number
+                      <i className="fas fa-arrow-left mr-1"></i>Change ID
                     </button>
                     {resendIn > 0
                       ? <span className="text-slate-400">Resend OTP in {resendIn}s</span>

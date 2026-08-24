@@ -63,8 +63,9 @@ export function AuthProvider({ children }) {
     return res;
   };
 
-  const loginWithOtp = async (phone, otp) => {
-    const res = await API.post('/auth/otp/verify', { phone, otp });
+  const loginWithOtp = async (identifier, otp) => {
+    const payload = typeof identifier === 'object' ? identifier : { identifier, otp };
+    const res = await API.post('/auth/otp/verify', payload);
     if (res.success) {
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify({ user: res.data.user, company: res.data.company, branch: res.data.branch }));
