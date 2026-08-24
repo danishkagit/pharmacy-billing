@@ -21,3 +21,21 @@ services:
         sync: false
       - key: SERVER_PUBLIC_URL
         sync: false
+      # LinOTP (self-hosted OTP authority) — when set, it overrides email OTP
+      - key: LINOTP_BASE_URL
+        sync: false
+      - key: LINOTP_REALM
+        sync: false
+      - key: LINOTP_USERNAME_FIELD
+        value: email
+      # SMTP / Gmail App Password for live OTP emails
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
