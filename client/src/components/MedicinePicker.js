@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import API from '../utils/api';
 import QuickAddMedicine from './QuickAddMedicine';
 
@@ -91,6 +92,75 @@ export default function MedicinePicker({ value, onSelect, onClear, placeholder =
     if (onSelect) onSelect(med);
   };
 
+  const [dropPos, setDropPos] = useState(null);
+
+  const updateDropPos = () => {
+    if (ref.current) {
+      const r = ref.current.getBoundingClientRect();
+      setDropPos({ top: r.bottom + 2, left: r.left, width: Math.max(r.width, 260) });
+    }
+  };
+
+  useEffect(() => {
+    if (open) updateDropPos();
+  }, [open, options, loading]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onScroll = () => updateDropPos();
+    window.addEventListener('scroll', onScroll, true);
+    window.addEventListener('resize', onScroll);
+    return () => { window.removeEventListener('scroll', onScroll, true); window.removeEventListener('resize', onScroll); };
+  }, [open]);
+
+  const dropdown = open && dropPos && createPortal(
+    <div
+      className="fixed z-[9999] max-h-72 overflow-y-auto bg-white rounded-lg shadow-lg border border-slate-200"
+      style={{ top: dropPos.top, left: dropPos.left, width: dropPos.width }}
+    >
+      {loading && (
+        <div className="px-3 py-3 text-xs text-slate-400"><i className="fas fa-spinner fa-spin mr-1"></i>Searching...</div>
+      )}
+      {!loading && options.length === 0 && (
+        <div className="px-3 py-3">
+          <p className="text-xs text-slate-400 mb-2">
+            <i className="fas fa-info-circle mr-1"></i>No medicines match. Try the brand or salt name.
+          </p>
+          <button
+            type="button"
+            onClick={() => { setOpen(false); setShowQuickAdd(true); }}
+            className="w-full text-left px-3 py-2 rounded-lg bg-pharma-50 text-pharma-700 text-xs font-medium hover:bg-pharma-100 transition-colors flex items-center gap-2"
+          >
+            <i className="fas fa-plus-circle"></i>Add "{query}" as new medicine
+          </button>
+        </div>
+      )}
+      {options.map((m, i) => (
+        <button
+          key={m._id}
+          type="button"
+          onMouseEnter={() => setActive(i)}
+          onClick={() => choose(m)}
+          className={`w-full text-left px-3 py-2.5 flex flex-col gap-0.5 transition-colors ${i === active ? 'bg-teal-50' : 'hover:bg-slate-50'}`}
+        >
+          <span className="text-sm font-medium text-slate-800 flex items-center gap-2">
+            {highlight(m.name, query)}
+            {m.schedule === 'H' && <span className="badge badge-yellow">H</span>}
+            {m.schedule === 'H1' && <span className="badge badge-purple">H1</span>}
+            {m.schedule === 'X' && <span className="badge badge-red">X</span>}
+            {m.schedule === 'OTC' && <span className="badge badge-green">OTC</span>}
+          </span>
+          {m.composition && <span className="text-xs text-slate-500 truncate"><i className="fas fa-pills mr-1 text-teal-400 text-[10px]"></i>{highlight(m.composition, query)}</span>}
+          <span className="flex items-center gap-2 text-[11px] text-slate-400">
+            {m.manufacturer && <span>{m.manufacturer}</span>}
+            {m.gstRate ? <span>GST {m.gstRate}%</span> : null}
+          </span>
+        </button>
+      ))}
+    </div>,
+    document.body
+  );
+
   return (
     <>
       <div className="relative w-full" ref={boxRef}>
@@ -111,51 +181,8 @@ export default function MedicinePicker({ value, onSelect, onClear, placeholder =
             </button>
           )}
         </div>
-
-        {open && (
-          <div className="absolute z-30 mt-1 w-full min-w-[260px] max-h-72 overflow-y-auto bg-white rounded-lg shadow-lg border border-slate-200">
-            {loading && (
-              <div className="px-3 py-3 text-xs text-slate-400"><i className="fas fa-spinner fa-spin mr-1"></i>Searching...</div>
-            )}
-            {!loading && options.length === 0 && (
-              <div className="px-3 py-3">
-                <p className="text-xs text-slate-400 mb-2">
-                  <i className="fas fa-info-circle mr-1"></i>No medicines match. Try the brand or salt name.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => { setOpen(false); setShowQuickAdd(true); }}
-                  className="w-full text-left px-3 py-2 rounded-lg bg-pharma-50 text-pharma-700 text-xs font-medium hover:bg-pharma-100 transition-colors flex items-center gap-2"
-                >
-                  <i className="fas fa-plus-circle"></i>Add "{query}" as new medicine
-                </button>
-              </div>
-            )}
-            {options.map((m, i) => (
-              <button
-                key={m._id}
-                type="button"
-                onMouseEnter={() => setActive(i)}
-                onClick={() => choose(m)}
-                className={`w-full text-left px-3 py-2.5 flex flex-col gap-0.5 transition-colors ${i === active ? 'bg-teal-50' : 'hover:bg-slate-50'}`}
-              >
-                <span className="text-sm font-medium text-slate-800 flex items-center gap-2">
-                  {highlight(m.name, query)}
-                  {m.schedule === 'H' && <span className="badge badge-yellow">H</span>}
-                  {m.schedule === 'H1' && <span className="badge badge-purple">H1</span>}
-                  {m.schedule === 'X' && <span className="badge badge-red">X</span>}
-                  {m.schedule === 'OTC' && <span className="badge badge-green">OTC</span>}
-                </span>
-                {m.composition && <span className="text-xs text-slate-500 truncate"><i className="fas fa-pills mr-1 text-teal-400 text-[10px]"></i>{highlight(m.composition, query)}</span>}
-                <span className="flex items-center gap-2 text-[11px] text-slate-400">
-                  {m.manufacturer && <span>{m.manufacturer}</span>}
-                  {m.gstRate ? <span>GST {m.gstRate}%</span> : null}
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
       </div>
+      {dropdown}
       <QuickAddMedicine
         open={showQuickAdd}
         onClose={() => setShowQuickAdd(false)}
