@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import API from '../utils/api';
+import QuickAddMedicine from './QuickAddMedicine';
 
 /**
  * MedicinePicker — salt/composition-aware autocomplete for selecting a medicine.
@@ -21,6 +22,7 @@ export default function MedicinePicker({ value, onSelect, onClear, placeholder =
   const [loading, setLoading] = useState(false);
   const [active, setActive] = useState(-1);
   const [selectedId, setSelectedId] = useState(value || '');
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
   const ref = useRef(null);
   const boxRef = useRef(null);
   const timer = useRef(null);
@@ -83,60 +85,83 @@ export default function MedicinePicker({ value, onSelect, onClear, placeholder =
     return () => { document.removeEventListener('mousedown', onDocClick); document.removeEventListener('keydown', onKey); };
   }, [open, options, active]);
 
+  const handleQuickAddCreated = (med) => {
+    setQuery(med.name);
+    setSelectedId(med._id);
+    if (onSelect) onSelect(med);
+  };
+
   return (
-    <div className="relative w-full" ref={boxRef}>
-      <div className="relative">
-        <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
-        <input
-          ref={ref}
-          autoFocus={autoFocus}
-          value={query}
-          onChange={handleInput}
-          onFocus={() => { if (query && options.length) setOpen(true); }}
-          placeholder={placeholder}
-          className={`glass-input pl-8 pr-8 ${compact ? 'text-xs py-1.5' : ''}`}
-        />
-        {query && (
-          <button type="button" onClick={() => { setQuery(''); setOptions([]); setOpen(false); if (onClear) onClear(); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5">
-            <i className="fas fa-times text-xs"></i>
-          </button>
+    <>
+      <div className="relative w-full" ref={boxRef}>
+        <div className="relative">
+          <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+          <input
+            ref={ref}
+            autoFocus={autoFocus}
+            value={query}
+            onChange={handleInput}
+            onFocus={() => { if (query && options.length) setOpen(true); }}
+            placeholder={placeholder}
+            className={`glass-input pl-8 pr-8 ${compact ? 'text-xs py-1.5' : ''}`}
+          />
+          {query && (
+            <button type="button" onClick={() => { setQuery(''); setOptions([]); setOpen(false); if (onClear) onClear(); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5">
+              <i className="fas fa-times text-xs"></i>
+            </button>
+          )}
+        </div>
+
+        {open && (
+          <div className="absolute z-30 mt-1 w-full min-w-[260px] max-h-72 overflow-y-auto bg-white rounded-lg shadow-lg border border-slate-200">
+            {loading && (
+              <div className="px-3 py-3 text-xs text-slate-400"><i className="fas fa-spinner fa-spin mr-1"></i>Searching...</div>
+            )}
+            {!loading && options.length === 0 && (
+              <div className="px-3 py-3">
+                <p className="text-xs text-slate-400 mb-2">
+                  <i className="fas fa-info-circle mr-1"></i>No medicines match. Try the brand or salt name.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { setOpen(false); setShowQuickAdd(true); }}
+                  className="w-full text-left px-3 py-2 rounded-lg bg-pharma-50 text-pharma-700 text-xs font-medium hover:bg-pharma-100 transition-colors flex items-center gap-2"
+                >
+                  <i className="fas fa-plus-circle"></i>Add "{query}" as new medicine
+                </button>
+              </div>
+            )}
+            {options.map((m, i) => (
+              <button
+                key={m._id}
+                type="button"
+                onMouseEnter={() => setActive(i)}
+                onClick={() => choose(m)}
+                className={`w-full text-left px-3 py-2.5 flex flex-col gap-0.5 transition-colors ${i === active ? 'bg-teal-50' : 'hover:bg-slate-50'}`}
+              >
+                <span className="text-sm font-medium text-slate-800 flex items-center gap-2">
+                  {highlight(m.name, query)}
+                  {m.schedule === 'H' && <span className="badge badge-yellow">H</span>}
+                  {m.schedule === 'H1' && <span className="badge badge-purple">H1</span>}
+                  {m.schedule === 'X' && <span className="badge badge-red">X</span>}
+                  {m.schedule === 'OTC' && <span className="badge badge-green">OTC</span>}
+                </span>
+                {m.composition && <span className="text-xs text-slate-500 truncate"><i className="fas fa-pills mr-1 text-teal-400 text-[10px]"></i>{highlight(m.composition, query)}</span>}
+                <span className="flex items-center gap-2 text-[11px] text-slate-400">
+                  {m.manufacturer && <span>{m.manufacturer}</span>}
+                  {m.gstRate ? <span>GST {m.gstRate}%</span> : null}
+                </span>
+              </button>
+            ))}
+          </div>
         )}
       </div>
-
-      {open && (
-        <div className="absolute z-30 mt-1 w-full min-w-[260px] max-h-72 overflow-y-auto bg-white rounded-lg shadow-lg border border-slate-200">
-          {loading && (
-            <div className="px-3 py-3 text-xs text-slate-400"><i className="fas fa-spinner fa-spin mr-1"></i>Searching...</div>
-          )}
-          {!loading && options.length === 0 && (
-            <div className="px-3 py-3 text-xs text-slate-400">
-              <i className="fas fa-info-circle mr-1"></i>No medicines match. Try the brand or salt name (e.g. "parac", "amox", "metform").
-            </div>
-          )}
-          {options.map((m, i) => (
-            <button
-              key={m._id}
-              type="button"
-              onMouseEnter={() => setActive(i)}
-              onClick={() => choose(m)}
-              className={`w-full text-left px-3 py-2.5 flex flex-col gap-0.5 transition-colors ${i === active ? 'bg-teal-50' : 'hover:bg-slate-50'}`}
-            >
-              <span className="text-sm font-medium text-slate-800 flex items-center gap-2">
-                {highlight(m.name, query)}
-                {m.schedule === 'H' && <span className="badge badge-yellow">H</span>}
-                {m.schedule === 'H1' && <span className="badge badge-purple">H1</span>}
-                {m.schedule === 'X' && <span className="badge badge-red">X</span>}
-                {m.schedule === 'OTC' && <span className="badge badge-green">OTC</span>}
-              </span>
-              {m.composition && <span className="text-xs text-slate-500 truncate"><i className="fas fa-pills mr-1 text-teal-400 text-[10px]"></i>{highlight(m.composition, query)}</span>}
-              <span className="flex items-center gap-2 text-[11px] text-slate-400">
-                {m.manufacturer && <span>{m.manufacturer}</span>}
-                {m.gstRate ? <span>GST {m.gstRate}%</span> : null}
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+      <QuickAddMedicine
+        open={showQuickAdd}
+        onClose={() => setShowQuickAdd(false)}
+        onCreated={handleQuickAddCreated}
+        prefillName={query}
+      />
+    </>
   );
 }
