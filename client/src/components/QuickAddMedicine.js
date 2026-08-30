@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import API from '../utils/api';
 
 const DOSAGE_FORMS = [
@@ -34,6 +34,10 @@ export default function QuickAddMedicine({ open, onClose, onCreated, prefillName
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (open) setForm(prev => ({ ...prev, name: prefillName || prev.name }));
+  }, [open, prefillName]);
 
   const handleChange = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));

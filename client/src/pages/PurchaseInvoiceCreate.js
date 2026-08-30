@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../utils/api';
 import MedicinePicker from '../components/MedicinePicker';
+import QuickAddMedicine from '../components/QuickAddMedicine';
 import { PageHeader, GlassCard } from '../components/ui';
 
 export default function PurchaseInvoiceCreate() {
@@ -15,6 +16,7 @@ export default function PurchaseInvoiceCreate() {
   const [parsing, setParsing] = useState(false);
   const [ocrParsing, setOcrParsing] = useState(false);
   const [templateMsg, setTemplateMsg] = useState('');
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
   const templateInputRef = useRef(null);
   const billImageInputRef = useRef(null);
 
@@ -273,6 +275,7 @@ export default function PurchaseInvoiceCreate() {
                 <button type="button" onClick={() => templateInputRef.current?.click()} disabled={parsing} className="btn btn-sm btn-secondary text-pharma-600">
                   <i className={`fas ${parsing ? 'fa-spinner fa-spin' : 'fa-file-csv'} mr-1`}></i>{parsing ? 'Parsing...' : 'Upload Supplier CSV'}
                 </button>
+                <button type="button" onClick={() => setShowQuickAdd(true)} className="btn btn-sm btn-secondary text-emerald-600"><i className="fas fa-pills mr-1"></i>Add New Medicine</button>
                 <button type="button" onClick={addItem} className="btn btn-sm btn-secondary text-pharma-600"><i className="fas fa-plus mr-1"></i>Add Item</button>
               </div>
             </div>
@@ -374,6 +377,28 @@ export default function PurchaseInvoiceCreate() {
           </div>
         </form>
       </GlassCard>
+      <QuickAddMedicine
+        open={showQuickAdd}
+        onClose={() => setShowQuickAdd(false)}
+        onCreated={(med) => {
+          setItems(prev => [...prev, {
+            medicine: med._id,
+            medicineName: med.name,
+            batchNo: '',
+            mfgDate: '',
+            expiryDate: '',
+            mrp: med.mrp || 0,
+            rate: 0,
+            qty: 1,
+            freeQty: 0,
+            freeMode: 'N',
+            freePct: 0,
+            freeNText: '',
+            schemeDisc: 0,
+            gstRate: med.gstRate || 5
+          }]);
+        }}
+      />
     </div>
   );
 }
