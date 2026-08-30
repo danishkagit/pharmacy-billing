@@ -7,7 +7,7 @@ export default function SupplierForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
-  const [form, setForm] = useState({ name: '', company: '', gstin: '', pan: '', dlNo: '', dlNoWholesale: '', address: '', city: '', state: '', pincode: '', phone: '', email: '', zone: '', creditDays: 0, creditLimit: 0, defaultDiscountPercent: 0 });
+  const [form, setForm] = useState({ name: '', company: '', gstin: '', pan: '', dlNoWholesale: '', address: '', city: '', state: '', pincode: '', phone: '', email: '', zone: '', creditDays: 0, creditLimit: 0, defaultDiscountPercent: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [gstinFetching, setGstinFetching] = useState(false);
@@ -21,7 +21,7 @@ export default function SupplierForm() {
       API.get(`/suppliers/${id}`).then(res => {
         if (res.success) {
           const s = res.data;
-          setForm({ name: s.name, company: s.company || '', gstin: s.gstin || '', pan: s.pan || '', dlNo: s.dlNo || '', dlNoWholesale: s.dlNoWholesale || '', address: s.address || '', city: s.city || '', state: s.state || '', pincode: s.pincode || '', phone: s.phone || '', email: s.email || '', zone: s.zone || '', creditDays: s.creditDays, creditLimit: s.creditLimit, defaultDiscountPercent: s.defaultDiscountPercent || 0 });
+          setForm({ name: s.name, company: s.company || '', gstin: s.gstin || '', pan: s.pan || '', dlNoWholesale: s.dlNoWholesale || '', address: s.address || '', city: s.city || '', state: s.state || '', pincode: s.pincode || '', phone: s.phone || '', email: s.email || '', zone: s.zone || '', creditDays: s.creditDays, creditLimit: s.creditLimit, defaultDiscountPercent: s.defaultDiscountPercent || 0 });
         }
       }).catch(err => setError(err?.error || 'Failed to load'));
     }
@@ -97,8 +97,7 @@ export default function SupplierForm() {
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Company</label><input value={form.company} onChange={e => setForm({ ...form, company: e.target.value })} className="glass-input" /></div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Phone</label><input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="glass-input" /></div>
             <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">GSTIN</label><input value={form.gstin} onChange={e => setForm({ ...form, gstin: e.target.value.toUpperCase() })} className="glass-input uppercase" /></div>
-            <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Drug License No (Retail)</label><input value={form.dlNo} onChange={e => setForm({ ...form, dlNo: e.target.value })} className="glass-input uppercase" /></div>
-            <div><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Drug License No (Wholesale)</label><input value={form.dlNoWholesale} onChange={e => setForm({ ...form, dlNoWholesale: e.target.value })} className="glass-input uppercase" /></div>
+            <div className="sm:col-span-2"><label className="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Drug License No</label><input value={form.dlNoWholesale} onChange={e => setForm({ ...form, dlNoWholesale: e.target.value })} className="glass-input uppercase" placeholder="Wholesale DL Number" /></div>
             {gstinFetching && (
               <div className="sm:col-span-2 animate-fade-up bg-sky-50/80 text-sky-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2 border border-sky-200">
                 <i className="fas fa-spinner fa-spin"></i>Verifying GSTIN with GST portal...

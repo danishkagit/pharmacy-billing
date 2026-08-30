@@ -20,7 +20,7 @@ router.get('/', async (req, res) => {
     if (paymentStatus) filter.paymentStatus = paymentStatus;
     if (from || to) { filter.invoiceDate = {}; if (from) filter.invoiceDate.$gte = new Date(from); if (to) filter.invoiceDate.$lte = new Date(new Date(to).setHours(23,59,59,999)); }
     const total = await PurchaseInvoice.countDocuments(filter);
-    const invoices = await PurchaseInvoice.find(filter).populate('supplier', 'name company gstin dlNo dlNoWholesale').sort({ invoiceDate: -1 }).skip((page - 1) * parseInt(limit)).limit(parseInt(limit));
+    const invoices = await PurchaseInvoice.find(filter).populate('supplier', 'name company gstin dlNoWholesale').sort({ invoiceDate: -1 }).skip((page - 1) * parseInt(limit)).limit(parseInt(limit));
     res.json({ success: true, data: invoices, total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const invoice = await PurchaseInvoice.findOne({ _id: req.params.id, companyRef: req.company._id }).populate('supplier', 'name company gstin dlNo dlNoWholesale phone');
+    const invoice = await PurchaseInvoice.findOne({ _id: req.params.id, companyRef: req.company._id }).populate('supplier', 'name company gstin dlNoWholesale phone');
     if (!invoice) return res.status(404).json({ success: false, error: 'Purchase invoice not found' });
     res.json({ success: true, data: invoice });
   } catch (error) {

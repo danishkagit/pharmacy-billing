@@ -19,8 +19,7 @@ export default function SupplierList() {
     { key: 'company', label: 'Company', render: s => s.company || '-' },
     { key: 'phone', label: 'Phone', render: s => s.phone || '-' },
     { key: 'gstin', label: 'GSTIN', render: s => s.gstin || '-' },
-    { key: 'dlNo', label: 'DL (Retail)', render: s => s.dlNo || '-' },
-    { key: 'dlNoWholesale', label: 'DL (Wholesale)', render: s => s.dlNoWholesale || '-' },
+    { key: 'dlNoWholesale', label: 'Drug License No', render: s => s.dlNoWholesale || '-' },
     { key: 'creditDays', label: 'Credit Days', className: 'text-right', tdClass: 'text-right' },
     { key: 'defaultDiscountPercent', label: 'Disc %', className: 'text-center', tdClass: 'text-center', render: s => s.defaultDiscountPercent ? `${s.defaultDiscountPercent}%` : '-' },
     {
