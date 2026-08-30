@@ -6,6 +6,7 @@ const supplierSchema = new mongoose.Schema({
   gstin: { type: String, trim: true, uppercase: true },
   pan: { type: String, trim: true, uppercase: true },
   dlNo: { type: String, trim: true, uppercase: true },
+  dlNoWholesale: { type: String, trim: true, uppercase: true },
   address: { type: String, trim: true },
   city: { type: String, trim: true },
   state: { type: String, trim: true },
